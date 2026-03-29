@@ -1,69 +1,36 @@
 <!DOCTYPE html>
 <html lang="pt-PT">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SACO.pt - Scanner Final</title>
-    <style>
-        body { background: #0a0a0a; color: #00ff00; font-family: monospace; padding: 20px; }
-        .btn-scan { width: 100%; background: #00ff00; color: #000; border: none; padding: 20px; border-radius: 15px; font-weight: bold; font-size: 16px; margin-bottom: 20px; }
-        #log { border: 1px solid #00ff00; padding: 15px; border-radius: 10px; min-height: 250px; white-space: pre-wrap; font-size: 12px; }
-    </style>
-</head>
-<body>
-
-    <h2 style="color:white; text-align:center;">SACO.pt DIAGNÓSTICO</h2>
-    
-    <button class="btn-scan" onclick="fazerDiagnostico()">CORRER SCANNER AGORA</button>
-    
-    <div id="log">Aguardando...</div>
+<body style="background: #000; color: #fff; font-family: sans-serif; padding: 20px;">
+    <h2>Teste de Vida API</h2>
+    <button onclick="teste()" style="padding:20px; width:100%">TESTAR AGORA</button>
+    <div id="out" style="margin-top:20px; color: yellow;"></div>
 
     <script>
-        async function testar(v, m) {
-            const key = localStorage.getItem('user_api_key');
-            if(!key) {
-                const n = prompt("Insere a chave API:");
-                if(n) localStorage.setItem('user_api_key', n.trim());
-                location.reload();
-                return;
-            }
+        async function teste() {
+            const key = prompt("Cola a tua CHAVE NOVA aqui:");
+            const out = document.getElementById('out');
+            out.innerHTML = "A enviar pedido...";
 
-            const log = document.getElementById('log');
-            log.innerHTML += `Testando ${v} / ${m}... `;
-            
             try {
-                const r = await fetch(`https://generativelanguage.googleapis.com/${v}/models/${m}:generateContent?key=${key}`, {
+                // O URL mais básico possível
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${key}`;
+                
+                const r = await fetch(url, {
                     method: "POST",
                     headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({contents: [{parts: [{text: "Hi"}]}]})
+                    body: JSON.stringify({contents: [{parts: [{text: "Diz apenas a palavra SUCESSO"}]}]})
                 });
+                
                 const d = await r.json();
-                if (d.error) {
-                    log.innerHTML += `❌ (Erro: ${d.error.code})\n`;
-                    return false;
+                
+                if(d.error) {
+                    out.innerHTML = "❌ ERRO GOOGLE: " + d.error.message;
                 } else {
-                    log.innerHTML += `✅ FUNCIONOU!\n`;
-                    alert(`ENCONTRADO: Usa ${v} com o modelo ${m}`);
-                    return true;
+                    out.innerHTML = "✅ RESPOSTA: " + d.candidates[0].content.parts[0].text;
                 }
             } catch(e) {
-                log.innerHTML += `❌ Erro rede\n`;
-                return false;
+                out.innerHTML = "❌ ERRO DE REDE: " + e.message;
             }
-        }
-
-        async function fazerDiagnostico() {
-            document.getElementById('log').innerHTML = "--- INÍCIO ---\n";
-            const versoes = ["v1", "v1beta"];
-            const modelos = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro"];
-            
-            for(let v of versoes) {
-                for(let m of modelos) {
-                    const ok = await testar(v, m);
-                    if(ok) return; // Pára no primeiro que funcionar
-                }
-            }
-            document.getElementById('log').innerHTML += "\nNenhuma combinação deu certo.";
         }
     </script>
 </body>
