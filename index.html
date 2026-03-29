@@ -2,53 +2,141 @@
 <html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SACO.pt - Diagnóstico</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SACO.pt - Lista Inteligente</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { background: #f0f2f5; font-family: 'Plus Jakarta Sans', sans-serif; padding: 20px; text-align: center; }
-        .card { background: white; padding: 25px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .btn-debug { width: 100%; background: #1a1c22; color: #00ff00; border: none; padding: 20px; border-radius: 20px; font-weight: 800; cursor: pointer; }
-        #log { margin-top: 20px; background: #000; color: #00ff00; padding: 15px; border-radius: 15px; font-family: monospace; font-size: 11px; text-align: left; overflow-x: auto; min-height: 150px; white-space: pre-wrap; }
+        :root { --bg: #f8f9fc; --acc: #007aff; --text: #1a1c22; --card: #ffffff; --border: #edf0f3; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; padding: 20px 20px 140px; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .logo { font-size: 26px; font-weight: 800; color: var(--acc); letter-spacing: -1px; }
+        
+        .input-box { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 8px; display: flex; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 20px; }
+        input { flex: 1; border: none; padding: 12px; font-size: 16px; font-weight: 600; font-family: inherit; background: transparent; }
+        .btn-add { background: var(--acc); color: white; border: none; width: 48px; height: 48px; border-radius: 15px; font-size: 20px; cursor: pointer; }
+        
+        .item { background: var(--card); padding: 15px; border-radius: 18px; display: flex; align-items: center; gap: 15px; border: 1px solid var(--border); margin-bottom: 10px; animation: slideIn 0.3s ease; }
+        .item-info { flex: 1; font-weight: 700; font-size: 15px; }
+        
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; padding: 20px; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); border-top: 1px solid var(--border); }
+        .btn-compare { width: 100%; background: var(--acc); color: white; border: none; padding: 18px; border-radius: 20px; font-size: 16px; font-weight: 800; }
+        
+        .ai-output { background: white; padding: 20px; border-radius: 20px; border-left: 5px solid var(--acc); margin-top: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); line-height: 1.5; }
+        .error-msg { color: #ff3b30; background: #fff1f1; padding: 15px; border-radius: 15px; margin-top: 15px; border: 1px solid #ff3b30; font-size: 13px; }
+        
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-    <div style="font-size: 24px; font-weight: 800; color: #007aff; margin-bottom: 20px;">SACO.pt DEBUG</div>
+    <div class="header">
+        <div class="logo">SACO.pt</div>
+        <button onclick="configKey()" style="background:#eee; border:none; padding:8px 12px; border-radius:10px; font-size:11px; font-weight:bold;">⚙️ Chave API</button>
+    </div>
 
-    <div class="card">
-        <p style="font-size: 14px; color: #444;">Clica no botão abaixo. Se a lista aparecer vazia ou com erro, a tua chave pode estar restrita.</p>
-        <button class="btn-debug" onclick="descobrirModelos()">LISTAR MODELOS DA MINHA CHAVE</button>
-        <div id="log">A aguardar clique...</div>
+    <div class="input-box">
+        <input type="text" id="itemIn" placeholder="Ex: Leite, Ovos..." onkeypress="if(event.key==='Enter') add()">
+        <button class="btn-add" onclick="add()">+</button>
+    </div>
+
+    <div id="list"></div>
+    <div id="results"></div>
+
+    <div class="footer">
+        <button id="compBtn" class="btn-compare" onclick="compare()">COMPARAR PREÇOS IA</button>
     </div>
 
     <script>
-        const MINHA_CHAVE = "AIzaSyBEeOFiu49Lk1CTxCsblRjjNRaDftnJHhM";
+        let basket = JSON.parse(localStorage.getItem('saco_items') || "[]");
 
-        async function descobrirModelos() {
-            const consoleLog = document.getElementById('log');
-            consoleLog.innerHTML = "A ligar aos servidores da Google...\n";
+        // GESTÃO DA CHAVE (Para evitar o bloqueio da Google)
+        function getKey() {
+            let key = localStorage.getItem('gemini_key');
+            if (!key) {
+                key = prompt("Insere a tua Gemini API Key para começar:\n(A chave fica guardada apenas no teu telemóvel)");
+                if (key) localStorage.setItem('gemini_key', key);
+            }
+            return key;
+        }
 
-            try {
-                // v1beta é a única que permite listar modelos
-                const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${MINHA_CHAVE}`;
-                const r = await fetch(url);
-                const d = await r.json();
-
-                if (d.error) {
-                    consoleLog.innerHTML = "❌ ERRO GOOGLE:\n" + JSON.stringify(d.error, null, 2);
-                } else {
-                    consoleLog.innerHTML = "✅ SUCESSO! Modelos permitidos:\n\n";
-                    d.models.forEach(m => {
-                        if(m.supportedGenerationMethods.includes("generateContent")) {
-                            consoleLog.innerHTML += `-> ${m.name}\n`;
-                        }
-                    });
-                }
-            } catch (e) {
-                consoleLog.innerHTML = "❌ ERRO DE LIGAÇÃO: " + e.message;
+        function configKey() {
+            const nova = prompt("Altera a tua API Key:", localStorage.getItem('gemini_key') || "");
+            if (nova) {
+                localStorage.setItem('gemini_key', nova);
+                location.reload();
             }
         }
+
+        function render() {
+            document.getElementById('list').innerHTML = basket.map((it, i) => `
+                <div class="item">
+                    <div class="item-info">${it.name}</div>
+                    <button onclick="remove(${i})" style="border:none; background:none; color:#ff3b30; font-size:20px; font-weight:bold;">×</button>
+                </div>
+            `).join('');
+            localStorage.setItem('saco_items', JSON.stringify(basket));
+        }
+
+        function add() {
+            const inp = document.getElementById('itemIn');
+            if(!inp.value) return;
+            basket.unshift({ name: inp.value });
+            inp.value = '';
+            render();
+        }
+
+        function remove(i) { basket.splice(i, 1); render(); }
+
+        async function compare() {
+            if (basket.length === 0) return alert("Adiciona itens primeiro!");
+            
+            const key = getKey();
+            if (!key) return;
+
+            const btn = document.getElementById('compBtn');
+            const resArea = document.getElementById('results');
+            const items = basket.map(i => i.name).join(', ');
+            
+            btn.innerText = "A ANALISAR...";
+            btn.disabled = true;
+            resArea.innerHTML = "";
+
+            try {
+                // Rota estável v1
+                const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`;
+
+                const resp = await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: `Como especialista em compras em Portugal, analisa estes itens: ${items}. Diz qual o supermercado (Pingo Doce, Continente, Auchan ou Lidl) está mais barato hoje e dá uma estimativa de preços total. Responde de forma direta e amigável.` }] }]
+                    })
+                });
+
+                const data = await resp.json();
+
+                if (data.error) {
+                    if(data.error.message.includes("API key not valid")) {
+                        localStorage.removeItem('gemini_key');
+                        resArea.innerHTML = `<div class="error-msg">A chave inserida é inválida. Tenta novamente.</div>`;
+                    } else {
+                        resArea.innerHTML = `<div class="error-msg">Erro: ${data.error.message}</div>`;
+                    }
+                } else {
+                    const aiText = data.candidates[0].content.parts[0].text;
+                    resArea.innerHTML = `<div class="ai-output"><b>Sugestão da IA:</b><br><br>${aiText.replace(/\n/g, '<br>')}</div>`;
+                }
+            } catch (e) {
+                resArea.innerHTML = `<div class="error-msg">Erro de rede. Verifica a internet.</div>`;
+            }
+
+            btn.innerText = "COMPARAR PREÇOS IA";
+            btn.disabled = false;
+        }
+
+        render();
     </script>
 </body>
 </html>
