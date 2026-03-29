@@ -3,97 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SACO.pt - Scanner de Versão</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+    <title>SACO.pt - Scanner Final</title>
     <style>
-        body { background: #1a1c22; color: white; font-family: 'Plus Jakarta Sans', sans-serif; padding: 20px; text-align: center; }
-        .card { background: #252830; padding: 25px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); margin-top: 20px; }
-        .btn-scan { width: 100%; background: #007aff; color: white; border: none; padding: 20px; border-radius: 20px; font-weight: 800; cursor: pointer; font-size: 16px; }
-        #log { margin-top: 20px; text-align: left; font-family: monospace; font-size: 12px; height: 300px; overflow-y: auto; background: #000; padding: 15px; border-radius: 15px; border: 1px solid #444; white-space: pre-wrap; }
-        .success { color: #00ff00; font-weight: bold; border: 1px solid #00ff00; padding: 10px; margin-top: 10px; border-radius: 10px; }
+        body { background: #0a0a0a; color: #00ff00; font-family: monospace; padding: 20px; }
+        .btn-scan { width: 100%; background: #00ff00; color: #000; border: none; padding: 20px; border-radius: 15px; font-weight: bold; font-size: 16px; margin-bottom: 20px; }
+        #log { border: 1px solid #00ff00; padding: 15px; border-radius: 10px; min-height: 250px; white-space: pre-wrap; font-size: 12px; }
     </style>
 </head>
 <body>
 
-    <div style="font-size: 24px; font-weight: 800; color: #007aff;">SACO.pt SCANNER</div>
-    <p style="font-size: 14px; color: #999;">Vamos descobrir qual a versão que a Google aceita para a tua conta.</p>
-
-    <div class="card">
-        <button id="btn" class="btn-scan" onclick="startScan()">INICIAR DIAGNÓSTICO</button>
-        <div id="log">Aguardando início...</div>
-        <div id="finalResult"></div>
-    </div>
+    <h2 style="color:white; text-align:center;">SACO.pt DIAGNÓSTICO</h2>
+    
+    <button class="btn-scan" onclick="fazerDiagnostico()">CORRER SCANNER AGORA</button>
+    
+    <div id="log">Aguardando...</div>
 
     <script>
-        const KEY = localStorage.getItem('user_api_key');
+        async function testar(v, m) {
+            const key = localStorage.getItem('user_api_key');
+            if(!key) {
+                const n = prompt("Insere a chave API:");
+                if(n) localStorage.setItem('user_api_key', n.trim());
+                location.reload();
+                return;
+            }
 
-        if (!KEY) {
-            const nova = prompt("Insere a tua API Key para o teste:");
-            if (nova) localStorage.setItem('user_api_key', nova.trim());
-            location.reload();
-        }
-
-        async function test(version, model) {
-            const logDiv = document.getElementById('log');
-            logDiv.innerHTML += `> A testar ${version} com ${model}...\n`;
+            const log = document.getElementById('log');
+            log.innerHTML += `Testando ${v} / ${m}... `;
             
             try {
-                const url = `https://generativelanguage.googleapis.com/${version}/models/${model}:generateContent?key=${KEY}`;
-                const resp = await fetch(url, {
+                const r = await fetch(`https://generativelanguage.googleapis.com/${v}/models/${m}:generateContent?key=${key}`, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: "Diz OK" }] }] })
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({contents: [{parts: [{text: "Hi"}]}]})
                 });
-                
-                const data = await resp.json();
-                
-                if (data.error) {
-                    logDiv.innerHTML += `  ❌ Erro: ${data.error.message.substring(0, 50)}...\n\n`;
-                    return null;
+                const d = await r.json();
+                if (d.error) {
+                    log.innerHTML += `❌ (Erro: ${d.error.code})\n`;
+                    return false;
                 } else {
-                    logDiv.innerHTML += `  ✅ SUCESSO!\n\n`;
-                    return { version, model };
+                    log.innerHTML += `✅ FUNCIONOU!\n`;
+                    alert(`ENCONTRADO: Usa ${v} com o modelo ${m}`);
+                    return true;
                 }
-            } catch (e) {
-                logDiv.innerHTML += `  ❌ Erro de Rede\n\n`;
-                return null;
+            } catch(e) {
+                log.innerHTML += `❌ Erro rede\n`;
+                return false;
             }
         }
 
-        async function startScan() {
-            const btn = document.getElementById('btn');
-            const logDiv = document.getElementById('log');
-            const resDiv = document.getElementById('finalResult');
+        async function fazerDiagnostico() {
+            document.getElementById('log').innerHTML = "--- INÍCIO ---\n";
+            const versoes = ["v1", "v1beta"];
+            const modelos = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro"];
             
-            btn.disabled = true;
-            logDiv.innerHTML = "--- INICIANDO SCAN ---\n";
-            resDiv.innerHTML = "";
-
-            // Lista de combinações para varrer
-            const versions = ["v1", "v1beta"];
-            const models = ["gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-pro"];
-
-            let winner = null;
-
-            for (let v of versions) {
-                for (let m of models) {
-                    const result = await test(v, m);
-                    if (result && !winner) winner = result;
+            for(let v of versoes) {
+                for(let m of modelos) {
+                    const ok = await testar(v, m);
+                    if(ok) return; // Pára no primeiro que funcionar
                 }
             }
-
-            if (winner) {
-                resDiv.innerHTML = `
-                    <div class="success">
-                        CONFIGURAÇÃO ENCONTRADA!<br><br>
-                        Versão: ${winner.version}<br>
-                        Modelo: ${winner.model}<br><br>
-                        Usa estes valores no teu código principal.
-                    </div>`;
-            } else {
-                resDiv.innerHTML = `<div style="color:red; margin-top:20px;">Nenhuma combinação funcionou. Verifica se a tua chave API no botão Config está correta.</div>`;
-            }
-            btn.disabled = false;
+            document.getElementById('log').innerHTML += "\nNenhuma combinação deu certo.";
         }
     </script>
 </body>
