@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SACO.pt | Comparador Oficial</title>
+    <title>SACO.pt | Comparador 2.0</title>
     <style>
         :root { --blue: #007aff; --green: #34c759; --bg: #f5f5f7; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
@@ -75,36 +75,31 @@
         const btn = document.getElementById('btn');
         
         resDiv.style.display = "block";
-        resDiv.innerHTML = "⏳ <b>A verificar preços...</b><br>Isto pode demorar 5-10 segundos.";
+        resDiv.innerHTML = "⏳ <b>A consultar Gemini 2.0...</b>";
         btn.disabled = true;
 
-        // MODELO 1.5 FLASH: O mais estável para evitar erros de quota "0"
-        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`;
+        // ROTA V1BETA + MODELO LITE (O ÚNICO NA TUA LISTA)
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${key}`;
 
         try {
             const response = await fetch(url, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: `Lista de compras: ${basket.join(', ')}. Com base nos preços médios em Portugal (Continente, Pingo Doce, Lidl), qual o total estimado e qual o supermercado mais barato? Responde de forma direta.` }] }]
+                    contents: [{ parts: [{ text: `Supermercados em Portugal (Pingo Doce, Continente, Lidl). Para os itens: ${basket.join(', ')}, qual é o mais barato hoje? Resposta rápida e curta.` }] }]
                 })
             });
 
             const data = await response.json();
             
             if (data.error) {
-                // Se der erro de quota, avisa o utilizador para esperar
-                if (data.error.message.includes("quota")) {
-                    resDiv.innerHTML = "❌ <b>Limite atingido.</b> A Google está a processar a tua chave. Tenta de novo dentro de 2 a 5 minutos.";
-                } else {
-                    resDiv.innerHTML = "❌ <b>Erro:</b> " + data.error.message;
-                }
+                resDiv.innerHTML = "❌ <b>Erro:</b> " + data.error.message;
             } else {
                 const aiText = data.candidates[0].content.parts[0].text;
-                resDiv.innerHTML = "<b>Sugestão SACO.pt:</b><br><br>" + aiText.replace(/\n/g, '<br>');
+                resDiv.innerHTML = "<b>Previsão SACO.pt:</b><br><br>" + aiText.replace(/\n/g, '<br>');
             }
         } catch (e) {
-            resDiv.innerHTML = "❌ Erro de rede. Verifica a internet.";
+            resDiv.innerHTML = "❌ Erro de rede.";
         } finally {
             btn.disabled = false;
         }
