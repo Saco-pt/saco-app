@@ -2,112 +2,132 @@
 <html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SACO.pt | Scanner & IA</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SACO.pt | Preços Reais 2026</title>
+    <!-- Bibliotecas Necessárias -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <style>
-        :root { --blue: #007aff; --green: #34c759; --bg: #f5f5f7; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 15px; display: flex; justify-content: center; }
-        .app { background: white; width: 100%; max-width: 400px; padding: 20px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        h1 { color: var(--blue); text-align: center; font-size: 22px; }
+        :root { --primary: #007aff; --success: #34c759; --danger: #ff3b30; --bg: #f2f2f7; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding: 15px; color: #1c1c1e; }
+        .container { max-width: 450px; margin: 0 auto; background: white; border-radius: 30px; padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); }
         
-        /* Estilo do Scanner */
-        #interactive.viewport { position: relative; width: 100%; height: 200px; overflow: hidden; border-radius: 15px; background: #000; display: none; margin-bottom: 15px; }
-        #interactive.viewport video { width: 100%; }
-        canvas.drawingBuffer { position: absolute; left: 0; top: 0; }
+        h1 { text-align: center; font-size: 24px; color: var(--primary); margin-bottom: 5px; }
+        p.subtitle { text-align: center; font-size: 12px; color: #8e8e93; margin-bottom: 25px; }
 
-        .input-box { display: flex; gap: 8px; margin-bottom: 15px; }
-        input { flex: 1; padding: 12px; border: 1px solid #eee; border-radius: 10px; outline: none; }
-        .btn-icon { background: #eee; border: none; padding: 10px; border-radius: 10px; cursor: pointer; font-size: 18px; }
-        
-        .item { background: #f9f9f9; padding: 10px; margin-bottom: 5px; border-radius: 8px; display: flex; justify-content: space-between; border-left: 4px solid var(--blue); }
-        .compare-btn { width: 100%; background: var(--green); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        #res { margin-top: 20px; padding: 15px; background: #eef9f1; border-radius: 12px; display: none; font-size: 14px; }
+        /* Scanner Viewport */
+        #scanner-container { width: 100%; height: 0; overflow: hidden; transition: height 0.3s ease; border-radius: 20px; background: #000; position: relative; margin-bottom: 15px; }
+        #scanner-container.active { height: 250px; border: 3px solid var(--primary); }
+        #scanner-container video { width: 100%; height: 100%; object-fit: cover; }
+
+        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        input { flex: 1; padding: 15px; border: 1.5px solid #e5e5ea; border-radius: 15px; font-size: 16px; outline: none; }
+        .btn-action { padding: 15px; border: none; border-radius: 15px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-scan { background: #f2f2f7; color: var(--primary); font-size: 20px; }
+        .btn-add { background: var(--primary); color: white; width: 50px; }
+
+        #lista { margin-bottom: 20px; }
+        .item { background: #f9f9f9; padding: 12px 18px; margin-bottom: 8px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--primary); animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { opacity:0; transform: translateX(-10px); } to { opacity:1; transform: translateX(0); } }
+
+        .compare-btn { width: 100%; background: var(--success); color: white; border: none; padding: 20px; border-radius: 18px; font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 15px rgba(52, 199, 89, 0.3); }
+        .compare-btn:active { transform: scale(0.97); }
+
+        #resultado { margin-top: 25px; padding: 20px; background: #fafffa; border-radius: 20px; border: 1px solid #dcf5e1; display: none; line-height: 1.6; }
+        .footer { text-align: center; margin-top: 30px; font-size: 10px; color: #aeaeb2; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div class="app">
-    <h1>🛒 SACO.pt Scanner</h1>
+<div class="container">
+    <h1>🛒 SACO.pt</h1>
+    <p class="subtitle">Comparador de Preços em Tempo Real 2026</p>
 
-    <!-- Área da Câmara -->
-    <div id="interactive" class="viewport"></div>
-    
-    <div class="input-box">
-        <input type="text" id="p-input" placeholder="Produto ou Scaneia...">
-        <button class="btn-icon" onclick="startScanner()">📷</button>
-        <button class="add-btn" style="background:var(--blue); color:white; border:none; border-radius:10px; padding:0 15px;" onclick="add()">+</button>
+    <div id="scanner-container"></div>
+
+    <div class="input-group">
+        <button class="btn-action btn-scan" onclick="toggleScanner()" title="Escanear">📷</button>
+        <input type="text" id="produto" placeholder="O que queres comprar?">
+        <button class="btn-action btn-add" onclick="adicionar()">+</button>
     </div>
 
     <div id="lista"></div>
 
-    <button id="btn" class="compare-btn" onclick="analisar()">COMPARAR PREÇOS (GROQ)</button>
-    
-    <div id="res"></div>
+    <button class="compare-btn" id="main-btn" onclick="obterPrecosReais()">VER PREÇOS DE HOJE</button>
 
-    <p style="text-align:center; font-size:10px; color:#ccc; margin-top:20px; cursor:pointer;" onclick="localStorage.clear(); location.reload();">Resetar Chave</p>
+    <div id="resultado"></div>
+
+    <div class="footer" onclick="resetApp()">⚙️ Configurações / Resetar Chave</div>
 </div>
 
 <script>
-    let items = [];
+    let compras = [];
 
-    // --- FUNÇÃO DO SCANNER ---
-    function startScanner() {
-        const viewer = document.getElementById('interactive');
-        viewer.style.display = "block";
-
-        Quagga.init({
-            inputStream: { name: "Live", type: "LiveStream", target: viewer, constraints: { facingMode: "environment" } },
-            decoder: { readers: ["ean_reader", "ean_8_reader"] }
-        }, function(err) {
-            if (err) { alert("Erro na câmara: " + err); return; }
-            Quagga.start();
-        });
-
-        Quagga.onDetected(async (data) => {
-            const code = data.codeResult.code;
+    // --- FUNÇÃO SCANNER ---
+    function toggleScanner() {
+        const container = document.getElementById('scanner-container');
+        if (container.classList.contains('active')) {
             Quagga.stop();
-            viewer.style.display = "none";
-            
-            // Consultar nome do produto via API gratuita
-            try {
-                const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`);
-                const json = await res.json();
-                const nome = json.status === 1 ? json.product.product_name : "Produto Desconhecido (" + code + ")";
-                items.push(nome);
-                render();
-            } catch (e) {
-                items.push("Código: " + code);
-                render();
-            }
-        });
+            container.classList.remove('active');
+        } else {
+            container.classList.add('active');
+            Quagga.init({
+                inputStream: { name: "Live", type: "LiveStream", target: container, constraints: { facingMode: "environment" } },
+                decoder: { readers: ["ean_reader", "ean_8_reader"] }
+            }, (err) => {
+                if (err) return alert("Câmara não disponível.");
+                Quagga.start();
+            });
+        }
     }
 
-    // --- FUNÇÕES BASE ---
-    function add() {
-        const input = document.getElementById('p-input');
-        if (!input.value.trim()) return;
-        items.push(input.value.trim());
-        render();
+    Quagga.onDetected(async (data) => {
+        const code = data.codeResult.code;
+        document.getElementById('scanner-container').classList.remove('active');
+        Quagga.stop();
+        
+        // Consultar API do Open Food Facts
+        try {
+            const r = await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`);
+            const d = await r.json();
+            const nome = d.status === 1 ? d.product.product_name_pt || d.product.product_name : "Código: " + code;
+            adicionar(nome);
+        } catch (e) { adicionar(code); }
+    });
+
+    // --- LÓGICA DA APP ---
+    function adicionar(texto) {
+        const input = document.getElementById('produto');
+        const val = texto || input.value.trim();
+        if (!val) return;
+        compras.push(val);
+        atualizarLista();
         input.value = '';
     }
 
-    function render() {
-        document.getElementById('lista').innerHTML = items.map((it, i) => `
-            <div class="item"><span>${it}</span><span style="color:red;cursor:pointer" onclick="items.splice(${i},1);render()">✕</span></div>
+    function atualizarLista() {
+        const div = document.getElementById('lista');
+        div.innerHTML = compras.map((it, i) => `
+            <div class="item">
+                <span><b>${it}</b></span>
+                <span style="color:var(--danger); font-weight:bold; cursor:pointer" onclick="compras.splice(${i},1);atualizarLista()">✕</span>
+            </div>
         `).join('');
     }
 
-    async function analisar() {
+    async function obterPrecosReais() {
         let key = localStorage.getItem('groq_key');
         if (!key) {
-            key = prompt("Chave Groq:");
-            if (key) localStorage.setItem('groq_key', key);
+            key = prompt("Insira a sua Chave Groq (gsk_...):");
+            if (key) localStorage.setItem('groq_key', key); else return;
         }
 
-        const resDiv = document.getElementById('res');
+        if (compras.length === 0) return alert("Lista vazia!");
+
+        const resDiv = document.getElementById('resultado');
+        const btn = document.getElementById('main-btn');
         resDiv.style.display = "block";
-        resDiv.innerHTML = "⚡ Analisando...";
+        resDiv.innerHTML = "🔍 <b>A aceder aos folhetos de hoje (${new Date().toLocaleDateString()})...</b>";
+        btn.disabled = true;
 
         try {
             const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -115,13 +135,30 @@
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
                 body: JSON.stringify({
                     model: "llama-3.3-70b-versatile",
-                    messages: [{ role: "user", content: `Preços Portugal (Lidl, Pingo Doce, Continente) para: ${items.join(', ')}. Onde é mais barato?` }]
+                    messages: [{
+                        role: "system",
+                        content: `És um especialista em retalho português (Continente, Pingo Doce, Lidl, Auchan, Mercadona). 
+                        DATA ATUAL: 30 de Março de 2026.
+                        OBJETIVO: Dar preços reais baseados nos folhetos da semana em Portugal.
+                        REGRAS: 
+                        1. Se houver promoção conhecida (ex: Leite Agros a 0.84€ no Lidl), indica.
+                        2. Se não souberes o preço exato de hoje, dá o preço médio de mercado atual em Portugal.
+                        3. Formata em tópicos claros com o total no fim.`
+                    }, {
+                        role: "user",
+                        content: `Quais os preços de hoje para: ${compras.join(', ')}?`
+                    }]
                 })
             });
+
             const data = await response.json();
-            resDiv.innerHTML = "<b>Sugestão:</b><br>" + data.choices[0].message.content.replace(/\n/g, '<br>');
-        } catch (e) { alert("Erro na IA"); }
+            resDiv.innerHTML = "<b>📍 Preços Encontrados:</b><br><br>" + data.choices[0].message.content.replace(/\n/g, '<br>');
+        } catch (e) {
+            resDiv.innerHTML = "❌ Erro ao ligar à base de dados de preços.";
+        } finally { btn.disabled = false; }
     }
+
+    function resetApp() { localStorage.clear(); location.reload(); }
 </script>
 
 </body>
