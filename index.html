@@ -1,37 +1,107 @@
 <!DOCTYPE html>
 <html lang="pt-PT">
-<body style="background: #000; color: #fff; font-family: sans-serif; padding: 20px;">
-    <h2>Teste de Vida API</h2>
-    <button onclick="teste()" style="padding:20px; width:100%">TESTAR AGORA</button>
-    <div id="out" style="margin-top:20px; color: yellow;"></div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SACO.pt | Comparador de Preços IA</title>
+    <style>
+        :root { --primary: #007aff; --bg: #f5f5f7; --card: #ffffff; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .app-card { background: var(--card); width: 100%; max-width: 400px; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        h1 { color: var(--primary); margin-top: 0; font-size: 24px; text-align: center; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 10px; outline: none; }
+        button { background: var(--primary); color: white; border: none; padding: 12px 18px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        button#ai-btn { width: 100%; background: #28a745; margin-top: 15px; }
+        #lista-compras { margin: 15px 0; border-top: 1px solid #eee; padding-top: 10px; }
+        .item-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #fafafa; }
+        #resultado-ia { margin-top: 20px; font-size: 14px; line-height: 1.6; color: #333; background: #f9f9f9; padding: 15px; border-radius: 10px; display: none; }
+        .config-link { display: block; text-align: center; font-size: 11px; color: #999; margin-top: 20px; text-decoration: none; }
+    </style>
+</head>
+<body>
 
-    <script>
-        async function teste() {
-            const key = prompt("Cola a tua CHAVE NOVA aqui:");
-            const out = document.getElementById('out');
-            out.innerHTML = "A enviar pedido...";
+<div class="app-card">
+    <h1>🛒 SACO.pt</h1>
+    
+    <div class="input-group">
+        <input type="text" id="item-input" placeholder="Adicionar produto...">
+        <button onclick="adicionar()">+</button>
+    </div>
 
-            try {
-                // O URL mais básico possível
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${key}`;
-                
-                const r = await fetch(url, {
-                    method: "POST",
-                    headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({contents: [{parts: [{text: "Diz apenas a palavra SUCESSO"}]}]})
-                });
-                
-                const d = await r.json();
-                
-                if(d.error) {
-                    out.innerHTML = "❌ ERRO GOOGLE: " + d.error.message;
-                } else {
-                    out.innerHTML = "✅ RESPOSTA: " + d.candidates[0].content.parts[0].text;
-                }
-            } catch(e) {
-                out.innerHTML = "❌ ERRO DE REDE: " + e.message;
-            }
+    <div id="lista-compras"></div>
+
+    <button id="ai-btn" onclick="compararComIA()">COMPARAR PREÇOS IA</button>
+    
+    <div id="resultado-ia"></div>
+
+    <a href="#" class="config-link" onclick="resetKey()">Configurar Nova Chave API</a>
+</div>
+
+<script>
+    let carrinho = [];
+
+    function adicionar() {
+        const input = document.getElementById('item-input');
+        if (!input.value) return;
+        carrinho.push(input.value);
+        atualizarLista();
+        input.value = '';
+    }
+
+    function atualizarLista() {
+        const div = document.getElementById('lista-compras');
+        div.innerHTML = carrinho.map(item => `<div class="item-row"><span>${item}</span></div>`).join('');
+    }
+
+    function resetKey() {
+        localStorage.removeItem('gemini_api_key');
+        alert("Chave removida. Clique em Comparar para inserir uma nova.");
+    }
+
+    async function compararComIA() {
+        let key = localStorage.getItem('gemini_api_key');
+        
+        if (!key) {
+            key = prompt("Insira a sua Chave API do Gemini (AIza...):");
+            if (!key) return;
+            localStorage.setItem('gemini_api_key', key);
         }
-    </script>
+
+        if (carrinho.length === 0) {
+            alert("Adicione itens à lista primeiro!");
+            return;
+        }
+
+        const resDiv = document.getElementById('resultado-ia');
+        resDiv.style.display = "block";
+        resDiv.innerHTML = "⏳ A consultar mercados (Continente, Pingo Doce, Lidl)...";
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+
+        try {
+            const response = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: `Como especialista em compras em Portugal, analisa esta lista: ${carrinho.join(', ')}. Qual o supermercado mais barato esta semana e qual o preço total estimado?` }] }]
+                })
+            });
+
+            const data = await response.json();
+            
+            if (data.error) {
+                resDiv.innerHTML = "❌ Erro: " + data.error.message;
+                if(data.error.code === 400) localStorage.removeItem('gemini_api_key');
+            } else {
+                const markdownText = data.candidates[0].content.parts[0].text;
+                resDiv.innerHTML = "<b>Análise da IA:</b><br>" + markdownText.replace(/\n/g, '<br>');
+            }
+        } catch (e) {
+            resDiv.innerHTML = "❌ Erro de ligação. Verifique a chave.";
+        }
+    }
+</script>
+
 </body>
 </html>
