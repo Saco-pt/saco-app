@@ -3,105 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt - Debug Mode</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <title>SACO.pt - Fix Final</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #f8f9fc; --acc: #007aff; --text: #1a1c22; --card: #ffffff; --border: #edf0f3; }
-        body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; padding: 20px; padding-bottom: 120px; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .logo { font-size: 26px; font-weight: 800; color: var(--acc); }
-        .input-box { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 8px; display: flex; gap: 8px; margin-bottom: 20px; }
-        input { flex: 1; border: none; padding: 12px; font-size: 16px; background: transparent; }
-        .btn-add { background: var(--acc); color: white; border: none; width: 48px; border-radius: 15px; font-size: 20px; }
-        .item { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 10px; border: 1px solid var(--border); display: flex; justify-content: space-between; }
-        .footer { position: fixed; bottom: 0; left: 0; right: 0; padding: 20px; background: white; border-top: 1px solid var(--border); }
-        .btn-compare { width: 100%; background: var(--acc); color: white; border: none; padding: 18px; border-radius: 20px; font-size: 16px; font-weight: 800; }
-        
-        /* ESTILO DO ERRO DETALHADO */
-        .debug-box { background: #fff1f1; color: #ff3b30; padding: 15px; border-radius: 15px; margin-top: 20px; font-family: monospace; font-size: 12px; border: 1px solid #ff3b30; white-space: pre-wrap; overflow-x: auto; }
-        .ai-output { background: white; padding: 20px; border-radius: 20px; border-left: 5px solid var(--acc); margin-top: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        body { background: #f8f9fc; font-family: 'Plus Jakarta Sans', sans-serif; padding: 20px; text-align: center; }
+        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .logo { font-size: 28px; font-weight: 800; color: #007aff; margin-bottom: 20px; }
+        input { width: 80%; padding: 15px; border-radius: 15px; border: 1px solid #ddd; margin-bottom: 10px; font-size: 16px; }
+        .btn { width: 100%; background: #007aff; color: white; border: none; padding: 20px; border-radius: 20px; font-weight: 800; font-size: 16px; cursor: pointer; }
+        #results { margin-top: 20px; text-align: left; padding: 15px; border-radius: 15px; display: none; }
+        .error { background: #fff1f1; color: #ff3b30; border: 1px solid #ff3b30; }
+        .success { background: #f0fff4; color: #22c55e; border: 1px solid #22c55e; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div class="logo">SACO.pt</div>
-        <button onclick="localStorage.clear(); location.reload();" style="font-size: 10px;">Reset App</button>
+    <div class="logo">SACO.pt</div>
+
+    <div class="card">
+        <input type="text" id="item" value="Leite, Ovos, Arroz">
+        <p style="font-size: 12px; color: #666;">Clica no botão abaixo para testar a chave nova.</p>
     </div>
 
-    <div class="input-box">
-        <input type="text" id="itemIn" placeholder="Ex: Leite, Ovos...">
-        <button class="btn-add" onclick="add()">+</button>
-    </div>
-
-    <div id="list"></div>
     <div id="results"></div>
 
-    <div class="footer">
-        <button id="compBtn" class="btn-compare" onclick="compare()">VERIFICAR ERRO IA</button>
+    <div style="position: fixed; bottom: 20px; left: 20px; right: 20px;">
+        <button id="btn" class="btn" onclick="askAI()">TESTAR LIGAÇÃO IA</button>
     </div>
 
     <script>
-        const API_KEY = "AIzaSyBEeOFiu49Lk1CTxCsblRjjNRaDftnJHhM"; 
-        let basket = JSON.parse(localStorage.getItem('saco_v1') || "[]");
+        // CHAVE NOVA QUE ME ENVIASTE
+        const API_KEY = "AIzaSyBEeOFiu49Lk1CTxCsblRjjNRaDftnJHhM";
 
-        function render() {
-            document.getElementById('list').innerHTML = basket.map((it, i) => `
-                <div class="item">
-                    <span>${it.name}</span>
-                    <button onclick="remove(${i})" style="color:red; border:none; background:none;">×</button>
-                </div>
-            `).join('');
-            localStorage.setItem('saco_v1', JSON.stringify(basket));
-        }
-
-        function add() {
-            const name = document.getElementById('itemIn').value;
-            if(!name) return;
-            basket.push({name});
-            document.getElementById('itemIn').value = '';
-            render();
-        }
-
-        function remove(i) { basket.splice(i, 1); render(); }
-
-        async function compare() {
+        async function askAI() {
+            const btn = document.getElementById('btn');
             const resArea = document.getElementById('results');
-            resArea.innerHTML = "<em>A tentar ligar à Google...</em>";
-            
-            // TENTATIVA COM NOME DE MODELO MAIS ESPECÍFICO
-            const modelName = "gemini-1.5-flash-latest"; 
-            
-            try {
-                const prompt = "Diz olá.";
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_KEY}`;
+            const items = document.getElementById('item').value;
 
-                const resp = await fetch(url, {
+            btn.innerText = "A PROCESSAR...";
+            btn.disabled = true;
+            resArea.style.display = "block";
+            resArea.className = "card";
+            resArea.innerHTML = "A enviar pedido à Google...";
+
+            try {
+                // URL configurado para a versão mais compatível
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+
+                const response = await fetch(url, {
                     method: "POST",
-                    headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: `Analise estes itens para Portugal: ${items}. Qual o supermercado mais barato? Responda curto.` }] }]
+                    })
                 });
 
-                const data = await resp.json();
+                const data = await response.json();
 
                 if (data.error) {
-                    // SE DER ERRO, MOSTRA O OBJETO COMPLETO DA GOOGLE
-                    resArea.innerHTML = `
-                        <div class="debug-box">
-                            <strong>DETETADO ERRO DA GOOGLE:</strong><br>
-                            Status: ${data.error.status}<br>
-                            Message: ${data.error.message}<br>
-                            Code: ${data.error.code}<br><br>
-                            <em>Copia este texto ou tira print!</em>
-                        </div>`;
+                    resArea.classList.add('error');
+                    resArea.innerHTML = `<b>ERRO DETETADO:</b><br>${data.error.message}<br><br><small>Status: ${data.error.status}</small>`;
                 } else {
-                    resArea.innerHTML = `<div class="ai-output">Sucesso! A IA respondeu: ${data.candidates[0].content.parts[0].text}</div>`;
+                    resArea.classList.add('success');
+                    const text = data.candidates[0].content.parts[0].text;
+                    resArea.innerHTML = `<b>IA RESPONDEU:</b><br>${text}`;
                 }
-            } catch (e) {
-                resArea.innerHTML = `<div class="debug-box">ERRO DE REDE: ${e.message}</div>`;
+            } catch (err) {
+                resArea.classList.add('error');
+                resArea.innerHTML = "Erro de rede: " + err.message;
             }
+
+            btn.innerText = "TESTAR LIGAÇÃO IA";
+            btn.disabled = false;
         }
-        render();
     </script>
 </body>
 </html>
