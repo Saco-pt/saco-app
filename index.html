@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SACO.pt - Forçar V1</title>
+    <title>SACO.pt - Teste Final</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
     <style>
         body { background: #f8f9fc; font-family: 'Plus Jakarta Sans', sans-serif; padding: 20px; text-align: center; }
         .card { background: white; padding: 25px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        .btn-new { width: 100%; background: #007aff; color: white; border: none; padding: 20px; border-radius: 20px; font-weight: 800; margin-top: 20px; }
-        #debug { margin-top: 20px; padding: 15px; border-radius: 15px; font-size: 14px; text-align: left; display: none; }
+        .btn { width: 100%; background: #007aff; color: white; border: none; padding: 20px; border-radius: 20px; font-weight: 800; margin-top: 20px; }
+        .log { margin-top: 20px; padding: 15px; border-radius: 15px; font-size: 13px; text-align: left; font-family: monospace; white-space: pre-wrap; border: 1px solid #ddd; }
     </style>
 </head>
 <body>
@@ -17,46 +17,60 @@
     <div style="font-size: 28px; font-weight: 800; color: #007aff; margin-bottom: 20px;">SACO.pt</div>
 
     <div class="card">
-        <input type="text" id="items" value="Leite" style="width:90%; padding:15px; border-radius:10px; border:1px solid #ddd;">
-        <button id="btnFinal" class="btn-new" onclick="validar()">FORÇAR LIGAÇÃO V1</button>
-        <div id="debug"></div>
+        <p>A testar 3 modelos diferentes...</p>
+        <button id="mainBtn" class="btn" onclick="testarTudo()">INICIAR TESTE TRIPLO</button>
+        <div id="console" class="log">Aguardando início...</div>
     </div>
 
     <script>
         const KEY = "AIzaSyBEeOFiu49Lk1CTxCsblRjjNRaDftnJHhM";
+        const logger = document.getElementById('console');
 
-        async function validar() {
-            const out = document.getElementById('debug');
-            const btn = document.getElementById('btnFinal');
-            
-            out.style.display = "block";
-            out.style.background = "#eee";
-            out.innerHTML = "A tentar nova rota (v1)...";
-            btn.disabled = true;
+        function log(msg, color = "black") {
+            logger.innerHTML += `<div style="color:${color}">${msg}</div>`;
+        }
 
+        async function chamar(modelo, versao) {
+            log(`> A tentar: ${versao} / ${modelo}...`);
             try {
-                // Forçamos v1 e adicionamos um parâmetro aleatório no fim para enganar a cache
-                const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${KEY}&nocache=${Date.now()}`;
-
+                const url = `https://generativelanguage.googleapis.com/${versao}/models/${modelo}:generateContent?key=${KEY}`;
                 const r = await fetch(url, {
                     method: "POST",
                     headers: {"Content-Type": "application/json"},
                     body: JSON.stringify({ contents: [{ parts: [{ text: "Diz OK" }] }] })
                 });
-
-                const data = await r.json();
-
-                if (data.error) {
-                    out.style.background = "#fff1f1";
-                    out.innerHTML = `<b>ERRO NA V1:</b><br>${data.error.message}`;
-                } else {
-                    out.style.background = "#f0fff4";
-                    out.innerHTML = "<b>SUCESSO!</b> A IA respondeu na versão estável.";
+                const res = await r.json();
+                if (res.error) {
+                    log(`  FALHOU: ${res.error.message}`, "red");
+                    return false;
                 }
+                log(`  SUCESSO! Resposta: ${res.candidates[0].content.parts[0].text}`, "green");
+                return true;
             } catch (e) {
-                out.innerHTML = "Erro de rede: " + e.message;
+                log(`  ERRO REDE: ${e.message}`, "red");
+                return false;
             }
-            btn.disabled = false;
+        }
+
+        async function testarTudo() {
+            logger.innerHTML = "";
+            document.getElementById('mainBtn').disabled = true;
+
+            // Tentativa 1: Flash com versão estável
+            await chamar("gemini-1.5-flash", "v1");
+            
+            log("---");
+
+            // Tentativa 2: Flash com nome técnico (001)
+            await chamar("gemini-1.5-flash-001", "v1");
+
+            log("---");
+
+            // Tentativa 3: Modelo Pro (mais compatível)
+            await chamar("gemini-pro", "v1beta");
+
+            document.getElementById('mainBtn').disabled = false;
+            log("\n--- TESTE CONCLUÍDO ---");
         }
     </script>
 </body>
