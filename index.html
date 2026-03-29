@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#007aff">
+    <title>SACO.pt - Lista Inteligente</title>
+    
+    <!-- Configuração PWA para instalar no ecrã do telemóvel -->
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2331/2331970.png">
+    <link rel="manifest" href="data:application/json;base64,ewogICJkZWZhdWx0X2xvY2FsZSI6ICJwdCIsCiAgIm5hbWUiOiAiU0FDTy5wdCIsCiAgInNob3J0X25hbWUiOiAiU0FDTyIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjZmZmZmZmIiwKICAidGhlbWVfY29sb3IiOiAiIzAwN2FmZiIsCiAgImljb25zIjogW3sgInNyYyI6ICJodHRwczovL2Nkbi1pY29ucy1wbmcuZmxhdGljb24uY29tLzUxMi8yMzMxLzIzMzE5NzAucG5nIiwgInNpemVzIjogIjUxMng1MTIiLCAidHlwZSI6ICJpbWFnZS9wbmciIH1dCn0=">
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js"></script>
+    
+    <style>
+        :root { --bg: #f8f9fc; --acc: #007aff; --text: #1a1c22; --card: #ffffff; --border: #edf0f3; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        
+        body { 
+            background: var(--bg); color: var(--text); 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            margin: 0; padding: 20px 20px 140px; 
+        }
+
+        /* Top Bar */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .logo { font-size: 26px; font-weight: 800; color: var(--acc); letter-spacing: -1px; }
+        .btn-clear { background: #fff1f1; color: #ff3b30; border: none; padding: 10px 16px; border-radius: 14px; font-size: 12px; font-weight: 700; cursor: pointer; }
+
+        /* Input Area */
+        .input-box { 
+            background: var(--card); border: 1px solid var(--border); border-radius: 20px; 
+            padding: 8px; display: flex; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); 
+            margin-bottom: 25px; 
+        }
+        input { flex: 1; border: none; padding: 12px; font-size: 16px; font-weight: 600; font-family: inherit; background: transparent; }
+        .btn-icon { width: 48px; height: 48px; border-radius: 15px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; transition: 0.1s; }
+        .btn-scan { background: #f0f2f5; color: #666; }
+        .btn-add { background: var(--acc); color: white; }
+        .btn-icon:active { transform: scale(0.92); }
+
+        /* Lista de Artigos */
+        .shopping-list { display: flex; flex-direction: column; gap: 12px; }
+        .item { 
+            background: var(--card); padding: 12px; border-radius: 20px; 
+            display: flex; align-items: center; gap: 15px; 
+            border: 1px solid var(--border); transition: 0.2s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+        }
+        .item.checked { opacity: 0.5; background: #f1f3f5; border-color: transparent; }
+        .item.checked .item-name { text-decoration: line-through; color: #8e95a2; }
+
+        .item-img { width: 55px; height: 55px; border-radius: 14px; object-fit: cover; background: #eee; }
+        .item-info { flex: 1; }
+        .item-name { display: block; font-weight: 700; font-size: 15px; }
+        
+        /* Checkbox Visual */
+        .check-ui { width: 24px; height: 24px; border: 2px solid #ddd; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+        .checked .check-ui { background: var(--acc); border-color: var(--acc); }
+        .checked .check-ui::after { content: '✓'; color: white; font-size: 14px; font-weight: 900; }
+
+        /* Rodapé Fixo */
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; padding: 20px; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); border-top: 1px solid var(--border); }
+        .btn-compare { width: 100%; background: var(--acc); color: white; border: none; padding: 18px; border-radius: 20px; font-size: 16px; font-weight: 800; text-transform: uppercase; box-shadow: 0 8px 20px rgba(0,122,255,0.2); }
+        .btn-compare:disabled { background: #d1d5db; box-shadow: none; }
+
+        /* Scanner */
+        #scanner-ui { display:none; position:fixed; inset:0; background:black; z-index:9999; }
+        #interactive video { width: 100%; height: 100vh; object-fit: cover; }
+        .scan-overlay { position: absolute; inset: 0; margin: auto; width: 260px; height: 180px; border: 2px solid var(--acc); border-radius: 20px; box-shadow: 0 0 0 1000px rgba(0,0,0,0.5); }
+        .btn-close-scan { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); background: white; border: none; padding: 15px 30px; border-radius: 30px; font-weight: 700; }
+
+        /* IA Result Area */
+        .ai-output { background: white; padding: 20px; border-radius: 20px; border-left: 5px solid var(--acc); margin-top: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo">SACO.pt</div>
+        <button class="btn-clear" onclick="clearList()">Limpar Tudo</button>
+    </div>
+
+    <div class="input-box">
+        <input type="text" id="itemIn" placeholder="Adicionar artigo..." onkeypress="if(event.key==='Enter') add()">
+        <button class="btn-icon btn-scan" onclick="openScanner()">📸</button>
+        <button class="btn-icon btn-add" onclick="add()">+</button>
+    </div>
+
+    <div id="list" class="shopping-list"></div>
+
+    <div id="results"></div>
+
+    <div class="footer">
+        <button id="compBtn" class="btn-compare" onclick="compare()" disabled>Comparar Preços IA</button>
+    </div>
+
+    <!-- Scanner Interface -->
+    <div id="scanner-ui">
+        <div id="interactive"></div>
+        <div class="scan-overlay"></div>
+        <button class="btn-close-scan" onclick="closeScanner()">Cancelar</button>
+    </div>
+
+    <script>
+        // 1. COLOCA A TUA CHAVE AQUI
+        const API_KEY = "AIzaSyBbBRRQMJDingtR1zABEnOB5rgV9SXOh-E"; 
+
+        let basket = JSON.parse(localStorage.getItem('saco_v1') || "[]");
+
+        function render() {
+            const listDiv = document.getElementById('list');
+            listDiv.innerHTML = basket.map((it, i) => `
+                <div class="item ${it.done ? 'checked' : ''}" onclick="toggle(${i})">
+                    <div class="check-ui"></div>
+                    <img class="item-img" src="https://images.weserv.nl/?url=https://source.unsplash.com/featured/?${it.name},grocery&w=150" alt="item">
+                    <div class="item-info">
+                        <span class="item-name">${it.name}</span>
+                    </div>
+                    <button onclick="remove(${i}, event)" style="background:none; border:none; color:#ff3b30; font-size:20px;">×</button>
+                </div>
+            `).join('');
+            
+            document.getElementById('compBtn').disabled = basket.length === 0;
+            localStorage.setItem('saco_v1', JSON.stringify(basket));
+        }
+
+        function add(val = null) {
+            const inp = document.getElementById('itemIn');
+            const name = val || inp.value.trim();
+            if(!name) return;
+            basket.unshift({ name: name, done: false });
+            inp.value = '';
+            render();
+        }
+
+        function toggle(i) {
+            basket[i].done = !basket[i].done;
+            if(window.navigator.vibrate) window.navigator.vibrate(10);
+            render();
+        }
+
+        function remove(i, e) {
+            e.stopPropagation();
+            basket.splice(i, 1);
+            render();
+        }
+
+        function clearList() {
+            if(confirm("Apagar toda a lista?")) {
+                basket = [];
+                document.getElementById('results').innerHTML = '';
+                render();
+            }
+        }
+
+        // Scanner Logic
+        function openScanner() {
+            document.getElementById('scanner-ui').style.display = 'block';
+            Quagga.init({
+                inputStream: { type: "LiveStream", target: document.querySelector('#interactive'), constraints: { facingMode: "environment" } },
+                decoder: { readers: ["ean_reader", "ean_8_reader"] }
+            }, (err) => { if(!err) Quagga.start(); });
+
+            Quagga.onDetected(res => {
+                if(window.navigator.vibrate) window.navigator.vibrate([50,30,50]);
+                closeScanner();
+                add("Código: " + res.codeResult.code);
+            });
+        }
+
+        function closeScanner() { Quagga.stop(); document.getElementById('scanner-ui').style.display = 'none'; }
+
+        // Gemini AI Logic
+        async function compare() {
+            const btn = document.getElementById('compBtn');
+            const resArea = document.getElementById('results');
+            const items = basket.map(i => i.name).join(', ');
+            
+            btn.innerText = "A ANALISAR...";
+            btn.disabled = true;
+
+            try {
+                const prompt = `Analise esta lista de compras para Portugal: ${items}. 
+                Diga qual o supermercado mais barato atualmente (Continente, Pingo Doce, Auchan ou Mercadona) 
+                e dê uma estimativa de preço total. Responda em HTML simples (h3 e p).`;
+
+                const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
+                    method: "POST", headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+                const data = await resp.json();
+                const htmlContent = data.candidates[0].content.parts[0].text.replace(/```html/g, '').replace(/```/g, '');
+                
+                resArea.innerHTML = `<div class="ai-output">${htmlContent}</div>`;
+                resArea.scrollIntoView({ behavior: 'smooth' });
+            } catch(e) { 
+                alert("Erro: Verifica se colaste a Chave API corretamente!"); 
+            }
+            btn.innerText = "Comparar Preços IA";
+            btn.disabled = false;
+        }
+
+        // Iniciar App
+        render();
+
+        // Service Worker (Para permitir instalação no ecrã)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('data:application/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGZ1bmN0aW9uKGV2ZW50KSB7IH0pOw==');
+        }
+    </script>
+</body>
+</html>
