@@ -3,105 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SACO.pt | Comparador 2.0</title>
+    <title>SACO.pt | Versão Estável</title>
     <style>
         :root { --blue: #007aff; --green: #34c759; --bg: #f5f5f7; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
         .app { background: white; width: 100%; max-width: 400px; padding: 25px; border-radius: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); }
-        h1 { color: var(--blue); text-align: center; font-size: 24px; margin-bottom: 20px; }
+        h1 { color: var(--blue); text-align: center; margin-bottom: 20px; }
         .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
-        input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; outline: none; }
-        .add-btn { background: var(--blue); color: white; border: none; padding: 0 15px; border-radius: 10px; font-size: 20px; cursor: pointer; }
-        #lista { margin-bottom: 20px; }
-        .item { background: #fafafa; padding: 10px; margin-bottom: 5px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
-        .del { color: #ff3b30; cursor: pointer; font-weight: bold; }
-        .compare-btn { width: 100%; background: var(--green); color: white; border: none; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; }
-        .compare-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-        #res { margin-top: 20px; padding: 15px; background: #f0f9f1; border-radius: 12px; display: none; font-size: 14px; line-height: 1.6; border-left: 4px solid var(--green); }
-        .reset { display: block; text-align: center; margin-top: 25px; font-size: 11px; color: #aaa; text-decoration: none; cursor: pointer; }
+        input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 10px; outline: none; }
+        .add-btn { background: var(--blue); color: white; border: none; padding: 0 15px; border-radius: 10px; cursor: pointer; }
+        .item { background: #fafafa; padding: 10px; margin-bottom: 5px; border-radius: 8px; display: flex; justify-content: space-between; }
+        .compare-btn { width: 100%; background: var(--green); color: white; border: none; padding: 16px; border-radius: 12px; font-weight: bold; cursor: pointer; }
+        #res { margin-top: 20px; padding: 15px; background: #f0f9f1; border-radius: 12px; display: none; border-left: 4px solid var(--green); }
     </style>
 </head>
 <body>
 
 <div class="app">
     <h1>🛒 SACO.pt</h1>
-    
     <div class="input-group">
-        <input type="text" id="inp" placeholder="O que vais comprar?" onkeypress="if(event.key==='Enter') add()">
+        <input type="text" id="p-input" placeholder="Ex: Sal, Massa...">
         <button class="add-btn" onclick="add()">+</button>
     </div>
-
     <div id="lista"></div>
-
     <button id="btn" class="compare-btn" onclick="analisar()">COMPARAR PREÇOS IA</button>
-    
     <div id="res"></div>
-
-    <span class="reset" onclick="localStorage.clear(); location.reload();">⚙️ Resetar Chave API</span>
+    <p style="text-align:center; font-size:10px; color:#ccc; margin-top:20px; cursor:pointer;" onclick="localStorage.clear(); location.reload();">Resetar Chave API</p>
 </div>
 
 <script>
-    let basket = [];
+    let items = [];
 
     function add() {
-        const input = document.getElementById('inp');
+        const input = document.getElementById('p-input');
         if (!input.value.trim()) return;
-        basket.push(input.value.trim());
-        render();
+        items.push(input.value.trim());
+        document.getElementById('lista').innerHTML = items.map(it => `<div class="item"><span>${it}</span></div>`).join('');
         input.value = '';
-    }
-
-    function render() {
-        const div = document.getElementById('lista');
-        div.innerHTML = basket.map((it, i) => `
-            <div class="item">
-                <span>${it}</span>
-                <span class="del" onclick="basket.splice(${i},1); render()">✕</span>
-            </div>
-        `).join('');
     }
 
     async function analisar() {
         let key = localStorage.getItem('saco_key');
         if (!key) {
-            key = prompt("Insira a sua Chave API (AIzaSy...):");
-            if (!key) return;
-            localStorage.setItem('saco_key', key);
+            key = prompt("Insira a sua Chave API:");
+            if (key) localStorage.setItem('saco_key', key);
         }
 
-        if (basket.length === 0) return alert("Adicione itens!");
-
         const resDiv = document.getElementById('res');
-        const btn = document.getElementById('btn');
-        
         resDiv.style.display = "block";
-        resDiv.innerHTML = "⏳ <b>A consultar Gemini 2.0...</b>";
-        btn.disabled = true;
+        resDiv.innerHTML = "⏳ Consultando base de dados estável...";
 
-        // ROTA V1BETA + MODELO LITE (O ÚNICO NA TUA LISTA)
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${key}`;
+        // A SOLUÇÃO: Usar v1beta com o modelo 1.5-flash (Quota real)
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
 
         try {
             const response = await fetch(url, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: `Supermercados em Portugal (Pingo Doce, Continente, Lidl). Para os itens: ${basket.join(', ')}, qual é o mais barato hoje? Resposta rápida e curta.` }] }]
+                    contents: [{ parts: [{ text: `Diz-me qual o supermercado mais barato em Portugal para estes itens: ${items.join(', ')}.` }] }]
                 })
             });
 
             const data = await response.json();
             
             if (data.error) {
-                resDiv.innerHTML = "❌ <b>Erro:</b> " + data.error.message;
+                resDiv.innerHTML = "❌ Erro: " + data.error.message;
             } else {
-                const aiText = data.candidates[0].content.parts[0].text;
-                resDiv.innerHTML = "<b>Previsão SACO.pt:</b><br><br>" + aiText.replace(/\n/g, '<br>');
+                resDiv.innerHTML = "<b>Análise:</b><br>" + data.candidates[0].content.parts[0].text.replace(/\n/g, '<br>');
             }
         } catch (e) {
-            resDiv.innerHTML = "❌ Erro de rede.";
-        } finally {
-            btn.disabled = false;
+            resDiv.innerHTML = "❌ Falha de ligação.";
         }
     }
 </script>
