@@ -3,63 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SACO.pt - Scanner de Erros</title>
+    <title>SACO.pt - Diagnóstico</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
     <style>
-        body { background: #f8f9fc; font-family: 'Plus Jakarta Sans', sans-serif; padding: 20px; }
-        .card { background: white; padding: 20px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        .btn { width: 100%; background: #007aff; color: white; border: none; padding: 20px; border-radius: 20px; font-weight: 800; font-size: 16px; cursor: pointer; }
-        .log-box { margin-top: 20px; background: #1a1c22; color: #00ff00; padding: 15px; border-radius: 15px; font-family: monospace; font-size: 12px; overflow-x: auto; white-space: pre-wrap; min-height: 200px; }
-        .label { color: #666; font-size: 14px; margin-bottom: 10px; display: block; }
+        body { background: #f0f2f5; font-family: 'Plus Jakarta Sans', sans-serif; padding: 20px; text-align: center; }
+        .card { background: white; padding: 25px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .btn-debug { width: 100%; background: #1a1c22; color: #00ff00; border: none; padding: 20px; border-radius: 20px; font-weight: 800; cursor: pointer; }
+        #log { margin-top: 20px; background: #000; color: #00ff00; padding: 15px; border-radius: 15px; font-family: monospace; font-size: 11px; text-align: left; overflow-x: auto; min-height: 150px; white-space: pre-wrap; }
     </style>
 </head>
 <body>
 
-    <div style="font-size: 28px; font-weight: 800; color: #007aff; margin-bottom: 20px; text-align: center;">SACO.pt</div>
+    <div style="font-size: 24px; font-weight: 800; color: #007aff; margin-bottom: 20px;">SACO.pt DEBUG</div>
 
     <div class="card">
-        <span class="label">Este teste vai listar os modelos disponíveis para a tua chave:</span>
-        <button id="btnScan" class="btn" onclick="scanModels()">SCANNER DE MODELOS</button>
-        
-        <div id="console" class="log-box">Aguardando início...</div>
+        <p style="font-size: 14px; color: #444;">Clica no botão abaixo. Se a lista aparecer vazia ou com erro, a tua chave pode estar restrita.</p>
+        <button class="btn-debug" onclick="descobrirModelos()">LISTAR MODELOS DA MINHA CHAVE</button>
+        <div id="log">A aguardar clique...</div>
     </div>
 
     <script>
-        const KEY = "AIzaSyBEeOFiu49Lk1CTxCsblRjjNRaDftnJHhM";
-        const logArea = document.getElementById('console');
+        const MINHA_CHAVE = "AIzaSyBEeOFiu49Lk1CTxCsblRjjNRaDftnJHhM";
 
-        async function scanModels() {
-            logArea.innerHTML = "A ligar à Google API...\n";
-            document.getElementById('btnScan').disabled = true;
+        async function descobrirModelos() {
+            const consoleLog = document.getElementById('log');
+            consoleLog.innerHTML = "A ligar aos servidores da Google...\n";
 
             try {
-                // Tentamos listar todos os modelos disponíveis para esta chave
-                const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${KEY}`;
-                
-                const response = await fetch(url);
-                const data = await response.json();
+                // v1beta é a única que permite listar modelos
+                const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${MINHA_CHAVE}`;
+                const r = await fetch(url);
+                const d = await r.json();
 
-                if (data.error) {
-                    logArea.innerHTML += `❌ ERRO DA CHAVE:\n${JSON.stringify(data.error, null, 2)}`;
+                if (d.error) {
+                    consoleLog.innerHTML = "❌ ERRO GOOGLE:\n" + JSON.stringify(d.error, null, 2);
                 } else {
-                    logArea.innerHTML = "✅ CONECTADO! Modelos disponíveis:\n\n";
-                    
-                    if (data.models && data.models.length > 0) {
-                        data.models.forEach(m => {
-                            // Filtramos apenas os que suportam gerar conteúdo
-                            if(m.supportedGenerationMethods.includes("generateContent")) {
-                                logArea.innerHTML += `• ${m.name}\n`;
-                            }
-                        });
-                    } else {
-                        logArea.innerHTML += "Nenhum modelo encontrado para esta conta.";
-                    }
+                    consoleLog.innerHTML = "✅ SUCESSO! Modelos permitidos:\n\n";
+                    d.models.forEach(m => {
+                        if(m.supportedGenerationMethods.includes("generateContent")) {
+                            consoleLog.innerHTML += `-> ${m.name}\n`;
+                        }
+                    });
                 }
             } catch (e) {
-                logArea.innerHTML += `❌ ERRO DE REDE: ${e.message}`;
+                consoleLog.innerHTML = "❌ ERRO DE LIGAÇÃO: " + e.message;
             }
-            
-            document.getElementById('btnScan').disabled = false;
         }
     </script>
 </body>
