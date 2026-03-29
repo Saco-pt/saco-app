@@ -2,77 +2,60 @@
 <html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt - Fix V1</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SACO.pt - Forçar V1</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
     <style>
         body { background: #f8f9fc; font-family: 'Plus Jakarta Sans', sans-serif; padding: 20px; text-align: center; }
-        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .logo { font-size: 28px; font-weight: 800; color: #007aff; margin-bottom: 20px; }
-        input { width: 80%; padding: 15px; border-radius: 15px; border: 1px solid #ddd; margin-bottom: 10px; font-size: 16px; }
-        .btn { width: 100%; background: #007aff; color: white; border: none; padding: 20px; border-radius: 20px; font-weight: 800; font-size: 16px; cursor: pointer; }
-        #results { margin-top: 20px; text-align: left; padding: 15px; border-radius: 15px; display: none; min-height: 50px; }
-        .error { background: #fff1f1; color: #ff3b30; border: 1px solid #ff3b30; }
-        .success { background: #f0fff4; color: #22c55e; border: 1px solid #22c55e; }
+        .card { background: white; padding: 25px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .btn-new { width: 100%; background: #007aff; color: white; border: none; padding: 20px; border-radius: 20px; font-weight: 800; margin-top: 20px; }
+        #debug { margin-top: 20px; padding: 15px; border-radius: 15px; font-size: 14px; text-align: left; display: none; }
     </style>
 </head>
 <body>
 
-    <div class="logo">SACO.pt</div>
+    <div style="font-size: 28px; font-weight: 800; color: #007aff; margin-bottom: 20px;">SACO.pt</div>
 
     <div class="card">
-        <input type="text" id="item" value="Leite, Ovos, Arroz">
-        <p style="font-size: 12px; color: #666;">A testar versão v1 estável...</p>
-    </div>
-
-    <div id="results"></div>
-
-    <div style="position: fixed; bottom: 20px; left: 20px; right: 20px;">
-        <button id="btn" class="btn" onclick="askAI()">TESTAR LIGAÇÃO IA (V1)</button>
+        <input type="text" id="items" value="Leite" style="width:90%; padding:15px; border-radius:10px; border:1px solid #ddd;">
+        <button id="btnFinal" class="btn-new" onclick="validar()">FORÇAR LIGAÇÃO V1</button>
+        <div id="debug"></div>
     </div>
 
     <script>
-        const API_KEY = "AIzaSyBEeOFiu49Lk1CTxCsblRjjNRaDftnJHhM";
+        const KEY = "AIzaSyBEeOFiu49Lk1CTxCsblRjjNRaDftnJHhM";
 
-        async function askAI() {
-            const btn = document.getElementById('btn');
-            const resArea = document.getElementById('results');
-            const items = document.getElementById('item').value;
-
-            btn.innerText = "A LIGAR...";
+        async function validar() {
+            const out = document.getElementById('debug');
+            const btn = document.getElementById('btnFinal');
+            
+            out.style.display = "block";
+            out.style.background = "#eee";
+            out.innerHTML = "A tentar nova rota (v1)...";
             btn.disabled = true;
-            resArea.style.display = "block";
-            resArea.className = "card";
-            resArea.innerHTML = "A tentar v1 estável...";
 
             try {
-                // MUDANÇA AQUI: v1 em vez de v1beta
-                const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+                // Forçamos v1 e adicionamos um parâmetro aleatório no fim para enganar a cache
+                const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${KEY}&nocache=${Date.now()}`;
 
-                const response = await fetch(url, {
+                const r = await fetch(url, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: `Diz apenas a palavra 'FUNCIONOU' se receberes isto: ${items}` }] }]
-                    })
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({ contents: [{ parts: [{ text: "Diz OK" }] }] })
                 });
 
-                const data = await response.json();
+                const data = await r.json();
 
                 if (data.error) {
-                    resArea.classList.add('error');
-                    resArea.innerHTML = `<b>ERRO V1:</b><br>${data.error.message}`;
+                    out.style.background = "#fff1f1";
+                    out.innerHTML = `<b>ERRO NA V1:</b><br>${data.error.message}`;
                 } else {
-                    resArea.classList.add('success');
-                    const text = data.candidates[0].content.parts[0].text;
-                    resArea.innerHTML = `<b>IA RESPONDEU:</b><br>${text}`;
+                    out.style.background = "#f0fff4";
+                    out.innerHTML = "<b>SUCESSO!</b> A IA respondeu na versão estável.";
                 }
-            } catch (err) {
-                resArea.classList.add('error');
-                resArea.innerHTML = "Erro de rede: " + err.message;
+            } catch (e) {
+                out.innerHTML = "Erro de rede: " + e.message;
             }
-
-            btn.innerText = "TESTAR LIGAÇÃO IA (V1)";
             btn.disabled = false;
         }
     </script>
