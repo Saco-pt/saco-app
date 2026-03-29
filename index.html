@@ -2,174 +2,99 @@
 <html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt - Inteligência de Compras</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SACO.pt - Scanner de Versão</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #f8f9fc; --acc: #007aff; --text: #1a1c22; --card: #ffffff; --border: #edf0f3; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; padding: 20px 20px 140px; }
-        
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .logo { font-size: 26px; font-weight: 800; color: var(--acc); letter-spacing: -1px; }
-        
-        .btn-config { background: #eee; border: none; padding: 10px 14px; border-radius: 12px; font-size: 11px; font-weight: 800; cursor: pointer; color: #555; }
-        
-        .input-box { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 8px; display: flex; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 25px; }
-        input { flex: 1; border: none; padding: 12px; font-size: 16px; font-weight: 600; font-family: inherit; background: transparent; }
-        .btn-add { background: var(--acc); color: white; border: none; width: 48px; height: 48px; border-radius: 15px; font-size: 20px; cursor: pointer; transition: 0.2s; }
-        .btn-add:active { transform: scale(0.9); }
-        
-        .item { background: var(--card); padding: 16px; border-radius: 20px; display: flex; align-items: center; gap: 15px; border: 1px solid var(--border); margin-bottom: 10px; animation: slideIn 0.3s ease; }
-        .item-info { flex: 1; font-weight: 700; font-size: 15px; }
-        .btn-remove { border: none; background: none; color: #ff3b30; font-size: 22px; font-weight: bold; cursor: pointer; padding: 0 5px; }
-        
-        .footer { position: fixed; bottom: 0; left: 0; right: 0; padding: 20px; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-top: 1px solid var(--border); z-index: 100; }
-        .btn-compare { width: 100%; background: var(--acc); color: white; border: none; padding: 20px; border-radius: 22px; font-size: 16px; font-weight: 800; text-transform: uppercase; cursor: pointer; transition: 0.3s; }
-        .btn-compare:disabled { background: #cbd5e0; cursor: not-allowed; }
-        
-        .ai-output { background: white; padding: 22px; border-radius: 24px; border-left: 6px solid var(--acc); margin-top: 20px; box-shadow: 0 6px 20px rgba(0,0,0,0.06); line-height: 1.6; font-size: 14px; color: #333; }
-        .error-msg { color: #ff3b30; background: #fff1f1; padding: 18px; border-radius: 18px; margin-top: 15px; border: 1px solid rgba(255,59,48,0.2); font-size: 13px; font-weight: 600; }
-        
-        @keyframes slideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        body { background: #1a1c22; color: white; font-family: 'Plus Jakarta Sans', sans-serif; padding: 20px; text-align: center; }
+        .card { background: #252830; padding: 25px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); margin-top: 20px; }
+        .btn-scan { width: 100%; background: #007aff; color: white; border: none; padding: 20px; border-radius: 20px; font-weight: 800; cursor: pointer; font-size: 16px; }
+        #log { margin-top: 20px; text-align: left; font-family: monospace; font-size: 12px; height: 300px; overflow-y: auto; background: #000; padding: 15px; border-radius: 15px; border: 1px solid #444; white-space: pre-wrap; }
+        .success { color: #00ff00; font-weight: bold; border: 1px solid #00ff00; padding: 10px; margin-top: 10px; border-radius: 10px; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div class="logo">SACO.pt</div>
-        <button class="btn-config" onclick="configKey()">⚙️ CONFIG. CHAVE</button>
-    </div>
+    <div style="font-size: 24px; font-weight: 800; color: #007aff;">SACO.pt SCANNER</div>
+    <p style="font-size: 14px; color: #999;">Vamos descobrir qual a versão que a Google aceita para a tua conta.</p>
 
-    <div class="input-box">
-        <input type="text" id="itemIn" placeholder="O que precisas de comprar?" onkeypress="if(event.key==='Enter') add()">
-        <button class="btn-add" onclick="add()">+</button>
-    </div>
-
-    <div id="list"></div>
-    <div id="results"></div>
-
-    <div class="footer">
-        <button id="compBtn" class="btn-compare" onclick="compare()">Comparar Preços IA</button>
+    <div class="card">
+        <button id="btn" class="btn-scan" onclick="startScan()">INICIAR DIAGNÓSTICO</button>
+        <div id="log">Aguardando início...</div>
+        <div id="finalResult"></div>
     </div>
 
     <script>
-        let basket = JSON.parse(localStorage.getItem('saco_items_v3') || "[]");
+        const KEY = localStorage.getItem('user_api_key');
 
-        // --- GESTÃO SEGURA DA CHAVE (LocalStorage) ---
-        function getKey() {
-            let key = localStorage.getItem('user_gemini_key');
-            if (!key) {
-                key = prompt("Insere a tua Gemini API Key:\n(Será guardada apenas no teu telemóvel para evitar bloqueios)");
-                if (key && key.trim().length > 10) {
-                    localStorage.setItem('user_gemini_key', key.trim());
-                    return key.trim();
-                }
-                alert("Precisas de uma chave válida!");
-                return null;
-            }
-            return key;
+        if (!KEY) {
+            const nova = prompt("Insere a tua API Key para o teste:");
+            if (nova) localStorage.setItem('user_api_key', nova.trim());
+            location.reload();
         }
 
-        function configKey() {
-            const atual = localStorage.getItem('user_gemini_key') || "";
-            const nova = prompt("Altera a tua API Key:", atual);
-            if (nova !== null) {
-                localStorage.setItem('user_gemini_key', nova.trim());
-                alert("Chave atualizada com sucesso.");
-                location.reload();
-            }
-        }
-
-        // --- LÓGICA DA LISTA ---
-        function render() {
-            const listDiv = document.getElementById('list');
-            if (basket.length === 0) {
-                listDiv.innerHTML = '<p style="text-align:center; color:#999; margin-top:20px;">A tua lista está vazia.</p>';
-            } else {
-                listDiv.innerHTML = basket.map((it, i) => `
-                    <div class="item">
-                        <div class="item-info">${it.name}</div>
-                        <button class="btn-remove" onclick="remove(${i})">×</button>
-                    </div>
-                `).join('');
-            }
-            localStorage.setItem('saco_items_v3', JSON.stringify(basket));
-        }
-
-        function add() {
-            const inp = document.getElementById('itemIn');
-            const val = inp.value.trim();
-            if(!val) return;
-            basket.unshift({ name: val });
-            inp.value = '';
-            render();
-        }
-
-        function remove(i) {
-            basket.splice(i, 1);
-            render();
-        }
-
-        // --- LÓGICA DA IA (Com Detecção de Quota/Erros) ---
-        async function compare() {
-            if (basket.length === 0) return alert("Adiciona artigos primeiro!");
+        async function test(version, model) {
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML += `> A testar ${version} com ${model}...\n`;
             
-            const key = getKey();
-            if (!key) return;
-
-            const btn = document.getElementById('compBtn');
-            const resArea = document.getElementById('results');
-            const items = basket.map(i => i.name).join(', ');
-            
-            btn.innerText = "A ANALISAR...";
-            btn.disabled = true;
-            resArea.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">A consultar preços nos supermercados...</div>';
-
             try {
-                // Rota estável v1 + modelo Flash
-                const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`;
-
+                const url = `https://generativelanguage.googleapis.com/${version}/models/${model}:generateContent?key=${KEY}`;
                 const resp = await fetch(url, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: `Age como um assistente de compras experiente em Portugal. Analisa esta lista: ${items}. Compara preços estimados entre Continente, Pingo Doce, Lidl e Auchan. Indica qual parece ser a opção mais económica hoje e dá uma estimativa do total em Euros. Resposta curta em português.` }] }]
-                    })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: "Diz OK" }] }] })
                 });
-
+                
                 const data = await resp.json();
-
+                
                 if (data.error) {
-                    let erroFinal = "Ocorreu um erro inesperado.";
-                    
-                    if (data.error.code === 429) {
-                        erroFinal = "⚠️ LIMITE ATINGIDO: Estás a fazer muitos pedidos seguidos. Espera 60 segundos.";
-                    } else if (data.error.code === 400 || data.error.code === 401) {
-                        erroFinal = "❌ CHAVE INVÁLIDA: A chave API que inseriste não funciona ou foi bloqueada.";
-                    } else {
-                        erroFinal = "Erro da Google: " + data.error.message;
-                    }
-                    
-                    resArea.innerHTML = `<div class="error-msg">${erroFinal}</div>`;
+                    logDiv.innerHTML += `  ❌ Erro: ${data.error.message.substring(0, 50)}...\n\n`;
+                    return null;
                 } else {
-                    const respostaText = data.candidates[0].content.parts[0].text;
-                    resArea.innerHTML = `
-                        <div class="ai-output">
-                            <b style="color:var(--acc); font-size:16px;">💡 Sugestão SACO.pt</b><br><br>
-                            ${respostaText.replace(/\n/g, '<br>')}
-                        </div>`;
+                    logDiv.innerHTML += `  ✅ SUCESSO!\n\n`;
+                    return { version, model };
                 }
             } catch (e) {
-                resArea.innerHTML = `<div class="error-msg">Erro de ligação. Verifica se tens internet.</div>`;
+                logDiv.innerHTML += `  ❌ Erro de Rede\n\n`;
+                return null;
             }
-
-            btn.innerText = "Comparar Preços IA";
-            btn.disabled = false;
         }
 
-        // Inicializar
-        render();
+        async function startScan() {
+            const btn = document.getElementById('btn');
+            const logDiv = document.getElementById('log');
+            const resDiv = document.getElementById('finalResult');
+            
+            btn.disabled = true;
+            logDiv.innerHTML = "--- INICIANDO SCAN ---\n";
+            resDiv.innerHTML = "";
+
+            // Lista de combinações para varrer
+            const versions = ["v1", "v1beta"];
+            const models = ["gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-pro"];
+
+            let winner = null;
+
+            for (let v of versions) {
+                for (let m of models) {
+                    const result = await test(v, m);
+                    if (result && !winner) winner = result;
+                }
+            }
+
+            if (winner) {
+                resDiv.innerHTML = `
+                    <div class="success">
+                        CONFIGURAÇÃO ENCONTRADA!<br><br>
+                        Versão: ${winner.version}<br>
+                        Modelo: ${winner.model}<br><br>
+                        Usa estes valores no teu código principal.
+                    </div>`;
+            } else {
+                resDiv.innerHTML = `<div style="color:red; margin-top:20px;">Nenhuma combinação funcionou. Verifica se a tua chave API no botão Config está correta.</div>`;
+            }
+            btn.disabled = false;
+        }
     </script>
 </body>
 </html>
