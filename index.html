@@ -5,18 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SACO.pt | Comparador de Preços IA</title>
     <style>
-        :root { --primary: #007aff; --bg: #f5f5f7; --card: #ffffff; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .app-card { background: var(--card); width: 100%; max-width: 400px; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        h1 { color: var(--primary); margin-top: 0; font-size: 24px; text-align: center; }
+        :root { --primary: #007aff; --success: #28a745; --bg: #f5f5f7; --card: #ffffff; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .app-card { background: var(--card); width: 100%; max-width: 400px; padding: 25px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+        h1 { color: var(--primary); margin: 0 0 20px 0; font-size: 26px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
-        input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 10px; outline: none; }
-        button { background: var(--primary); color: white; border: none; padding: 12px 18px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        button#ai-btn { width: 100%; background: #28a745; margin-top: 15px; }
-        #lista-compras { margin: 15px 0; border-top: 1px solid #eee; padding-top: 10px; }
-        .item-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #fafafa; }
-        #resultado-ia { margin-top: 20px; font-size: 14px; line-height: 1.6; color: #333; background: #f9f9f9; padding: 15px; border-radius: 10px; display: none; }
-        .config-link { display: block; text-align: center; font-size: 11px; color: #999; margin-top: 20px; text-decoration: none; }
+        input { flex: 1; padding: 14px; border: 1px solid #e0e0e0; border-radius: 12px; outline: none; font-size: 16px; transition: border 0.3s; }
+        input:focus { border-color: var(--primary); }
+        button { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: bold; cursor: pointer; transition: opacity 0.2s; }
+        button:active { opacity: 0.7; }
+        #ai-btn { width: 100%; background: var(--success); margin-top: 15px; font-size: 16px; padding: 16px; }
+        #lista-compras { margin: 15px 0; min-height: 50px; }
+        .item-row { display: flex; justify-content: space-between; padding: 10px; background: #fafafa; margin-bottom: 5px; border-radius: 8px; animation: fadeIn 0.3s ease; }
+        #resultado-ia { margin-top: 20px; font-size: 15px; line-height: 1.6; color: #333; background: #f0f7ff; padding: 18px; border-radius: 15px; border-left: 5px solid var(--primary); display: none; }
+        .config-link { display: block; text-align: center; font-size: 12px; color: #999; margin-top: 25px; text-decoration: none; cursor: pointer; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -25,7 +28,7 @@
     <h1>🛒 SACO.pt</h1>
     
     <div class="input-group">
-        <input type="text" id="item-input" placeholder="Adicionar produto...">
+        <input type="text" id="item-input" placeholder="Ex: Leite, Ovos..." onkeypress="if(event.key==='Enter') adicionar()">
         <button onclick="adicionar()">+</button>
     </div>
 
@@ -35,7 +38,7 @@
     
     <div id="resultado-ia"></div>
 
-    <a href="#" class="config-link" onclick="resetKey()">Configurar Nova Chave API</a>
+    <span class="config-link" onclick="resetKey()">⚙️ Configurar Nova Chave API</span>
 </div>
 
 <script>
@@ -43,27 +46,26 @@
 
     function adicionar() {
         const input = document.getElementById('item-input');
-        if (!input.value) return;
-        carrinho.push(input.value);
-        atualizarLista();
-        input.value = '';
-    }
-
-    function atualizarLista() {
+        const valor = input.value.trim();
+        if (!valor) return;
+        
+        carrinho.push(valor);
         const div = document.getElementById('lista-compras');
-        div.innerHTML = carrinho.map(item => `<div class="item-row"><span>${item}</span></div>`).join('');
+        div.innerHTML += `<div class="item-row"><span>${valor}</span><span style="color:#ff3b30; cursor:pointer" onclick="this.parentElement.remove()">✕</span></div>`;
+        input.value = '';
+        input.focus();
     }
 
     function resetKey() {
         localStorage.removeItem('gemini_api_key');
-        alert("Chave removida. Clique em Comparar para inserir uma nova.");
+        alert("Chave removida! Ao clicar em comparar, será pedida uma nova.");
     }
 
     async function compararComIA() {
         let key = localStorage.getItem('gemini_api_key');
         
         if (!key) {
-            key = prompt("Insira a sua Chave API do Gemini (AIza...):");
+            key = prompt("Insira a sua Chave API do Gemini (AIzaSy...):");
             if (!key) return;
             localStorage.setItem('gemini_api_key', key);
         }
@@ -74,31 +76,41 @@
         }
 
         const resDiv = document.getElementById('resultado-ia');
+        const btn = document.getElementById('ai-btn');
+        
         resDiv.style.display = "block";
-        resDiv.innerHTML = "⏳ A consultar mercados (Continente, Pingo Doce, Lidl)...";
+        resDiv.innerHTML = "⏳ <b>A analisar mercados...</b><br>Verificando Continente, Pingo Doce e Lidl Portugal.";
+        btn.disabled = true;
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+        // ROTA CORRIGIDA: v1 com gemini-1.5-flash
+        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`;
 
         try {
             const response = await fetch(url, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: `Como especialista em compras em Portugal, analisa esta lista: ${carrinho.join(', ')}. Qual o supermercado mais barato esta semana e qual o preço total estimado?` }] }]
+                    contents: [{ 
+                        parts: [{ text: `Age como um assistente de compras em Portugal. Analisa estes itens: ${carrinho.join(', ')}. Indica qual o supermercado mais barato hoje (Continente, Pingo Doce ou Lidl) e dá uma estimativa de preços totais em Euros.` }] 
+                    }]
                 })
             });
 
             const data = await response.json();
             
             if (data.error) {
-                resDiv.innerHTML = "❌ Erro: " + data.error.message;
-                if(data.error.code === 400) localStorage.removeItem('gemini_api_key');
+                resDiv.innerHTML = "❌ <b>Erro da Google:</b> " + data.error.message;
+                // Se a chave for inválida, limpa para pedir de novo
+                if(data.error.status === "INVALID_ARGUMENT") localStorage.removeItem('gemini_api_key');
             } else {
-                const markdownText = data.candidates[0].content.parts[0].text;
-                resDiv.innerHTML = "<b>Análise da IA:</b><br>" + markdownText.replace(/\n/g, '<br>');
+                const respostaIA = data.candidates[0].content.parts[0].text;
+                // Converter quebras de linha da IA para HTML
+                resDiv.innerHTML = "<b>Análise da IA:</b><br>" + respostaIA.replace(/\n/g, '<br>');
             }
         } catch (e) {
-            resDiv.innerHTML = "❌ Erro de ligação. Verifique a chave.";
+            resDiv.innerHTML = "❌ <b>Falha de ligação.</b> Verifique a internet ou a chave.";
+        } finally {
+            btn.disabled = false;
         }
     }
 </script>
