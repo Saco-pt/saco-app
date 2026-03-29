@@ -3,156 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#007aff">
-    <title>SACO.pt - Lista Inteligente</title>
-    
-    <!-- Configuração PWA -->
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2331/2331970.png">
-    <link rel="manifest" href="data:application/json;base64,ewogICJkZWZhdWx0X2xvY2FsZSI6ICJwdCIsCiAgIm5hbWUiOiAiU0FDTy5wdCIsCiAgInNob3J0X25hbWUiOiAiU0FDTyIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAmZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjZmZmZmZmIiwKICAidGhlbWVfY29sb3IiOiAiIzAwN2FmZiIsCiAgImljb25zIjogW3sgInNyYyI6ICJodHRwczovL2Nkbi1pY29ucy1wbmcuZmxhdGDPbi5jb20vNTEyLzIzMzEvMjMzMTk3MC5wbmciLCAic2l6ZXMiOiAiNTEyeDUxMiIsICJ0eXBlIjogImltYWdlL3BuZyIgfV0KfQ==">
-
+    <title>SACO.pt - Debug Mode</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js"></script>
-    
     <style>
         :root { --bg: #f8f9fc; --acc: #007aff; --text: #1a1c22; --card: #ffffff; --border: #edf0f3; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        
-        body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; padding: 20px 20px 140px; }
+        body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; padding: 20px; padding-bottom: 120px; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .logo { font-size: 26px; font-weight: 800; color: var(--acc); letter-spacing: -1px; }
-        .btn-clear { background: #fff1f1; color: #ff3b30; border: none; padding: 10px 16px; border-radius: 14px; font-size: 12px; font-weight: 700; cursor: pointer; }
-
-        .input-box { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 8px; display: flex; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 25px; }
-        input { flex: 1; border: none; padding: 12px; font-size: 16px; font-weight: 600; font-family: inherit; background: transparent; }
-        .btn-icon { width: 48px; height: 48px; border-radius: 15px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-        .btn-scan { background: #f0f2f5; color: #666; }
-        .btn-add { background: var(--acc); color: white; }
-
-        .shopping-list { display: flex; flex-direction: column; gap: 12px; }
-        .item { background: var(--card); padding: 12px; border-radius: 20px; display: flex; align-items: center; gap: 15px; border: 1px solid var(--border); box-shadow: 0 2px 6px rgba(0,0,0,0.02); }
-        .item.checked { opacity: 0.5; background: #f1f3f5; border-color: transparent; }
-        .item.checked .item-name { text-decoration: line-through; color: #8e95a2; }
-        .item-img { width: 55px; height: 55px; border-radius: 14px; object-fit: cover; background: #eee; }
-        .item-info { flex: 1; }
-        .item-name { display: block; font-weight: 700; font-size: 15px; }
+        .logo { font-size: 26px; font-weight: 800; color: var(--acc); }
+        .input-box { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 8px; display: flex; gap: 8px; margin-bottom: 20px; }
+        input { flex: 1; border: none; padding: 12px; font-size: 16px; background: transparent; }
+        .btn-add { background: var(--acc); color: white; border: none; width: 48px; border-radius: 15px; font-size: 20px; }
+        .item { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 10px; border: 1px solid var(--border); display: flex; justify-content: space-between; }
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; padding: 20px; background: white; border-top: 1px solid var(--border); }
+        .btn-compare { width: 100%; background: var(--acc); color: white; border: none; padding: 18px; border-radius: 20px; font-size: 16px; font-weight: 800; }
         
-        .check-ui { width: 24px; height: 24px; border: 2px solid #ddd; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
-        .checked .check-ui { background: var(--acc); border-color: var(--acc); }
-        .checked .check-ui::after { content: '✓'; color: white; font-size: 14px; font-weight: 900; }
-
-        .footer { position: fixed; bottom: 0; left: 0; right: 0; padding: 20px; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); border-top: 1px solid var(--border); z-index: 100; }
-        .btn-compare { width: 100%; background: var(--acc); color: white; border: none; padding: 18px; border-radius: 20px; font-size: 16px; font-weight: 800; text-transform: uppercase; box-shadow: 0 8px 20px rgba(0,122,255,0.2); }
-        .btn-compare:disabled { background: #ccc; box-shadow: none; }
-
-        .ai-output { background: white; padding: 20px; border-radius: 20px; border-left: 5px solid var(--acc); margin-top: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px; }
-        .error-msg { color: #ff3b30; background: #fff1f1; padding: 15px; border-radius: 15px; margin-top: 15px; font-size: 14px; font-weight: bold; }
-        
-        #scanner-ui { display:none; position:fixed; inset:0; background:black; z-index:9999; }
-        #interactive video { width: 100%; height: 100vh; object-fit: cover; }
+        /* ESTILO DO ERRO DETALHADO */
+        .debug-box { background: #fff1f1; color: #ff3b30; padding: 15px; border-radius: 15px; margin-top: 20px; font-family: monospace; font-size: 12px; border: 1px solid #ff3b30; white-space: pre-wrap; overflow-x: auto; }
+        .ai-output { background: white; padding: 20px; border-radius: 20px; border-left: 5px solid var(--acc); margin-top: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
 
     <div class="header">
         <div class="logo">SACO.pt</div>
-        <button class="btn-clear" onclick="clearList()">Limpar Tudo</button>
+        <button onclick="localStorage.clear(); location.reload();" style="font-size: 10px;">Reset App</button>
     </div>
 
     <div class="input-box">
-        <input type="text" id="itemIn" placeholder="Adicionar artigo..." onkeypress="if(event.key==='Enter') add()">
-        <button class="btn-icon btn-scan" onclick="openScanner()">📸</button>
-        <button class="btn-icon btn-add" onclick="add()">+</button>
+        <input type="text" id="itemIn" placeholder="Ex: Leite, Ovos...">
+        <button class="btn-add" onclick="add()">+</button>
     </div>
 
-    <div id="list" class="shopping-list"></div>
+    <div id="list"></div>
     <div id="results"></div>
 
     <div class="footer">
-        <button id="compBtn" class="btn-compare" onclick="compare()" disabled>Comparar Preços IA</button>
-    </div>
-
-    <div id="scanner-ui">
-        <div id="interactive"></div>
-        <button style="position:absolute; bottom:40px; left:50%; transform:translateX(-50%); padding:15px 30px; border-radius:30px; border:none; background:white; font-weight:700;" onclick="closeScanner()">Cancelar</button>
+        <button id="compBtn" class="btn-compare" onclick="compare()">VERIFICAR ERRO IA</button>
     </div>
 
     <script>
-        // TUA CHAVE NOVA
         const API_KEY = "AIzaSyBEeOFiu49Lk1CTxCsblRjjNRaDftnJHhM"; 
-
         let basket = JSON.parse(localStorage.getItem('saco_v1') || "[]");
 
         function render() {
-            const listDiv = document.getElementById('list');
-            listDiv.innerHTML = basket.map((it, i) => `
-                <div class="item ${it.done ? 'checked' : ''}" onclick="toggle(${i})">
-                    <div class="check-ui"></div>
-                    <img class="item-img" src="https://loremflickr.com/150/150/${it.name},grocery" alt="item">
-                    <div class="item-info"><span class="item-name">${it.name}</span></div>
-                    <button onclick="remove(${i}, event)" style="background:none; border:none; color:#ff3b30; font-size:22px;">×</button>
+            document.getElementById('list').innerHTML = basket.map((it, i) => `
+                <div class="item">
+                    <span>${it.name}</span>
+                    <button onclick="remove(${i})" style="color:red; border:none; background:none;">×</button>
                 </div>
             `).join('');
-            document.getElementById('compBtn').disabled = basket.length === 0;
             localStorage.setItem('saco_v1', JSON.stringify(basket));
         }
 
-        function add(val = null) {
-            const inp = document.getElementById('itemIn');
-            const name = val || inp.value.trim();
+        function add() {
+            const name = document.getElementById('itemIn').value;
             if(!name) return;
-            basket.unshift({ name: name, done: false });
-            inp.value = '';
+            basket.push({name});
+            document.getElementById('itemIn').value = '';
             render();
         }
 
-        function toggle(i) { basket[i].done = !basket[i].done; render(); }
-        function remove(i, e) { e.stopPropagation(); basket.splice(i, 1); render(); }
-        function clearList() { if(confirm("Apagar tudo?")) { basket = []; document.getElementById('results').innerHTML=''; render(); } }
-
-        function openScanner() {
-            document.getElementById('scanner-ui').style.display = 'block';
-            Quagga.init({
-                inputStream: { type: "LiveStream", target: document.querySelector('#interactive'), constraints: { facingMode: "environment" } },
-                decoder: { readers: ["ean_reader"] }
-            }, (err) => { if(!err) Quagga.start(); });
-            Quagga.onDetected(res => { closeScanner(); add("EAN " + res.codeResult.code); });
-        }
-        function closeScanner() { Quagga.stop(); document.getElementById('scanner-ui').style.display = 'none'; }
+        function remove(i) { basket.splice(i, 1); render(); }
 
         async function compare() {
-            const btn = document.getElementById('compBtn');
             const resArea = document.getElementById('results');
-            const items = basket.map(i => i.name).join(', ');
+            resArea.innerHTML = "<em>A tentar ligar à Google...</em>";
             
-            btn.innerText = "A ANALISAR...";
-            btn.disabled = true;
-
+            // TENTATIVA COM NOME DE MODELO MAIS ESPECÍFICO
+            const modelName = "gemini-1.5-flash-latest"; 
+            
             try {
-                const prompt = `Analise esta lista de compras para Portugal: ${items}. Diga qual o supermercado mais barato entre Continente, Pingo Doce, Auchan e Mercadona. Dê um preço estimado total. Responda em HTML (h3 e p).`;
+                const prompt = "Diz olá.";
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_KEY}`;
 
-                // URL ATUALIZADO PARA V1 (ESTÁVEL)
-                const resp = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
-                    method: "POST", 
+                const resp = await fetch(url, {
+                    method: "POST",
                     headers: {"Content-Type": "application/json"},
                     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
 
                 const data = await resp.json();
 
-                if(data.error) {
-                    resArea.innerHTML = `<div class="error-msg">Erro da Google: ${data.error.message}</div>`;
+                if (data.error) {
+                    // SE DER ERRO, MOSTRA O OBJETO COMPLETO DA GOOGLE
+                    resArea.innerHTML = `
+                        <div class="debug-box">
+                            <strong>DETETADO ERRO DA GOOGLE:</strong><br>
+                            Status: ${data.error.status}<br>
+                            Message: ${data.error.message}<br>
+                            Code: ${data.error.code}<br><br>
+                            <em>Copia este texto ou tira print!</em>
+                        </div>`;
                 } else {
-                    const html = data.candidates[0].content.parts[0].text.replace(/```html/g, '').replace(/```/g, '');
-                    resArea.innerHTML = `<div class="ai-output">${html}</div>`;
-                    resArea.scrollIntoView({ behavior: 'smooth' });
+                    resArea.innerHTML = `<div class="ai-output">Sucesso! A IA respondeu: ${data.candidates[0].content.parts[0].text}</div>`;
                 }
-            } catch(e) { 
-                resArea.innerHTML = `<div class="error-msg">Erro de ligação. Tente novamente.</div>`; 
+            } catch (e) {
+                resArea.innerHTML = `<div class="debug-box">ERRO DE REDE: ${e.message}</div>`;
             }
-            btn.innerText = "Comparar Preços IA";
-            btn.disabled = false;
         }
-
         render();
     </script>
 </body>
