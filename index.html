@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SACO.pt | Comparador IA 2026</title>
+    <title>SACO.pt | Comparador Lite</title>
     <style>
         :root { --blue: #007aff; --green: #28a745; --bg: #f2f2f7; }
         body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
@@ -11,12 +11,11 @@
         h1 { color: var(--blue); text-align: center; margin-bottom: 25px; font-size: 28px; }
         .input-box { display: flex; gap: 10px; margin-bottom: 20px; }
         input { flex: 1; padding: 15px; border: 1.5px solid #eee; border-radius: 12px; font-size: 16px; outline: none; }
-        input:focus { border-color: var(--blue); }
         .add-btn { background: var(--blue); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: bold; cursor: pointer; }
         #lista { margin-bottom: 20px; min-height: 50px; }
         .item { background: #f9f9f9; padding: 12px; margin-bottom: 8px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--blue); }
         .del { color: #ff3b30; font-weight: bold; cursor: pointer; padding: 5px; }
-        .compare-btn { width: 100%; background: var(--green); color: white; border: none; padding: 18px; border-radius: 15px; font-size: 17px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .compare-btn { width: 100%; background: var(--green); color: white; border: none; padding: 18px; border-radius: 15px; font-size: 17px; font-weight: bold; cursor: pointer; }
         .compare-btn:disabled { background: #ccc; }
         #res { margin-top: 25px; padding: 20px; background: #eef9f1; border-radius: 15px; display: none; font-size: 15px; line-height: 1.5; color: #1a1a1a; border: 1px solid #d4edda; }
         .footer-link { display: block; text-align: center; margin-top: 30px; font-size: 11px; color: #bbb; text-decoration: none; cursor: pointer; }
@@ -77,18 +76,18 @@
         const btn = document.getElementById('btn');
         
         resDiv.style.display = "block";
-        resDiv.innerHTML = "⏳ <b>Gemini 2.0 a analisar mercados...</b>";
+        resDiv.innerHTML = "⏳ <b>A consultar mercados (Versão Lite)...</b>";
         btn.disabled = true;
 
-        // CONFIGURAÇÃO VALIDADA: v1 com gemini-2.0-flash
-        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${key}`;
+        // ATUALIZADO PARA MODELO LITE: Mais estável para evitar erros de quota
+        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-lite:generateContent?key=${key}`;
 
         try {
             const response = await fetch(url, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: `Analisa esta lista de compras em Portugal: ${items.join(', ')}. Qual o supermercado (Continente, Pingo Doce, Auchan ou Lidl) tem os melhores preços para estes itens hoje? Dá uma estimativa de preço total.` }] }]
+                    contents: [{ parts: [{ text: `Analisa estes itens de supermercado em Portugal: ${items.join(', ')}. Qual o supermercado (Continente, Pingo Doce ou Lidl) é provavelmente o mais barato hoje? Dá uma resposta curta com preços estimados.` }] }]
                 })
             });
 
@@ -96,13 +95,12 @@
             
             if (data.error) {
                 resDiv.innerHTML = "❌ <b>Erro:</b> " + data.error.message;
-                if(data.error.status === "PERMISSION_DENIED") localStorage.removeItem('saco_key');
             } else {
                 const text = data.candidates[0].content.parts[0].text;
                 resDiv.innerHTML = "<b>Análise da IA:</b><br><br>" + text.replace(/\n/g, '<br>');
             }
         } catch (e) {
-            resDiv.innerHTML = "❌ Erro de rede. Tente novamente.";
+            resDiv.innerHTML = "❌ Erro de ligação. Tenta novamente.";
         } finally {
             btn.disabled = false;
         }
