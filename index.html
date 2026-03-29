@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SACO.pt | Versão Estável</title>
+    <title>SACO.pt | Comparador</title>
     <style>
         :root { --blue: #007aff; --green: #34c759; --bg: #f5f5f7; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
@@ -14,13 +14,13 @@
         .add-btn { background: var(--blue); color: white; border: none; padding: 0 15px; border-radius: 10px; cursor: pointer; }
         .item { background: #fafafa; padding: 10px; margin-bottom: 5px; border-radius: 8px; display: flex; justify-content: space-between; }
         .compare-btn { width: 100%; background: var(--green); color: white; border: none; padding: 16px; border-radius: 12px; font-weight: bold; cursor: pointer; }
-        #res { margin-top: 20px; padding: 15px; background: #f0f9f1; border-radius: 12px; display: none; border-left: 4px solid var(--green); }
+        #res { margin-top: 20px; padding: 15px; background: #f0f9f1; border-radius: 12px; display: none; border-left: 4px solid var(--green); font-size: 14px; }
     </style>
 </head>
 <body>
 
 <div class="app">
-    <h1>🛒 SACO.pt</h1>
+    <h1>🛒 SACO.133t</h1>
     <div class="input-group">
         <input type="text" id="p-input" placeholder="Ex: Sal, Massa...">
         <button class="add-btn" onclick="add()">+</button>
@@ -51,17 +51,17 @@
 
         const resDiv = document.getElementById('res');
         resDiv.style.display = "block";
-        resDiv.innerHTML = "⏳ Consultando base de dados estável...";
+        resDiv.innerHTML = "⏳ A analisar preços em Portugal...";
 
-        // A SOLUÇÃO: Usar v1beta com o modelo 1.5-flash (Quota real)
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+        // NOME TÉCNICO COMPLETO PARA EVITAR "NOT FOUND"
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key=${key}`;
 
         try {
             const response = await fetch(url, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: `Diz-me qual o supermercado mais barato em Portugal para estes itens: ${items.join(', ')}.` }] }]
+                    contents: [{ parts: [{ text: `Preços em Portugal (Pingo Doce, Continente, Lidl). Para: ${items.join(', ')}, qual o mais barato? Resposta curta.` }] }]
                 })
             });
 
@@ -70,7 +70,8 @@
             if (data.error) {
                 resDiv.innerHTML = "❌ Erro: " + data.error.message;
             } else {
-                resDiv.innerHTML = "<b>Análise:</b><br>" + data.candidates[0].content.parts[0].text.replace(/\n/g, '<br>');
+                const aiText = data.candidates[0].content.parts[0].text;
+                resDiv.innerHTML = "<b>Análise:</b><br>" + aiText.replace(/\n/g, '<br>');
             }
         } catch (e) {
             resDiv.innerHTML = "❌ Falha de ligação.";
