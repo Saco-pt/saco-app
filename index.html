@@ -3,54 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V16</title>
+    <title>SACO.pt | V15.0 Sniper</title>
     <style>
-        :root {
-            --blue: #4285f4;
-            --green: #1a8a4a;
-            --bg: #f1f3f4;
-            --card: #fff;
-            --muted: #888;
-            --red: #e53935;
-        }
-        * { box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
-            background: var(--bg); margin: 0; padding: 16px;
-            color: #1a1a2e;
-        }
-        .container { max-width: 460px; margin: 0 auto; }
+        :root { --google-blue: #4285f4; --success: #34a853; --bg: #f8f9fa; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding: 15px; }
+        .container { max-width: 480px; margin: 0 auto; }
+        .version-badge { font-size: 10px; background: var(--success); color: #fff; padding: 4px 12px; border-radius: 20px; float: right; }
+        .main-card { background: white; border-radius: 28px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-top: 10px; }
+        .btn { width: 100%; padding: 18px; border-radius: 14px; border: none; font-weight: bold; cursor: pointer; font-size: 16px; margin-bottom: 10px; }
+        .btn-scan { background: var(--google-blue); color: white; }
+        .btn-search { background: var(--success); color: white; }
+        input[type="text"] { width: 100%; padding: 18px; border: 2px solid #eee; border-radius: 16px; font-size: 16px; box-sizing: border-box; margin-bottom: 10px; }
+        #ia-output { margin-top: 20px; padding: 20px; background: white; border-radius: 24px; display: none; border: 1px solid #e0e0e0; }
+        .loader { text-align: center; color: var(--google-blue); padding: 10px; font-weight: bold; }
+        #config-modal { display: none; position: fixed; inset: 0; background: white; z-index: 1000; padding: 40px 25px; }
+    </style>
+</head>
+<body>
 
-        .header {
-            display: flex; align-items: center;
-            justify-content: space-between; margin-bottom: 16px;
-        }
-        .header h1 { color: var(--blue); font-size: 26px; margin: 0; }
-        .badge {
-            font-size: 10px; font-weight: 700;
-            background: var(--blue); color: white;
-            padding: 4px 10px; border-radius: 50px;
-        }
+<div class="container">
+    <div class="version-badge">V15.0 STABLE</div>
+    <h1 style="color:var(--google-blue); margin:0;">SACO.pt</h1>
 
-        .card {
-            background: var(--card); border-radius: 20px;
-            padding: 20px; box-shadow: 0 4px 16px rgba(66,133,244,0.12);
-            margin-bottom: 14px;
-        }
+    <div class="main-card">
+        <input type="text" id="product-input" placeholder="Lendo QR ou Nome...">
+        
+        <!-- O botão agora foca no Scan de QR/Código -->
+        <button class="btn btn-scan" onclick="document.getElementById('file-input').click()">🔍 SCAN QR / PRODUTO</button>
+        <input type="file" id="file-input" style="display:none" accept="image/*" capture="environment" onchange="handleGeminiV15(event)">
+        
+        <button class="btn btn-search" onclick="runFinalSearch()">🛒 VER PREÇOS REAIS</button>
+        <p style="text-align:center; color:#999; font-size:12px; cursor:pointer;" onclick="toggleConfig(true)">⚙️ Configurar Keys</p>
+    </div>
 
-        /* Separador de modos */
-        .mode-label {
-            font-size: 11px; font-weight: 700; color: var(--muted);
-            text-transform: uppercase; letter-spacing: .6px;
-            margin: 14px 0 8px;
-        }
-        .divider {
-            display: flex; align-items: center; gap: 10px;
-            margin: 14px 0; color: var(--muted); font-size: 12px;
-        }
-        .divider::before, .divider::after {
-            content: ''; flex: 1; height: 1px; background: #eee;
-        }
+    <div id="ia-output"></div>
+</div>
 
-        .btn {
-            width: 100%; padding: 15px; border-radius: 14px;
+<!-- Modal Config -->
+<div id="config-modal">
+    <h2>Definições V15</h2>
+    <input type="password" id="gem-key" class="btn" style="border:1px solid #ddd; color:black" placeholder="Gemini API Key">
+    <input type="password" id="tav-key" class="btn" style="border:1px solid #ddd; color:black" placeholder="Tavily API Key">
+    <button class="btn btn-scan" onclick="save()">GUARDAR</button>
+</div>
+
+<script>
+    function toggleConfig(s) { document.getElementById('config-modal').style.display = s ? 'block' : 'none'; }
+    function save() {
+        localStorage.setItem('gem_v15', document.getElementById('gem-key').value);
+        localStorage.setItem('tav_v15', document.getElementById('tav-key').value);
+        toggleConfig(false);
+    }
+
+    async function handleGeminiV15(event) {
+        const file = event.target.files[0];
+        const key = localStorage.getItem('gem_v15');
+        const out = document.getElementById('ia-output');
+
+        if (!file || !key) return toggleConfig(true);
+        
+        // Validação de tipo de ficheiro conforme sugerido
+        if (!file.type.startsWith('image/')) return alert("Por favor, selecione uma imagem.");
+
+        out.style.display = "block";
+        out.innerHTML = '<div class="loader">📡 Analisando QR/Produto...</div>';
+
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = async () => {
+            const base64 = reader.result.split(',')[1];
+            // Solução Aplicada: Key na URL para evitar problemas de CORS
+            // Solução Aplicada: Uso do gemini-1.5-flash estável (evitando o lite deprecado)
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+
+            try {
+                const resp = await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: [{ parts: [
+                            { text: "Lê o QR Code ou Código de Barras desta imagem. Se não houver código, identifica o produto pelo rótulo. Responde apenas o NOME e MARCA." },
+                            // Solução Aplicada: mime_type detectado automaticamente
+                            { inline_data: { mime_type: file.type, data: base64 } }
+                        ]}]
+                    })
+                });
+
+                const data = await resp.json();
+                if (data.error) throw new Error(data.error.message);
+
+                const name = data.candidates[0].content.parts[0].text.trim();
+                document.getElementById('product-input').value = name;
+                runFinalSearch();
+            } catch (e) { out.innerHTML = "❌ Erro: " + e.message; }
+        };
+    }
+
+    async function runFinalSearch() {
+        const q = document.getElementById('product-input').value;
+        const gK = localStorage.getItem('gem_v15');
+        const tK = localStorage.getItem('tav_v15');
+        const out = document.getElementById('ia-output');
+
+        if (!q || !tK) return;
+        out.style.display = "block";
+        out.innerHTML = `<div class="loader">🌐 Sniper em ação:<br>"${q}"</div>`;
+
+        try {
+            const s = await fetch("https://api.tavily.com/search", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ api_key: tK, query: `preço euros "${q}" continente.pt pingo-doce.pt auchan.pt`, search_depth: "advanced" })
+            });
+            const sData = await s.json();
+
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${gK}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: `Extrai preços para ${q} destes dados: ${JSON.stringify(sData.results)}. Formato Tabela HTML: Loja | Preço. Sem conversa.` }]}]
+                })
+            });
+            const fData = await res.json();
+            out.innerHTML = `<b>💰 RESULTADOS:</b><br>${fData.candidates[0].content.parts[0].text}`;
+        } catch (e) { out.innerHTML = "❌ Falha no Scraper."; }
+    }
+</script>
+</body>
+</html>
