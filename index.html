@@ -3,74 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V16.3 PREMIUM</title>
+    <title>SACO.pt | V16.4 FIXED</title>
     <style>
         :root { --blue: #4285f4; --green: #1a8a4a; --bg: #f1f3f4; --card: #fff; --muted: #888; --red: #e53935; --gold: #f9ab00; }
-        * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding: 16px; color: #1a1a2e; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background: var(--bg); margin: 0; padding: 16px; color: #1a1a2e; }
         .container { max-width: 500px; margin: 0 auto; }
-        
-        /* Interface Principal */
-        .card { background: var(--card); border-radius: 20px; padding: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); margin-bottom: 14px; border: 1px solid rgba(0,0,0,0.05); }
-        .mode-label { font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
-        .btn { width: 100%; padding: 16px; border-radius: 14px; border: none; font-weight: 700; cursor: pointer; margin-bottom: 10px; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; text-decoration: none; }
+        .card { background: var(--card); border-radius: 20px; padding: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); margin-bottom: 14px; }
+        .mode-label { font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
+        .btn { width: 100%; padding: 16px; border-radius: 14px; border: none; font-weight: 700; cursor: pointer; margin-bottom: 10px; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; text-decoration: none; }
         .btn:active { transform: scale(0.97); }
         .btn-barcode { background: #1a1a1a; color: #fff; }
         .btn-cam { background: var(--blue); color: #fff; }
         .btn-search { background: var(--green); color: #fff; }
         .btn-ghost { background: none; border: 1.5px solid #ddd; color: var(--muted); }
         input { width: 100%; padding: 14px; border: 1.5px solid #e0e0e0; border-radius: 12px; margin-bottom: 12px; font-size: 16px; outline: none; }
-
-        /* Estilo da Lista Adaptativa (Mobile First) */
         #output { display: none; margin-top: 10px; }
-        .result-item { 
-            background: white; border-radius: 15px; padding: 15px; margin-bottom: 10px;
-            border-left: 5px solid #eee; display: block; text-decoration: none; color: inherit;
-            transition: 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        }
-        .result-item:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        
+        .result-item { background: white; border-radius: 15px; padding: 15px; margin-bottom: 10px; border-left: 5px solid #eee; display: block; text-decoration: none; color: inherit; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
         .item-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-        .store-name { font-weight: 800; font-size: 14px; text-transform: uppercase; color: var(--muted); }
+        .store-name { font-weight: 800; font-size: 13px; color: var(--muted); }
         .price { font-size: 20px; font-weight: 900; color: var(--blue); }
-        
-        .prod-title { font-size: 15px; font-weight: 600; margin-bottom: 8px; display: block; color: #333; }
-        
-        /* Badges */
-        .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; margin-right: 5px; }
+        .prod-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; display: block; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 800; margin-right: 5px; }
         .badge-cheapest { background: #e6f4ea; color: var(--green); border: 1px solid var(--green); }
         .badge-promo { background: #fff4e5; color: var(--gold); border: 1px solid var(--gold); }
-        
-        .obs { font-size: 12px; color: var(--muted); font-style: italic; }
-
-        /* Painel Config */
         #config-panel { display: none; position: fixed; inset: 0; background: #fff; z-index: 9999; padding: 40px 20px; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
-        .spin { display: inline-block; animation: spin 1s linear infinite; }
+        .spin { display: inline-block; animation: spin 1s linear infinite; font-size: 24px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-        <h1 style="color:var(--blue); margin:0;">🛒 SACO.pt</h1>
-        <span style="font-size:10px; background:#333; color:#fff; padding:4px 8px; border-radius:10px;">V16.3 PREMIUM</span>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <h1 style="color:var(--blue); margin:0; font-size:24px;">🛒 SACO.pt</h1>
+        <span style="font-size:10px; background:#333; color:#fff; padding:4px 8px; border-radius:10px;">V16.4 FIXED</span>
     </div>
 
     <div class="card">
-        <div class="mode-label">📦 Leitura Digital</div>
-        <button class="btn btn-barcode" id="btn-bar" onclick="document.getElementById('in-bar').click()">〓 Fotografar Código</button>
+        <div class="mode-label">📦 Captura</div>
+        <button class="btn btn-barcode" id="btn-bar" onclick="document.getElementById('in-bar').click()">〓 Ler Código</button>
         <input type="file" id="in-bar" style="display:none" accept="image/*" capture="environment" onchange="processImage(this, 'barcode')">
 
-        <button class="btn btn-cam" id="btn-cam" onclick="document.getElementById('in-cam').click()">📸 Identificar Produto</button>
+        <button class="btn btn-cam" id="btn-cam" onclick="document.getElementById('in-cam').click()">📸 Foto Produto</button>
         <input type="file" id="in-cam" style="display:none" accept="image/*" capture="environment" onchange="processImage(this, 'photo')">
 
-        <div style="margin: 15px 0; border-top: 1px solid #eee;"></div>
+        <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
 
         <input type="text" id="q" placeholder="Ex: Água Penacova 5L">
         <button class="btn btn-search" id="btn-search" onclick="runSearch()">🔍 Comparar Preços</button>
-        
-        <button class="btn btn-ghost" onclick="toggleConfig(true)">⚙️ Configurar Chave AI</button>
+        <button class="btn btn-ghost" onclick="toggleConfig(true)">⚙️ API Key</button>
     </div>
 
     <div id="output"></div>
@@ -78,7 +60,7 @@
 
 <div id="config-panel">
     <h2>⚙️ Configuração</h2>
-    <input type="password" id="api-key" placeholder="Insere a tua Gemini API Key">
+    <input type="password" id="api-key" placeholder="AIza...">
     <button class="btn btn-cam" onclick="saveKey()">💾 Guardar</button>
     <button class="btn btn-ghost" onclick="toggleConfig(false)">Fechar</button>
 </div>
@@ -89,7 +71,7 @@ const MODEL = "gemini-2.5-flash";
 function toggleConfig(show) { document.getElementById('config-panel').style.display = show ? 'block' : 'none'; }
 function saveKey() {
     const key = document.getElementById('api-key').value.trim();
-    if (key) { localStorage.setItem('gemini_key', key); alert("Configurado!"); toggleConfig(false); }
+    if (key) { localStorage.setItem('gemini_key', key); alert("Guardado!"); toggleConfig(false); }
 }
 
 function setUI(loading) {
@@ -98,19 +80,20 @@ function setUI(loading) {
     const out = document.getElementById('output');
     if (loading) { 
         out.style.display = 'block'; 
-        out.innerHTML = '<div style="text-align:center;"><span class="spin" style="font-size:30px;">⌛</span><br>A caçar os melhores preços...</div>'; 
+        out.innerHTML = '<div style="text-align:center; padding:20px;"><span class="spin">⌛</span><br>A pesquisar...</div>'; 
     }
 }
 
 async function geminiRequest(payload) {
     const key = localStorage.getItem('gemini_key');
-    if (!key) throw new Error("Falta a API Key!");
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`, {
+    if (!key) throw new Error("Configura a API Key primeiro!");
+    const response = await fetch(`[https://generativelanguage.googleapis.com/v1beta/models/$](https://generativelanguage.googleapis.com/v1beta/models/$){MODEL}:generateContent?key=${key}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     });
     const data = await response.json();
+    if (data.error) throw new Error(data.error.message);
     return data.candidates[0].content.parts[0].text;
 }
 
@@ -120,7 +103,7 @@ async function processImage(input, mode) {
     setUI(true);
     try {
         const base64 = await toBase64(file);
-        const prompt = mode === 'barcode' ? "Diz apenas o número do código de barras." : "Diz apenas Marca e Nome do produto.";
+        const prompt = mode === 'barcode' ? "Responde APENAS o número do código de barras." : "Responde APENAS Marca e Nome do produto.";
         const result = await geminiRequest({
             contents: [{ parts: [{ inline_data: { mime_type: file.type, data: base64 } }, { text: prompt }]}]
         });
@@ -137,50 +120,47 @@ async function runSearch() {
     try {
         const result = await geminiRequest({
             contents: [{ parts: [{ text: `Pesquisa o preço de "${query}" no Continente, Pingo Doce, Auchan e Lidl em Portugal.
-            
-            REGRAS DE RESPOSTA (JSON):
-            Devolve APENAS um array JSON de objetos com este formato:
-            [{"loja": "Continente", "produto": "Nome Completo", "preco": 1.29, "url": "link-direto", "promo": true, "obs": "0.20€/L"}]
-            
-            - Identifica o mais barato com o campo "mais_barato": true no objeto respetivo.
-            - O campo "url" deve ser o link real para o produto no site da loja.
-            - Se não encontrares o preço exato, usa o valor do folheto atual.` 
-            }] }],
+            Responde APENAS com um array JSON puro (sem markdown, sem texto antes ou depois).
+            Formato: [{"loja": "Nome", "produto": "Nome", "preco": 1.29, "url": "link", "promo": false, "mais_barato": false, "obs": "€/L"}]
+            Certifica-te que o campo 'preco' é um número.` }] }],
             tools: [{ google_search: {} }]
         });
 
-        // Limpar o texto do Gemini (remover markdown se houver)
-        const cleanJson = result.replace(/```json|```/g, "").trim();
+        // LIMPEZA DO JSON (Remove markdown ou texto extra que causa erro)
+        let cleanJson = result.replace(/```json/g, "").replace(/```/g, "").trim();
+        const startIdx = cleanJson.indexOf('[');
+        const endIdx = cleanJson.lastIndexOf(']') + 1;
+        cleanJson = cleanJson.substring(startIdx, endIdx);
+
         const dados = JSON.parse(cleanJson);
         renderResults(dados);
-
     } catch (e) {
-        document.getElementById('output').innerHTML = "Erro ao processar dados. Tenta novamente.";
-        console.error(e);
+        document.getElementById('output').innerHTML = `<div style="color:red; padding:10px;">⚠️ Erro de leitura. Tenta novamente.<br><small>${e.message}</small></div>`;
     } finally { setUI(false); }
 }
 
 function renderResults(items) {
     const out = document.getElementById('output');
-    out.innerHTML = '<div class="mode-label">Melhores Opções Encontradas:</div>';
+    out.innerHTML = '<div class="mode-label">Resultados:</div>';
     
-    items.sort((a, b) => a.preco - b.preco).forEach(item => {
-        const html = `
-            <a href="${item.url}" target="_blank" class="result-item" style="border-left-color: ${item.mais_barato ? 'var(--green)' : '#eee'}">
+    // Identificar o mais barato via JS para garantir precisão
+    const minPreco = Math.min(...items.map(i => i.preco));
+
+    items.forEach(item => {
+        const isCheapest = item.preco === minPreco;
+        out.innerHTML += `
+            <a href="${item.url}" target="_blank" class="result-item" style="border-left-color: ${isCheapest ? 'var(--green)' : '#eee'}">
                 <div class="item-header">
                     <span class="store-name">${item.loja}</span>
                     <span class="price">${item.preco.toFixed(2)}€</span>
                 </div>
                 <span class="prod-title">${item.produto}</span>
                 <div>
-                    ${item.mais_barato ? '<span class="badge badge-cheapest">★ MAIS BARATO</span>' : ''}
+                    ${isCheapest ? '<span class="badge badge-cheapest">★ MAIS BARATO</span>' : ''}
                     ${item.promo ? '<span class="badge badge-promo">% PROMOÇÃO</span>' : ''}
-                    <span class="obs">${item.obs || ''}</span>
+                    <span style="font-size:11px; color:#999;">${item.obs || ''}</span>
                 </div>
-                <div style="margin-top:10px; font-size:10px; color:var(--blue); text-align:right;">Ver no site ↗</div>
-            </a>
-        `;
-        out.innerHTML += html;
+            </a>`;
     });
 }
 
