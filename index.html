@@ -3,64 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V11.0 Fixed Scraper</title>
+    <title>SACO.pt | V12.0 Gemini Sniper</title>
     <style>
-        :root { --primary: #007aff; --sniper: #34c759; --bg: #f2f2f7; --card: #ffffff; }
-        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding: 15px; color: #1c1c1e; }
+        :root { --primary: #1a73e8; --sniper: #1ed760; --bg: #f8f9fa; --card: #ffffff; }
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg); margin: 0; padding: 15px; color: #202124; }
         .container { max-width: 480px; margin: 0 auto; }
-        .version-badge { font-size: 10px; font-weight: 800; background: #ff3b30; color: #fff; padding: 4px 8px; border-radius: 6px; float: right; }
+        .version-badge { font-size: 10px; font-weight: bold; background: #1a73e8; color: white; padding: 4px 10px; border-radius: 20px; float: right; margin-top: 5px; }
         .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; }
-        .header h1 { font-size: 24px; font-weight: 800; margin: 0; color: var(--primary); }
-        #image-preview-container { width: 100%; height: 180px; background: #000; border-radius: 15px; margin-bottom: 15px; display: none; overflow: hidden; }
+        .header h1 { font-size: 26px; font-weight: 800; margin: 0; color: var(--primary); letter-spacing: -1px; }
+        #image-preview-container { width: 100%; height: 200px; background: #202124; border-radius: 16px; margin-bottom: 15px; display: none; overflow: hidden; border: 2px solid var(--primary); }
         #image-preview { width: 100%; height: 100%; object-fit: cover; }
-        .input-zone { background: var(--card); border-radius: 20px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .btn-main { width: 100%; padding: 16px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; margin-bottom: 10px; }
-        .btn-camera { background: var(--primary); color: white; }
-        .btn-search { background: var(--sniper); color: white; }
-        input[type="text"] { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 10px; box-sizing: border-box; font-size: 16px; }
-        #ia-output { margin-top: 20px; padding: 15px; background: white; border-radius: 15px; display: none; border: 1px solid #ddd; font-size: 14px; white-space: pre-wrap; }
+        .input-zone { background: var(--card); border-radius: 24px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #e0e0e0; }
+        .btn-main { width: 100%; padding: 18px; border-radius: 14px; border: none; font-weight: 700; font-size: 16px; cursor: pointer; transition: 0.2s; margin-bottom: 12px; }
+        .btn-camera { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(26,115,232,0.3); }
+        .btn-search { background: var(--sniper); color: white; box-shadow: 0 4px 12px rgba(30,215,96,0.3); }
+        input[type="text"] { width: 100%; padding: 16px; border: 1px solid #dadce0; border-radius: 12px; margin-bottom: 12px; box-sizing: border-box; font-size: 16px; outline: none; }
+        input[type="text"]:focus { border-color: var(--primary); }
+        #ia-output { margin-top: 20px; padding: 20px; background: white; border-radius: 20px; display: none; border: 1px solid #e0e0e0; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .loader { text-align: center; color: var(--primary); font-weight: bold; padding: 20px; display: block; }
         #config-panel { display: none; position: fixed; inset: 0; background: white; z-index: 1000; padding: 40px 25px; }
-        .loader { color: var(--primary); font-weight: bold; text-align: center; display: block; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { text-align: left; padding: 12px 8px; border-bottom: 1px solid #f1f3f4; font-size: 14px; }
+        th { color: #5f6368; font-size: 11px; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="version-badge">V11.0</div>
+    <div class="version-badge">GEMINI V12.0</div>
     <div class="header">
         <h1>SACO.pt</h1>
-        <div onclick="toggleConfig()" style="cursor:pointer; font-size:20px;">⚙️</div>
+        <div onclick="toggleConfig()" style="cursor:pointer; font-size:24px;">⚙️</div>
     </div>
 
     <div id="image-preview-container"><img id="image-preview" src=""></div>
 
     <div class="input-zone">
-        <button class="btn-main btn-camera" onclick="document.getElementById('file-input').click()">📸 FOTO PRODUTO</button>
-        <input type="file" id="file-input" style="display:none" accept="image/*" capture="environment" onchange="handleVision(event)">
-        <input type="text" id="product-input" placeholder="Produto para pesquisa real...">
-        <button class="btn-main btn-search" onclick="runManualSearch()">🔍 PESQUISAR PREÇOS REAIS</button>
+        <button class="btn-main btn-camera" onclick="document.getElementById('file-input').click()">📸 FOTO AO PRODUTO</button>
+        <input type="file" id="file-input" style="display:none" accept="image/*" capture="environment" onchange="handleGeminiVision(event)">
+        
+        <input type="text" id="product-input" placeholder="Ou digite o nome aqui...">
+        <button class="btn-main btn-search" onclick="runGeminiSearch()">🔍 VER PREÇOS REAIS</button>
     </div>
 
     <div id="ia-output"></div>
 </div>
 
+<!-- Configurações -->
 <div id="config-panel">
-    <h2 onclick="toggleConfig()">✕ Fechar</h2>
-    <input type="password" id="save-groq" placeholder="Groq API Key" style="width:100%; padding:15px; margin-bottom:10px; border:1px solid #ddd; border-radius:10px;">
-    <input type="password" id="save-tavily" placeholder="Tavily API Key" style="width:100%; padding:15px; margin-bottom:20px; border:1px solid #ddd; border-radius:10px;">
-    <button class="btn-main btn-camera" onclick="confirmKeys()">GUARDAR</button>
+    <h2>Configurações</h2>
+    <p>API do Google (Gemini):</p>
+    <input type="password" id="gemini-key" placeholder="Insere a Gemini API Key" style="width:100%; padding:15px; margin-bottom:15px; border:1px solid #ddd; border-radius:10px;">
+    <p>API de Pesquisa (Tavily):</p>
+    <input type="password" id="tavily-key" placeholder="Insere a Tavily API Key" style="width:100%; padding:15px; margin-bottom:25px; border:1px solid #ddd; border-radius:10px;">
+    <button class="btn-main btn-camera" onclick="saveKeys()">GUARDAR E FECHAR</button>
 </div>
 
 <script>
     function toggleConfig() {
         const p = document.getElementById('config-panel');
         p.style.display = p.style.display === 'block' ? 'none' : 'block';
+        document.getElementById('gemini-key').value = localStorage.getItem('gemini_key') || '';
+        document.getElementById('tavily-key').value = localStorage.getItem('tavily_key') || '';
     }
 
-    function confirmKeys() {
-        localStorage.setItem('groq_key', document.getElementById('save-groq').value);
-        localStorage.setItem('tavily_key', document.getElementById('save-tavily').value);
-        alert("Chaves guardadas!");
+    function saveKeys() {
+        localStorage.setItem('gemini_key', document.getElementById('gemini-key').value);
+        localStorage.setItem('tavily_key', document.getElementById('tavily-key').value);
         toggleConfig();
     }
 
@@ -72,95 +81,91 @@
         });
     }
 
-    async function handleVision(event) {
+    async function handleGeminiVision(event) {
         const file = event.target.files[0];
-        const gK = localStorage.getItem('groq_key');
-        if (!file || !gK) return alert("Configura a Groq Key na ⚙️");
+        const key = localStorage.getItem('gemini_key');
+        if (!file || !key) return alert("Configura a tua Gemini Key na ⚙️");
 
         document.getElementById('image-preview').src = URL.createObjectURL(file);
         document.getElementById('image-preview-container').style.display = 'block';
 
         const out = document.getElementById('ia-output');
         out.style.display = "block";
-        out.innerHTML = '<span class="loader">📷 Identificando imagem...</span>';
+        out.innerHTML = '<span class="loader">🤖 Gemini a identificar produto...</span>';
 
         try {
             const base64 = await encodeImage(file);
-            const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+            
+            const res = await fetch(url, {
                 method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${gK}` },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    model: "llama-3.2-11b-vision-preview",
-                    messages: [{
-                        role: "user",
-                        content: [
-                            { type: "text", text: "Responde APENAS o nome e marca deste produto." },
-                            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64}` } }
+                    contents: [{
+                        parts: [
+                            { text: "Identifica este produto de supermercado. Devolve APENAS o Nome e a Marca. Exemplo: 'Arroz Cigala 1kg'." },
+                            { inline_data: { mime_type: "image/jpeg", data: base64 } }
                         ]
                     }]
                 })
             });
+
             const data = await res.json();
-            const name = data.choices[0].message.content.trim();
-            document.getElementById('product-input').value = name;
-            runManualSearch();
-        } catch (e) { 
-            out.innerHTML = "❌ Erro na Visão. Verifica a tua Key do Groq.";
+            const productName = data.candidates[0].content.parts[0].text.trim();
+            document.getElementById('product-input').value = productName;
+            runGeminiSearch();
+
+        } catch (e) {
+            out.innerHTML = "❌ Erro na Visão Gemini. Verifica a tua chave API.";
         }
     }
 
-    async function runManualSearch() {
+    async function runGeminiSearch() {
         const query = document.getElementById('product-input').value;
-        const gK = localStorage.getItem('groq_key');
-        const tK = localStorage.getItem('tavily_key');
+        const geminiKey = localStorage.getItem('gemini_key');
+        const tavilyKey = localStorage.getItem('tavily_key');
         const out = document.getElementById('ia-output');
 
-        if (!query) return alert("Escreve um produto!");
-        if (!tK || !gK) return alert("Configura as Keys na ⚙️");
+        if (!query || !tavilyKey) return alert("Produto ou Tavily Key em falta!");
 
         out.style.display = "block";
-        out.innerHTML = `<span class="loader">🌐 A extrair preços de hoje para:<br>"${query}"</span>`;
+        out.innerHTML = `<span class="loader">🌐 A pesquisar preços reais para:<br>"${query}"...</span>`;
 
         try {
-            // Chamada ao Tavily com filtro de sites PT
+            // 1. Scraping via Tavily
             const search = await fetch("https://api.tavily.com/search", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    api_key: tK,
-                    query: `preço atual em Euros "${query}" em continente.pt, pingo-doce.pt, auchan.pt, elcorteingles.pt`,
+                    api_key: tavilyKey,
+                    query: `preço atual "${query}" em continente.pt, auchan.pt, pingo-doce.pt, elcorteingles.pt`,
                     search_depth: "advanced",
                     max_results: 5
                 })
             });
-            
             const sData = await search.json();
-            if (!sData.results || sData.results.length === 0) {
-                out.innerHTML = "⚠️ Nenhum preço encontrado nos sites principais.";
-                return;
-            }
 
-            // Filtragem inteligente com Llama 3.3
-            const final = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            // 2. Extração via Gemini (mais inteligente para tabelas)
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
+            const final = await fetch(url, {
                 method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${gK}` },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    model: "llama-3.3-70b-versatile",
-                    messages: [
-                        { role: "system", content: "És um extrator de preços. Devolve apenas uma lista simples: Loja: Preço. Não dês sugestões, não fales mais nada." },
-                        { role: "user", content: `Extrai preços para ${query} destes dados: ${JSON.stringify(sData.results.map(r => ({c: r.content})))}` }
-                    ],
-                    temperature: 0.1
+                    contents: [{
+                        parts: [{ 
+                            text: `Cria uma tabela HTML simples (Loja, Preço €) para o produto ${query} usando estes dados reais: ${JSON.stringify(sData.results)}. Não dês conselhos nem fales nada extra.` 
+                        }]
+                    }]
                 })
             });
 
             const fData = await final.json();
-            const resposta = fData.choices[0].message.content;
+            const htmlTable = fData.candidates[0].content.parts[0].text;
             
-            out.innerHTML = `<b>💰 RESULTADOS DE HOJE:</b>\n\n${resposta}`;
+            out.innerHTML = `<b>💰 RESULTADOS DE HOJE:</b><br>${htmlTable}`;
 
-        } catch (e) { 
-            out.innerHTML = "❌ Erro de Scraper. Verifica a ligação ou a validade das API Keys.";
+        } catch (e) {
+            out.innerHTML = "❌ Erro ao obter preços reais.";
         }
     }
 </script>
