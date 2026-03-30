@@ -3,257 +3,241 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | Sniper vs Cabaz</title>
+    <title>SACO.pt | Sniper & Planeamento</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <style>
         :root { 
-            --primary: #007aff; --success: #34c759; --warning: #ffcc00; 
-            --danger: #ff3b30; --bg: #f2f2f7; --card: #ffffff;
+            --primary: #007aff; --sniper: #34c759; --bg: #f2f2f7; --card: #ffffff; --text: #1c1c1e;
         }
-        
         body { 
             font-family: -apple-system, system-ui, sans-serif; 
-            background: var(--bg); margin: 0; padding: 15px; color: #1c1c1e;
+            background: var(--bg); margin: 0; padding: 15px; color: var(--text);
+            padding-bottom: 50px;
         }
-
-        .app-container { max-width: 480px; margin: 0 auto; }
-
-        /* Header */
+        .container { max-width: 480px; margin: 0 auto; }
         .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0 20px; }
-        .header h1 { font-size: 26px; font-weight: 800; margin: 0; color: var(--primary); }
-        .config-btn { font-size: 22px; cursor: pointer; opacity: 0.5; }
+        .header h1 { font-size: 28px; font-weight: 800; margin: 0; color: var(--primary); letter-spacing: -1px; }
+        .config-icon { font-size: 24px; cursor: pointer; opacity: 0.4; }
 
-        /* Card Perfil */
+        /* Perfil Familiar */
         .card-perfil { 
             background: var(--card); border-radius: 20px; padding: 15px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px;
             display: flex; justify-content: space-between; align-items: center;
         }
-        .inputs-perfil { display: flex; gap: 10px; align-items: center; font-weight: bold; }
-        .inputs-perfil input { width: 35px; border: 1px solid #ddd; border-radius: 8px; text-align: center; padding: 4px; }
+        .family-counts { display: flex; gap: 12px; align-items: center; font-weight: 700; }
+        .family-counts input { width: 35px; border: 1px solid #ddd; border-radius: 8px; text-align: center; padding: 5px; font-size: 15px; }
 
         /* Scanner */
-        #scanner-view { 
-            width: 100%; height: 0; overflow: hidden; transition: 0.3s; 
-            border-radius: 20px; background: #000; position: relative;
+        #scanner-container { 
+            width: 100%; height: 0; overflow: hidden; transition: 0.3s ease-in-out; 
+            border-radius: 22px; background: #000; position: relative;
         }
-        #scanner-view.active { height: 250px; margin-bottom: 15px; border: 3px solid var(--primary); }
-        #torch-btn { 
-            position: absolute; top: 15px; right: 15px; z-index: 10; 
-            background: rgba(0,0,0,0.5); color: white; border: none; padding: 12px; border-radius: 50%;
-        }
+        #scanner-container.active { height: 250px; margin-bottom: 15px; border: 3px solid var(--primary); }
+        #btn-torch { position: absolute; top: 15px; right: 15px; z-index: 10; background: rgba(0,0,0,0.6); color: white; border: none; padding: 12px; border-radius: 50%; display: none; }
 
         /* Inputs */
-        .input-box { display: flex; gap: 8px; margin-bottom: 15px; }
-        input[type="text"] { 
-            flex: 1; padding: 16px; border: none; border-radius: 15px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05); outline: none;
-        }
-        .btn-round { background: var(--card); border: none; border-radius: 15px; padding: 0 15px; font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .btn-add { background: var(--primary); color: white; font-weight: bold; }
+        .input-bar { display: flex; gap: 10px; margin-bottom: 15px; }
+        input[type="text"] { flex: 1; padding: 16px; border: none; border-radius: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); outline: none; font-size: 16px; }
+        .btn-action-icon { background: var(--card); border: none; border-radius: 16px; padding: 0 15px; font-size: 22px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+        .btn-add-item { background: var(--primary); color: white; font-weight: 900; }
 
         /* Lista */
-        .list-area { margin-bottom: 20px; }
-        .item-tag { 
-            background: var(--card); padding: 12px 15px; border-radius: 12px; 
+        .shopping-list { margin-bottom: 20px; }
+        .list-item { 
+            background: var(--card); padding: 14px 18px; border-radius: 15px; 
             margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
-            border-left: 5px solid #ccc;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02); border-left: 5px solid #d1d1d6;
         }
-        .item-tag.latest { border-left-color: var(--success); background: #f0fff4; }
+        .list-item.target { border-left-color: var(--sniper); background: #fafffa; }
 
-        /* SEÇÕES DE AÇÃO */
-        .section-title { font-size: 12px; font-weight: 800; color: #8e8e93; margin: 15px 0 8px 5px; text-transform: uppercase; }
-        
-        .btn-action { 
-            width: 100%; padding: 18px; border-radius: 18px; border: none; 
-            font-weight: 700; font-size: 15px; cursor: pointer; margin-bottom: 10px;
-            display: flex; align-items: center; justify-content: center; gap: 10px;
+        /* Botões de Ação */
+        .label-section { font-size: 11px; font-weight: 800; color: #8e8e93; margin: 20px 0 10px 5px; text-transform: uppercase; letter-spacing: 1px; }
+        .action-card { 
+            width: 100%; padding: 20px; border-radius: 20px; border: none; 
+            font-weight: 700; font-size: 16px; cursor: pointer; margin-bottom: 12px;
+            display: flex; align-items: center; justify-content: center; gap: 12px; transition: 0.2s;
         }
-        .btn-sniper { background: var(--success); color: white; box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3); }
-        .btn-familiar { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3); }
-        .btn-clear { background: #e5e5ea; color: #ff3b30; padding: 12px; font-size: 13px; }
+        .btn-sniper-mode { background: var(--sniper); color: white; box-shadow: 0 6px 20px rgba(52, 199, 89, 0.2); }
+        .btn-family-mode { background: var(--primary); color: white; box-shadow: 0 6px 20px rgba(0, 122, 255, 0.2); }
+        .btn-reset { background: #e5e5ea; color: #ff3b30; padding: 12px; font-size: 14px; margin-top: 10px; }
 
-        /* Resultado */
-        #res-box { 
-            margin-top: 20px; padding: 20px; background: white; border-radius: 20px; 
-            display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid #eee;
+        /* Saída IA */
+        #ia-output { 
+            margin-top: 25px; padding: 20px; background: white; border-radius: 22px; 
+            display: none; box-shadow: 0 15px 40px rgba(0,0,0,0.1); border: 1px solid #eee;
+            line-height: 1.6; font-size: 15px;
         }
-
-        /* Config */
-        #modal-config { display: none; position: fixed; inset: 0; background: white; z-index: 100; padding: 30px; }
+        #config-panel { display: none; position: fixed; inset: 0; background: white; z-index: 1000; padding: 40px 25px; }
     </style>
 </head>
 <body>
 
-<div class="app-container">
+<div class="container">
     <div class="header">
         <h1>SACO.pt</h1>
-        <div class="config-btn" onclick="toggleConfig()">⚙️</div>
+        <div class="config-icon" onclick="toggleConfig()">⚙️</div>
     </div>
 
     <div class="card-perfil">
-        <div class="inputs-perfil">
-            👨 <input type="number" id="adultos" value="2">
-            👶 <input type="number" id="criancas" value="1">
+        <div class="family-counts">
+            <span>👨 <input type="number" id="num-adultos" value="2"></span>
+            <span>👶 <input type="number" id="num-criancas" value="1"></span>
         </div>
-        <div style="font-size: 11px; color: #888;">PERFIL FAMILIAR</div>
+        <div style="font-size: 11px; font-weight: 700; color: #999;">MODO FAMÍLIA</div>
     </div>
 
-    <div id="scanner-view">
-        <button id="torch-btn" onclick="toggleTorch()">🔦</button>
+    <div id="scanner-container"><button id="btn-torch" onclick="toggleFlash()">🔦</button></div>
+
+    <div class="input-bar">
+        <button class="btn-action-icon" onclick="startCamera()">📷</button>
+        <input type="text" id="product-input" placeholder="Produto ou scan...">
+        <button class="btn-action-icon btn-add-item" onclick="addNewItem()">+</button>
     </div>
 
-    <div class="input-box">
-        <button class="btn-round" onclick="openScanner()">📷</button>
-        <input type="text" id="main-input" placeholder="Produto ou scan...">
-        <button class="btn-round btn-add" onclick="addItem()">+</button>
-    </div>
+    <div id="display-list" class="shopping-list"></div>
 
-    <div id="lista-compras" class="list-area"></div>
+    <div class="label-section">No Supermercado (Sniper)</div>
+    <button class="action-card btn-sniper-mode" onclick="runSniper()">🎯 Comparar este Artigo</button>
 
-    <div class="section-title">Modo Sniper (Decisão Rápida)</div>
-    <button class="btn-action btn-sniper" onclick="modoSniper()">🎯 Comparar Último Artigo</button>
-
-    <div class="section-title">Modo Familiar (Planeamento)</div>
-    <button class="btn-action btn-familiar" onclick="modoFamiliar()">📦 Cabaz & Timing Mensal</button>
+    <div class="label-section">Planeamento (Onde & Quais Marcas)</div>
+    <button class="action-card btn-family-mode" onclick="runFamilyPlan()">📦 Cabaz, Marcas & Locais</button>
     
-    <button class="btn-action btn-clear" onclick="limpar()">🗑️ Limpar Lista</button>
+    <button class="action-card btn-reset" onclick="resetAll()">🗑️ Limpar Tudo</button>
 
-    <div id="res-box"></div>
+    <div id="ia-output"></div>
 </div>
 
-<!-- Modal Config -->
-<div id="modal-config">
-    <h2 style="margin-top:0">Configurações</h2>
-    <label>Groq Key:</label>
-    <input type="password" id="k-groq" style="width:100%; padding:12px; margin:10px 0 20px; border-radius:10px; border:1px solid #ddd;">
-    <label>Tavily Key:</label>
-    <input type="password" id="k-tavily" style="width:100%; padding:12px; margin:10px 0 20px; border-radius:10px; border:1px solid #ddd;">
-    <button class="btn-action btn-familiar" onclick="saveKeys()">Guardar</button>
-    <center><p onclick="toggleConfig()" style="margin-top:20px; color:#888;">Fechar</p></center>
+<div id="config-panel">
+    <div onclick="toggleConfig()" style="text-align: right; font-size: 30px; cursor: pointer;">✕</div>
+    <h2>Configuração</h2>
+    <input type="password" id="save-groq" placeholder="Groq API Key" style="width:100%; padding:15px; margin-bottom:10px; border-radius:10px; border:1px solid #ddd;">
+    <input type="password" id="save-tavily" placeholder="Tavily API Key" style="width:100%; padding:15px; margin-bottom:20px; border-radius:10px; border:1px solid #ddd;">
+    <button class="action-card btn-family-mode" onclick="confirmKeys()">GUARDAR</button>
 </div>
 
 <script>
-    let list = [];
-    let track = null;
+    let myItems = [];
+    let lightTrack = null;
 
     function toggleConfig() {
-        const m = document.getElementById('modal-config');
-        m.style.display = m.style.display === 'block' ? 'none' : 'block';
-        document.getElementById('k-groq').value = localStorage.getItem('groq_key') || '';
-        document.getElementById('k-tavily').value = localStorage.getItem('tavily_key') || '';
+        const p = document.getElementById('config-panel');
+        p.style.display = p.style.display === 'block' ? 'none' : 'block';
+        document.getElementById('save-groq').value = localStorage.getItem('groq_key') || '';
+        document.getElementById('save-tavily').value = localStorage.getItem('tavily_key') || '';
     }
 
-    function saveKeys() {
-        localStorage.setItem('groq_key', document.getElementById('k-groq').value);
-        localStorage.setItem('tavily_key', document.getElementById('k-tavily').value);
+    function confirmKeys() {
+        localStorage.setItem('groq_key', document.getElementById('save-groq').value);
+        localStorage.setItem('tavily_key', document.getElementById('save-tavily').value);
         toggleConfig();
     }
 
-    function openScanner() {
-        const v = document.getElementById('scanner-view');
-        v.classList.add('active');
-        document.getElementById('torch-btn').style.display = "block";
+    function startCamera() {
+        const c = document.getElementById('scanner-container');
+        c.classList.add('active');
+        document.getElementById('btn-torch').style.display = "block";
         Quagga.init({
-            inputStream: { name: "Live", type: "LiveStream", target: v, constraints: { facingMode: "environment" } },
+            inputStream: { name: "Live", type: "LiveStream", target: c, constraints: { facingMode: "environment" } },
             decoder: { readers: ["ean_reader", "ean_8_reader"] }
         }, (err) => {
             if(!err) Quagga.start();
             setTimeout(() => {
-                const vid = document.querySelector('video');
-                if(vid) track = vid.srcObject.getVideoTracks()[0];
+                const v = document.querySelector('video');
+                if(v) lightTrack = v.srcObject.getVideoTracks()[0];
             }, 1000);
         });
     }
 
-    function toggleTorch() {
-        if(track && track.getCapabilities().torch) {
-            track.applyConstraints({ advanced: [{ torch: !track.getSettings().torch }] });
+    function toggleFlash() {
+        if(lightTrack && lightTrack.getCapabilities().torch) {
+            lightTrack.applyConstraints({ advanced: [{ torch: !lightTrack.getSettings().torch }] });
         }
     }
 
-    Quagga.onDetected((data) => {
+    Quagga.onDetected((res) => {
         Quagga.stop();
-        document.getElementById('scanner-view').classList.remove('active');
-        addItem(data.codeResult.code);
+        document.getElementById('scanner-container').classList.remove('active');
+        addNewItem(res.codeResult.code);
     });
 
-    function addItem(val) {
-        const inp = document.getElementById('main-input');
-        const txt = val || inp.value.trim();
-        if(!txt) return;
-        list.push(txt);
-        inp.value = '';
-        render();
+    function addNewItem(v) {
+        const input = document.getElementById('product-input');
+        const name = v || input.value.trim();
+        if(!name) return;
+        myItems.push(name);
+        input.value = '';
+        updateDisplay();
     }
 
-    function render() {
-        const cont = document.getElementById('lista-compras');
-        cont.innerHTML = list.map((item, i) => `
-            <div class="item-tag ${i === list.length-1 ? 'latest' : ''}">
-                <span><b>${item}</b></span>
-                <span style="color:var(--danger); font-weight:bold; cursor:pointer;" onclick="list.splice(${i},1);render()">✕</span>
+    function updateDisplay() {
+        const d = document.getElementById('display-list');
+        d.innerHTML = myItems.map((it, i) => `
+            <div class="list-item ${i === myItems.length-1 ? 'target' : ''}">
+                <span><b>${it}</b></span>
+                <span style="color:red; font-weight:bold; cursor:pointer;" onclick="myItems.splice(${i},1);updateDisplay()">✕</span>
             </div>
         `).join('');
     }
 
-    function limpar() { list = []; render(); document.getElementById('res-box').style.display="none"; }
+    function resetAll() { myItems = []; updateDisplay(); document.getElementById('ia-output').style.display="none"; }
 
-    // --- LÓGICA SNIPER (ARTIGO ÚNICO) ---
-    async function modoSniper() {
-        const gKey = localStorage.getItem('groq_key');
-        const tKey = localStorage.getItem('tavily_key');
-        if(!gKey || !tKey || list.length === 0) return alert("Verifica as chaves e a lista!");
+    async function runSniper() {
+        const gK = localStorage.getItem('groq_key');
+        const tK = localStorage.getItem('tavily_key');
+        if(!gK || !tK || myItems.length === 0) return alert("Configura as chaves!");
 
-        const item = list[list.length - 1];
-        const res = document.getElementById('res-box');
-        res.style.display = "block";
-        res.innerHTML = `🎯 <b>Sniper: A comparar preços para ${item}...</b>`;
+        const target = myItems[myItems.length - 1];
+        const out = document.getElementById('ia-output');
+        out.style.display = "block";
+        out.innerHTML = `🎯 <b>Sniper: A pesquisar ${target} em Portugal...</b>`;
 
         try {
             const s = await fetch("https://api.tavily.com/search", {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ api_key: tKey, query: `preço hoje Portugal: ${item} Continente Pingo Doce Lidl Mercadona`, search_depth: "advanced" })
+                body: JSON.stringify({ api_key: tK, query: `preço atual em € Portugal hoje: ${target} no Continente Pingo Doce Lidl Auchan Mercadona`, search_depth: "advanced" })
             });
             const sD = await s.json();
-
             const g = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${gKey}` },
+                method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${gK}` },
                 body: JSON.stringify({
                     model: "llama-3.3-70b-versatile",
-                    messages: [{ role: "system", content: "És um comparador Sniper. Dá apenas o preço do artigo selecionado nos vários supermercados. Sê curto e direto." },
-                               { role: "user", content: `Artigo: ${item} \n\n Dados: ${sD.results.map(r=>r.content).join("\n")}` }]
+                    messages: [{ role: "system", content: "És um comparador Sniper de Portugal. Indica o preço em € do artigo e diz qual o supermercado mais barato hoje. Sê breve." },
+                               { role: "user", content: `Artigo: ${target} \n\n Dados: ${sD.results.map(r=>r.content).join("\n")}` }]
                 })
             });
             const gD = await g.json();
-            res.innerHTML = `<b>📍 Sniper Veredito: ${item}</b><br><br>` + gD.choices[0].message.content.replace(/\n/g, '<br>');
-        } catch(e) { res.innerHTML = "❌ Erro Sniper."; }
+            out.innerHTML = `<b>📍 Veredito Sniper:</b><br><br>` + gD.choices[0].message.content.replace(/\n/g, '<br>');
+        } catch(e) { out.innerHTML = "❌ Erro Sniper."; }
     }
 
-    // --- LÓGICA FAMILIAR (CABAZ E TIMING) ---
-    async function modoFamiliar() {
-        const gKey = localStorage.getItem('groq_key');
-        if(!gKey) return toggleConfig();
+    async function runFamilyPlan() {
+        const gK = localStorage.getItem('groq_key');
+        if(!gK) return toggleConfig();
         
-        const res = document.getElementById('res-box');
-        res.style.display = "block";
-        res.innerHTML = "📦 <b>Familiar: A analisar quantidades e calendário...</b>";
+        const out = document.getElementById('ia-output');
+        out.style.display = "block";
+        out.innerHTML = "📦 <b>A calcular cabaz ideal, locais e melhores marcas...</b>";
 
-        const hoje = new Date();
-        const perfil = `${document.getElementById('adultos').value} adultos e ${document.getElementById('criancas').value} crianças`;
+        const today = new Date();
+        const profile = `${document.getElementById('num-adultos').value} adultos e ${document.getElementById('num-criancas').value} crianças`;
 
         try {
             const g = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${gKey}` },
+                method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${gK}` },
                 body: JSON.stringify({
                     model: "llama-3.3-70b-versatile",
-                    messages: [{ role: "system", content: `Data: ${hoje.toLocaleDateString()}. Diz se hoje é o dia ideal para a compra mensal e sugere o cabaz essencial para o perfil.` },
-                               { role: "user", content: `Perfil: ${perfil}` }]
+                    messages: [{ role: "system", content: `És um especialista em poupança em Portugal. DATA: ${today.toLocaleDateString()}. 
+                    1. Sugere o cabaz mensal para ${profile}. 
+                    2. Indica ONDE comprar cada categoria (ex: Frescos no Lidl, Limpeza na Mercadona). 
+                    3. Sugere MARCAS brancas recomendadas (ex: É, Milbona, Deliplus, Pingo Doce) vs quando comprar marcas líderes (Dodot, Fairy). 
+                    4. Diz se hoje é um bom dia para comprar baseando-te no ciclo de folhetos (Terça-feira é chave).` },
+                               { role: "user", content: `Gera o plano para ${profile}` }]
                 })
             });
             const gD = await g.json();
-            res.innerHTML = "<b>🕒 Cabaz & Timing Familiar:</b><br><br>" + gD.choices[0].message.content.replace(/\n/g, '<br>');
-        } catch(e) { res.innerHTML = "❌ Erro Familiar."; }
+            out.innerHTML = "<b>🕒 Plano de Poupança Familiar:</b><br><br>" + gD.choices[0].message.content.replace(/\n/g, '<br>');
+        } catch(e) { out.innerHTML = "❌ Erro no plano familiar."; }
     }
 </script>
 </body>
