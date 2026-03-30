@@ -3,56 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V18.5 Sniper</title>
+    <title>SACO.pt | V19.0 Sniper</title>
     <style>
         :root { --blue: #4285f4; --green: #34a853; --bg: #f8f9fa; --text: #202124; }
-        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; color: var(--text); }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding: 12px; color: var(--text); }
         .container { max-width: 420px; margin: 0 auto; }
         
-        /* Header */
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 5px; }
         .logo { font-size: 26px; font-weight: 900; color: var(--blue); margin: 0; letter-spacing: -1.5px; }
         .status { font-size: 10px; font-weight: 800; background: #e8f0fe; color: var(--blue); padding: 4px 10px; border-radius: 20px; }
 
-        /* Main Card */
         .card { background: white; border-radius: 28px; padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.05); }
         
         .btn-main { 
-            width: 100%; padding: 22px; border-radius: 20px; border: none; 
+            width: 100%; padding: 20px; border-radius: 18px; border: none; 
             background: var(--blue); color: white; font-weight: 800; font-size: 16px;
             cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px;
             box-shadow: 0 8px 20px rgba(66, 133, 244, 0.25); transition: 0.2s;
         }
-        .btn-main:active { transform: scale(0.97); box-shadow: none; }
+        .btn-main:active { transform: scale(0.97); }
 
-        .input-group { position: relative; margin-top: 20px; }
+        .input-group { position: relative; margin-top: 15px; }
         input { 
-            width: 100%; padding: 18px; border: 2px solid #f1f3f4; border-radius: 16px; 
-            font-size: 16px; outline: none; box-sizing: border-box; transition: 0.3s; background: #fdfdfd;
+            width: 100%; padding: 16px; border: 2px solid #f1f3f4; border-radius: 14px; 
+            font-size: 16px; outline: none; box-sizing: border-box; transition: 0.3s;
         }
-        input:focus { border-color: var(--blue); background: #fff; }
+        input:focus { border-color: var(--blue); }
 
-        /* Results Area */
-        #output { display: none; margin-top: 15px; animation: fadeIn 0.4s ease; }
-        .result-box { background: white; border-radius: 24px; overflow: hidden; border: 1px solid #eee; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+        #output { display: none; margin-top: 15px; background: white; border-radius: 24px; padding: 20px; border: 1px solid #eee; }
         
-        .row { display: flex; justify-content: space-between; align-items: center; padding: 18px; border-bottom: 1px solid #f8f9fa; }
-        .row:last-child { border-bottom: none; }
-        .row.best { background: #e6f4ea; position: relative; }
-        
-        .loja { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 10px; }
-        .preco { font-weight: 900; font-size: 18px; color: var(--blue); }
-        .best .preco { color: var(--green); }
-        
-        .badge-best { background: var(--green); color: white; font-size: 10px; padding: 4px 10px; border-radius: 8px; font-weight: 900; letter-spacing: 0.5px; }
-        
-        /* Utils */
-        .loader { text-align: center; padding: 40px; color: #5f6368; }
-        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid var(--blue); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; display: inline-block; margin-bottom: 15px; }
+        /* Estilo para a tabela que o Gemini vai gerar */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: left; font-size: 12px; color: #888; text-transform: uppercase; padding-bottom: 8px; }
+        td { padding: 12px 0; border-bottom: 1px solid #f1f3f4; font-weight: 600; }
+        tr:last-child td { border-bottom: none; }
+        .price-val { color: var(--green); font-weight: 800; text-align: right; }
+
+        .loader { text-align: center; padding: 30px; color: #5f6368; }
+        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid var(--blue); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        #cfg-btn { text-align: center; color: #bdc1c6; font-size: 12px; margin-top: 20px; cursor: pointer; padding: 10px; }
+        
+        #cfg-btn { text-align: center; color: #bdc1c6; font-size: 11px; margin-top: 20px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -60,23 +51,21 @@
 <div class="container">
     <div class="header">
         <h1 class="logo">SACO<span style="color:#bdc1c6">.pt</span></h1>
-        <div class="status">V18.5 LIVE</div>
+        <div class="status">V19.0 LIVE</div>
     </div>
 
     <div class="card">
-        <!-- Gatilho On-The-Fly -->
         <button class="btn-main" onclick="document.getElementById('cam-trigger').click()">
-            📸 TIRAR FOTO À EMBALAGEM
+            📸 FOTO À EMBALAGEM
         </button>
-        <!-- Capture environment garante que abre a câmara traseira diretamente no telemóvel -->
         <input type="file" id="cam-trigger" style="display:none" accept="image/*" capture="environment" onchange="processOnTheFly(event)">
         
         <div class="input-group">
-            <input type="text" id="prod-name" placeholder="Ou digita o produto aqui...">
+            <input type="text" id="prod-name" placeholder="Ou digita o produto...">
         </div>
         
-        <button class="btn-main" style="background: var(--green); padding: 16px; font-size: 14px; box-shadow: 0 4px 12px rgba(52, 168, 83, 0.2);" onclick="manualSearch()">
-            🔍 PESQUISA MANUAL
+        <button class="btn-main" style="background: var(--green); margin-top:10px; padding: 14px; font-size: 14px;" onclick="manualSearch()">
+            🔍 COMPARAR AGORA
         </button>
 
         <div id="cfg-btn" onclick="setupKey()">⚙️ CONFIGURAR API KEY</div>
@@ -86,43 +75,88 @@
 </div>
 
 <script>
-// Configuração do Modelo Estável para 2026
-const MODEL_ID = "gemini-2.5-flash";
+const MODEL_ID = "gemini-1.5-flash"; // Versão mais estável para pesquisa em tempo real
 
 function setupKey() {
-    const key = prompt("Insere a tua Gemini API Key (AIza...):", localStorage.getItem('gem_key') || "");
-    if(key) {
-        localStorage.setItem('gem_key', key.trim());
-        alert("✅ Chave configurada com sucesso!");
-    }
+    const key = prompt("Insere a API Key:", localStorage.getItem('gem_key') || "");
+    if(key) localStorage.setItem('gem_key', key.trim());
 }
 
-// FLUXO ON-THE-FLY (Zero Storage)
 async function processOnTheFly(event) {
     const file = event.target.files[0];
     const key = localStorage.getItem('gem_key');
-    
-    if(!key) {
-        alert("⚠️ Configura primeiro a tua API Key nas definições.");
-        return setupKey();
-    }
+    if(!key) return setupKey();
     if(!file) return;
 
     const out = document.getElementById('output');
     out.style.display = 'block';
-    out.innerHTML = `<div class="loader"><div class="spinner"></div><br><b>A analisar embalagem...</b></div>`;
+    out.innerHTML = `<div class="loader"><div class="spinner"></div><br><br><b>A ler embalagem...</b></div>`;
 
     const reader = new FileReader();
     reader.onload = async () => {
         const base64 = reader.result.split(',')[1];
-        const mimeType = file.type;
-
-        // LIMPEZA IMEDIATA: O browser esquece o ficheiro para não ocupar memória/disco
-        event.target.value = ""; 
+        event.target.value = ""; // Limpa imagem do telemóvel
 
         try {
-            // PASSO 1: IDENTIFICAR PRODUTO (Visão Computacional)
-            const visionResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_ID}:generateContent?key=${key}`, {
+            const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_ID}:generateContent?key=${key}`, {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({
+                    contents: [{ parts: [
+                        { inline_data: { mime_type: file.type, data: base64 } },
+                        { text: "Identifica este produto. Responde apenas: Marca e Nome." }
+                    ]}]
+                })
+            });
+            const data = await resp.json();
+            const name = data.candidates[0].content.parts[0].text.trim();
+            document.getElementById('prod-name').value = name;
+            startSniper(name);
+        } catch (e) { out.innerHTML = "❌ Erro ao identificar produto."; }
+    };
+    reader.readAsDataURL(file);
+}
+
+function manualSearch() {
+    const q = document.getElementById('prod-name').value;
+    if(q) startSniper(q);
+}
+
+async function startSniper(product) {
+    const key = localStorage.getItem('gem_key');
+    const out = document.getElementById('output');
+    out.style.display = 'block';
+    out.innerHTML = `<div class="loader"><div class="spinner"></div><br><br><b>A pesquisar preços para:</b><br>${product}</div>`;
+
+    try {
+        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_ID}:generateContent?key=${key}`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                contents: [{ parts: [{ 
+                    text: `Pesquisa o preço de "${product}" em Portugal nos supermercados: Continente, Pingo Doce, Auchan e Intermarché. 
+                    Cria uma tabela HTML com duas colunas: "Loja" e "Preço". 
+                    No fim da tabela, indica qual é o mais barato com um emoji ✅. 
+                    Não escrevas conversa, apenas a tabela.` 
+                }] }],
+                tools: [{ google_search: {} }]
+            })
+        });
+
+        const data = await resp.json();
+        // O Gemini vai devolver HTML diretamente na resposta de texto
+        const content = data.candidates[0].content.parts[0].text;
+        
+        out.innerHTML = `
+            <div style="font-size:12px; font-weight:bold; color:var(--blue); margin-bottom:10px;">RESULTADOS ENCONTRADOS:</div>
+            ${content}
+            <p style="font-size:10px; color:#999; margin-top:15px; text-align:center;">Pesquisa efetuada em tempo real via Google.</p>
+        `;
+
+    } catch (e) {
+        out.innerHTML = `<div class="loader">❌ Erro ao obter preços. Verifica a tua Key.</div>`;
+    }
+}
+</script>
+</body>
+</html>
