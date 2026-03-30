@@ -3,52 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V10.0 Pure Data</title>
+    <title>SACO.pt | V11.0 Fixed Scraper</title>
     <style>
         :root { --primary: #007aff; --sniper: #34c759; --bg: #f2f2f7; --card: #ffffff; }
         body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding: 15px; color: #1c1c1e; }
         .container { max-width: 480px; margin: 0 auto; }
-        
-        .version-badge { font-size: 10px; font-weight: 800; background: #000; color: #fff; padding: 4px 8px; border-radius: 6px; float: right; }
+        .version-badge { font-size: 10px; font-weight: 800; background: #ff3b30; color: #fff; padding: 4px 8px; border-radius: 6px; float: right; }
         .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; }
         .header h1 { font-size: 24px; font-weight: 800; margin: 0; color: var(--primary); }
-
         #image-preview-container { width: 100%; height: 180px; background: #000; border-radius: 15px; margin-bottom: 15px; display: none; overflow: hidden; }
         #image-preview { width: 100%; height: 100%; object-fit: cover; }
-
         .input-zone { background: var(--card); border-radius: 20px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .btn-main { width: 100%; padding: 16px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; margin-bottom: 10px; }
         .btn-camera { background: var(--primary); color: white; }
         .btn-search { background: var(--sniper); color: white; }
-        
         input[type="text"] { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 10px; box-sizing: border-box; font-size: 16px; }
-
-        #ia-output { margin-top: 20px; padding: 15px; background: white; border-radius: 15px; display: none; border: 1px solid #ddd; font-size: 14px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { text-align: left; padding: 8px; border-bottom: 1px solid #eee; }
-        th { font-size: 12px; text-transform: uppercase; color: #666; }
-        
+        #ia-output { margin-top: 20px; padding: 15px; background: white; border-radius: 15px; display: none; border: 1px solid #ddd; font-size: 14px; white-space: pre-wrap; }
         #config-panel { display: none; position: fixed; inset: 0; background: white; z-index: 1000; padding: 40px 25px; }
-        .hidden { display: none; }
+        .loader { color: var(--primary); font-weight: bold; text-align: center; display: block; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="version-badge">V10.0</div>
+    <div class="version-badge">V11.0</div>
     <div class="header">
         <h1>SACO.pt</h1>
-        <div onclick="toggleConfig()" style="cursor:pointer;">⚙️</div>
+        <div onclick="toggleConfig()" style="cursor:pointer; font-size:20px;">⚙️</div>
     </div>
 
     <div id="image-preview-container"><img id="image-preview" src=""></div>
 
     <div class="input-zone">
         <button class="btn-main btn-camera" onclick="document.getElementById('file-input').click()">📸 FOTO PRODUTO</button>
-        <input type="file" id="file-input" class="hidden" accept="image/*" capture="environment" onchange="handleVision(event)">
-        
-        <input type="text" id="product-input" placeholder="Nome do produto...">
-        <button class="btn-main btn-search" onclick="runManualSearch()">🔍 OBTER PREÇOS HOJE</button>
+        <input type="file" id="file-input" style="display:none" accept="image/*" capture="environment" onchange="handleVision(event)">
+        <input type="text" id="product-input" placeholder="Produto para pesquisa real...">
+        <button class="btn-main btn-search" onclick="runManualSearch()">🔍 PESQUISAR PREÇOS REAIS</button>
     </div>
 
     <div id="ia-output"></div>
@@ -56,8 +46,8 @@
 
 <div id="config-panel">
     <h2 onclick="toggleConfig()">✕ Fechar</h2>
-    <input type="password" id="save-groq" placeholder="Groq API Key" style="width:100%; padding:15px; margin-bottom:10px;">
-    <input type="password" id="save-tavily" placeholder="Tavily API Key" style="width:100%; padding:15px; margin-bottom:10px;">
+    <input type="password" id="save-groq" placeholder="Groq API Key" style="width:100%; padding:15px; margin-bottom:10px; border:1px solid #ddd; border-radius:10px;">
+    <input type="password" id="save-tavily" placeholder="Tavily API Key" style="width:100%; padding:15px; margin-bottom:20px; border:1px solid #ddd; border-radius:10px;">
     <button class="btn-main btn-camera" onclick="confirmKeys()">GUARDAR</button>
 </div>
 
@@ -70,6 +60,7 @@
     function confirmKeys() {
         localStorage.setItem('groq_key', document.getElementById('save-groq').value);
         localStorage.setItem('tavily_key', document.getElementById('save-tavily').value);
+        alert("Chaves guardadas!");
         toggleConfig();
     }
 
@@ -84,14 +75,14 @@
     async function handleVision(event) {
         const file = event.target.files[0];
         const gK = localStorage.getItem('groq_key');
-        if (!file || !gK) return alert("Falta API Key!");
+        if (!file || !gK) return alert("Configura a Groq Key na ⚙️");
 
         document.getElementById('image-preview').src = URL.createObjectURL(file);
         document.getElementById('image-preview-container').style.display = 'block';
 
         const out = document.getElementById('ia-output');
         out.style.display = "block";
-        out.innerHTML = "⌛ Identificando...";
+        out.innerHTML = '<span class="loader">📷 Identificando imagem...</span>';
 
         try {
             const base64 = await encodeImage(file);
@@ -103,17 +94,19 @@
                     messages: [{
                         role: "user",
                         content: [
-                            { type: "text", text: "Identifica o produto. Responde APENAS o Nome e Marca." },
+                            { type: "text", text: "Responde APENAS o nome e marca deste produto." },
                             { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64}` } }
                         ]
                     }]
                 })
             });
             const data = await res.json();
-            const name = data.choices[0].message.content;
+            const name = data.choices[0].message.content.trim();
             document.getElementById('product-input').value = name;
             runManualSearch();
-        } catch (e) { out.innerHTML = "❌ Erro Visão."; }
+        } catch (e) { 
+            out.innerHTML = "❌ Erro na Visão. Verifica a tua Key do Groq.";
+        }
     }
 
     async function runManualSearch() {
@@ -122,37 +115,53 @@
         const tK = localStorage.getItem('tavily_key');
         const out = document.getElementById('ia-output');
 
-        if (!query || !tK) return;
+        if (!query) return alert("Escreve um produto!");
+        if (!tK || !gK) return alert("Configura as Keys na ⚙️");
 
         out.style.display = "block";
-        out.innerHTML = `⌛ Procurando preços reais para: ${query}...`;
+        out.innerHTML = `<span class="loader">🌐 A extrair preços de hoje para:<br>"${query}"</span>`;
 
         try {
+            // Chamada ao Tavily com filtro de sites PT
             const search = await fetch("https://api.tavily.com/search", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     api_key: tK,
-                    query: `preço hoje "${query}" Portugal site:continente.pt OR site:auchan.pt OR site:pingo-doce.pt OR site:elcorteingles.pt OR "Lidl" OR "Mercadona"`,
-                    search_depth: "advanced"
+                    query: `preço atual em Euros "${query}" em continente.pt, pingo-doce.pt, auchan.pt, elcorteingles.pt`,
+                    search_depth: "advanced",
+                    max_results: 5
                 })
             });
+            
             const sData = await search.json();
+            if (!sData.results || sData.results.length === 0) {
+                out.innerHTML = "⚠️ Nenhum preço encontrado nos sites principais.";
+                return;
+            }
 
+            // Filtragem inteligente com Llama 3.3
             const final = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${gK}` },
                 body: JSON.stringify({
                     model: "llama-3.3-70b-versatile",
                     messages: [
-                        { role: "system", content: "És um extrator de dados de preços. Cria uma tabela HTML com: Loja, Preço (€) e Data/Obs. Não dês conselhos, não dês sugestões, não fales. Apenas a tabela ou 'Preço não encontrado'." },
-                        { role: "user", content: `Dados: ${JSON.stringify(sData.results)}` }
-                    ]
+                        { role: "system", content: "És um extrator de preços. Devolve apenas uma lista simples: Loja: Preço. Não dês sugestões, não fales mais nada." },
+                        { role: "user", content: `Extrai preços para ${query} destes dados: ${JSON.stringify(sData.results.map(r => ({c: r.content})))}` }
+                    ],
+                    temperature: 0.1
                 })
             });
+
             const fData = await final.json();
-            out.innerHTML = fData.choices[0].message.content;
-        } catch (e) { out.innerHTML = "❌ Erro Scraper."; }
+            const resposta = fData.choices[0].message.content;
+            
+            out.innerHTML = `<b>💰 RESULTADOS DE HOJE:</b>\n\n${resposta}`;
+
+        } catch (e) { 
+            out.innerHTML = "❌ Erro de Scraper. Verifica a ligação ou a validade das API Keys.";
+        }
     }
 </script>
 </body>
