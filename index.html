@@ -3,47 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V19.0 Sniper</title>
+    <title>SACO.pt | V21 Turbo</title>
     <style>
-        :root { --blue: #4285f4; --green: #34a853; --bg: #f8f9fa; --text: #202124; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding: 12px; color: var(--text); }
-        .container { max-width: 420px; margin: 0 auto; }
+        :root { --blue: #4285f4; --green: #34a853; --bg: #f8f9fa; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding: 12px; color: #202124; }
+        .container { max-width: 440px; margin: 0 auto; }
         
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 5px; }
-        .logo { font-size: 26px; font-weight: 900; color: var(--blue); margin: 0; letter-spacing: -1.5px; }
-        .status { font-size: 10px; font-weight: 800; background: #e8f0fe; color: var(--blue); padding: 4px 10px; border-radius: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .logo { font-size: 24px; font-weight: 900; color: var(--blue); margin: 0; }
+        .badge { font-size: 10px; background: #333; color: #fff; padding: 4px 8px; border-radius: 12px; }
 
-        .card { background: white; border-radius: 28px; padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.05); }
+        .card { background: white; border-radius: 24px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #eee; }
         
         .btn-main { 
-            width: 100%; padding: 20px; border-radius: 18px; border: none; 
+            width: 100%; padding: 18px; border-radius: 16px; border: none; 
             background: var(--blue); color: white; font-weight: 800; font-size: 16px;
-            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px;
-            box-shadow: 0 8px 20px rgba(66, 133, 244, 0.25); transition: 0.2s;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
         }
-        .btn-main:active { transform: scale(0.97); }
+        .btn-main:active { transform: scale(0.98); }
 
-        .input-group { position: relative; margin-top: 15px; }
         input { 
             width: 100%; padding: 16px; border: 2px solid #f1f3f4; border-radius: 14px; 
-            font-size: 16px; outline: none; box-sizing: border-box; transition: 0.3s;
+            margin: 15px 0; font-size: 15px; outline: none; box-sizing: border-box;
         }
-        input:focus { border-color: var(--blue); }
 
-        #output { display: none; margin-top: 15px; background: white; border-radius: 24px; padding: 20px; border: 1px solid #eee; }
+        #output { display: none; margin-top: 15px; background: white; border-radius: 20px; padding: 15px; border: 1px solid #eee; }
         
-        /* Estilo para a tabela que o Gemini vai gerar */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { text-align: left; font-size: 12px; color: #888; text-transform: uppercase; padding-bottom: 8px; }
-        td { padding: 12px 0; border-bottom: 1px solid #f1f3f4; font-weight: 600; }
-        tr:last-child td { border-bottom: none; }
-        .price-val { color: var(--green); font-weight: 800; text-align: right; }
+        /* Tabela de Preços Optimizada */
+        table { width: 100%; border-collapse: collapse; }
+        td { padding: 12px 5px; border-bottom: 1px solid #f8f9fa; font-size: 14px; font-weight: 600; }
+        .p-val { text-align: right; color: var(--blue); font-weight: 800; }
+        .best-row { background: #e6f4ea; }
+        .best-row .p-val { color: var(--green); }
 
-        .loader { text-align: center; padding: 30px; color: #5f6368; }
-        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid var(--blue); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; }
+        .loader { text-align: center; padding: 20px; font-weight: bold; color: #5f6368; }
+        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid var(--blue); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        #cfg-btn { text-align: center; color: #bdc1c6; font-size: 11px; margin-top: 20px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -51,111 +46,128 @@
 <div class="container">
     <div class="header">
         <h1 class="logo">SACO<span style="color:#bdc1c6">.pt</span></h1>
-        <div class="status">V19.0 LIVE</div>
+        <span class="badge">V21 TURBO</span>
     </div>
 
     <div class="card">
-        <button class="btn-main" onclick="document.getElementById('cam-trigger').click()">
-            📸 FOTO À EMBALAGEM
+        <button class="btn-main" onclick="document.getElementById('cam').click()">
+            📸 FOTOGRAFAR EMBALAGEM
         </button>
-        <input type="file" id="cam-trigger" style="display:none" accept="image/*" capture="environment" onchange="processOnTheFly(event)">
+        <input type="file" id="cam" style="display:none" accept="image/*" capture="environment" onchange="fastProcess(event)">
         
-        <div class="input-group">
-            <input type="text" id="prod-name" placeholder="Ou digita o produto...">
-        </div>
-        
-        <button class="btn-main" style="background: var(--green); margin-top:10px; padding: 14px; font-size: 14px;" onclick="manualSearch()">
+        <input type="text" id="q" placeholder="Ou escreve o nome...">
+        <button class="btn-main" style="background: var(--green); padding: 14px; font-size: 14px;" onclick="manualSearch()">
             🔍 COMPARAR AGORA
         </button>
-
-        <div id="cfg-btn" onclick="setupKey()">⚙️ CONFIGURAR API KEY</div>
+        <p style="text-align:center; font-size:11px; color:#ccc; cursor:pointer; margin-top:10px" onclick="setKey()">⚙️ API KEY</p>
     </div>
 
     <div id="output"></div>
 </div>
 
 <script>
-const MODEL_ID = "gemini-1.5-flash"; // Versão mais estável para pesquisa em tempo real
+const MODEL = "gemini-1.5-flash"; // Mais rápido para deteção on-the-fly
 
-function setupKey() {
-    const key = prompt("Insere a API Key:", localStorage.getItem('gem_key') || "");
-    if(key) localStorage.setItem('gem_key', key.trim());
+function setKey() {
+    const k = prompt("API Key:", localStorage.getItem('gem_key')||"");
+    if(k) localStorage.setItem('gem_key', k.trim());
 }
 
-async function processOnTheFly(event) {
+// --- CORE: REDIMENSIONAMENTO PARA VELOCIDADE ---
+async function shrinkImage(file) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (e) => {
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX = 800; // Resolução ideal para IA ler rótulos/barras
+                let w = img.width, h = img.height;
+                if (w > h && w > MAX) { h *= MAX/w; w = MAX; }
+                else if (h > MAX) { w *= MAX/h; h = MAX; }
+                canvas.width = w; canvas.height = h;
+                canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                resolve({
+                    base64: canvas.toDataURL('image/jpeg', 0.6).split(',')[1],
+                    mime: 'image/jpeg'
+                });
+            };
+        };
+    });
+}
+
+async function fastProcess(event) {
     const file = event.target.files[0];
     const key = localStorage.getItem('gem_key');
-    if(!key) return setupKey();
-    if(!file) return;
+    if(!key || !file) return setKey();
 
     const out = document.getElementById('output');
     out.style.display = 'block';
-    out.innerHTML = `<div class="loader"><div class="spinner"></div><br><br><b>A ler embalagem...</b></div>`;
+    out.innerHTML = '<div class="loader"><div class="spinner"></div>A comprimir e enviar...</div>';
 
-    const reader = new FileReader();
-    reader.onload = async () => {
-        const base64 = reader.result.split(',')[1];
-        event.target.value = ""; // Limpa imagem do telemóvel
+    try {
+        // 1. Shrink imediato (corre no telemóvel em milisegundos)
+        const imgData = await shrinkImage(file);
+        event.target.value = ""; // Zero Storage: limpa o rasto do ficheiro
 
-        try {
-            const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_ID}:generateContent?key=${key}`, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({
-                    contents: [{ parts: [
-                        { inline_data: { mime_type: file.type, data: base64 } },
-                        { text: "Identifica este produto. Responde apenas: Marca e Nome." }
-                    ]}]
-                })
-            });
-            const data = await resp.json();
-            const name = data.candidates[0].content.parts[0].text.trim();
-            document.getElementById('prod-name').value = name;
-            startSniper(name);
-        } catch (e) { out.innerHTML = "❌ Erro ao identificar produto."; }
-    };
-    reader.readAsDataURL(file);
+        out.innerHTML = '<div class="loader"><div class="spinner"></div>A identificar produto...</div>';
+
+        // 2. Identificação Ultra-Rápida
+        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                contents: [{ parts: [
+                    { inline_data: { mime_type: imgData.mime, data: imgData.base64 } },
+                    { text: "Identifica marca e nome deste produto. Sê breve (max 5 palavras). Responde apenas o nome." }
+                ]}],
+                generationConfig: { maxOutputTokens: 20, temperature: 0 }
+            })
+        });
+        
+        const data = await resp.json();
+        const productName = data.candidates[0].content.parts[0].text.trim();
+        document.getElementById('q').value = productName;
+        
+        // 3. Disparar Comparador
+        startSniper(productName);
+
+    } catch (e) { out.innerHTML = "❌ Erro na deteção rápida."; }
 }
 
-function manualSearch() {
-    const q = document.getElementById('prod-name').value;
-    if(q) startSniper(q);
+function manualSearch() { 
+    const val = document.getElementById('q').value;
+    if(val) startSniper(val); 
 }
 
 async function startSniper(product) {
     const key = localStorage.getItem('gem_key');
     const out = document.getElementById('output');
     out.style.display = 'block';
-    out.innerHTML = `<div class="loader"><div class="spinner"></div><br><br><b>A pesquisar preços para:</b><br>${product}</div>`;
+    out.innerHTML = `<div class="loader"><div class="spinner"></div>A caçar preços para:<br><b>${product}</b></div>`;
 
     try {
-        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_ID}:generateContent?key=${key}`, {
+        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`, {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({
-                contents: [{ parts: [{ 
-                    text: `Pesquisa o preço de "${product}" em Portugal nos supermercados: Continente, Pingo Doce, Auchan e Intermarché. 
-                    Cria uma tabela HTML com duas colunas: "Loja" e "Preço". 
-                    No fim da tabela, indica qual é o mais barato com um emoji ✅. 
-                    Não escrevas conversa, apenas a tabela.` 
-                }] }],
-                tools: [{ google_search: {} }]
+                contents: [{ parts: [{ text: `Pesquisa o preço de "${product}" em Portugal (Continente, Pingo Doce, Auchan, Lidl, Intermarché). 
+                Gera apenas uma tabela HTML <table> com as colunas Loja e Preço. 
+                Usa a classe 'best-row' para a linha do preço mais baixo. Sem texto extra.` }] }],
+                tools: [{ google_search: {} }],
+                safetySettings: [{category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE"}]
             })
         });
 
         const data = await resp.json();
-        // O Gemini vai devolver HTML diretamente na resposta de texto
-        const content = data.candidates[0].content.parts[0].text;
-        
         out.innerHTML = `
-            <div style="font-size:12px; font-weight:bold; color:var(--blue); margin-bottom:10px;">RESULTADOS ENCONTRADOS:</div>
-            ${content}
-            <p style="font-size:10px; color:#999; margin-top:15px; text-align:center;">Pesquisa efetuada em tempo real via Google.</p>
+            <div style="font-size:12px; font-weight:bold; color:var(--blue); margin-bottom:8px;">PREÇOS HOJE:</div>
+            ${data.candidates[0].content.parts[0].text}
+            <p style="text-align:center; font-size:10px; color:#999; margin-top:15px;">Atualizado via Google Search.</p>
         `;
-
-    } catch (e) {
-        out.innerHTML = `<div class="loader">❌ Erro ao obter preços. Verifica a tua Key.</div>`;
-    }
+    } catch (e) { out.innerHTML = "❌ Erro ao obter preços."; }
 }
 </script>
 </body>
