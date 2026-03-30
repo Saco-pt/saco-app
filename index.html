@@ -3,170 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V12.0 Gemini Sniper</title>
+    <title>SACO.pt | V13.0 Stable Gemini</title>
     <style>
-        :root { --primary: #1a73e8; --sniper: #1ed760; --bg: #f8f9fa; --card: #ffffff; }
-        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg); margin: 0; padding: 15px; color: #202124; }
-        .container { max-width: 480px; margin: 0 auto; }
-        .version-badge { font-size: 10px; font-weight: bold; background: #1a73e8; color: white; padding: 4px 10px; border-radius: 20px; float: right; margin-top: 5px; }
-        .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; }
-        .header h1 { font-size: 26px; font-weight: 800; margin: 0; color: var(--primary); letter-spacing: -1px; }
-        #image-preview-container { width: 100%; height: 200px; background: #202124; border-radius: 16px; margin-bottom: 15px; display: none; overflow: hidden; border: 2px solid var(--primary); }
-        #image-preview { width: 100%; height: 100%; object-fit: cover; }
-        .input-zone { background: var(--card); border-radius: 24px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #e0e0e0; }
-        .btn-main { width: 100%; padding: 18px; border-radius: 14px; border: none; font-weight: 700; font-size: 16px; cursor: pointer; transition: 0.2s; margin-bottom: 12px; }
-        .btn-camera { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(26,115,232,0.3); }
-        .btn-search { background: var(--sniper); color: white; box-shadow: 0 4px 12px rgba(30,215,96,0.3); }
-        input[type="text"] { width: 100%; padding: 16px; border: 1px solid #dadce0; border-radius: 12px; margin-bottom: 12px; box-sizing: border-box; font-size: 16px; outline: none; }
-        input[type="text"]:focus { border-color: var(--primary); }
-        #ia-output { margin-top: 20px; padding: 20px; background: white; border-radius: 20px; display: none; border: 1px solid #e0e0e0; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        .loader { text-align: center; color: var(--primary); font-weight: bold; padding: 20px; display: block; }
-        #config-panel { display: none; position: fixed; inset: 0; background: white; z-index: 1000; padding: 40px 25px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { text-align: left; padding: 12px 8px; border-bottom: 1px solid #f1f3f4; font-size: 14px; }
-        th { color: #5f6368; font-size: 11px; text-transform: uppercase; }
+        :root { --google-blue: #4285f4; --success: #34a853; --bg: #f1f3f4; }
+        body { font-family: 'Google Sans', Roboto, Arial, sans-serif; background: var(--bg); margin: 0; padding: 15px; }
+        .container { max-width: 450px; margin: 0 auto; }
+        .version-badge { font-size: 10px; font-weight: bold; background: #333; color: white; padding: 5px 12px; border-radius: 50px; float: right; }
+        .header h1 { color: var(--google-blue); font-size: 24px; margin: 10px 0; }
+        .input-zone { background: white; border-radius: 24px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .btn { width: 100%; padding: 16px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; margin-bottom: 10px; font-size: 15px; }
+        .btn-cam { background: var(--google-blue); color: white; }
+        .btn-search { background: var(--success); color: white; }
+        input[type="text"] { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 12px; margin-bottom: 10px; box-sizing: border-box; }
+        #ia-output { margin-top: 15px; padding: 15px; background: white; border-radius: 16px; display: none; border: 1px solid #ddd; font-size: 14px; }
+        #config-panel { display: none; position: fixed; inset: 0; background: white; z-index: 9999; padding: 40px 20px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="version-badge">GEMINI V12.0</div>
-    <div class="header">
-        <h1>SACO.pt</h1>
-        <div onclick="toggleConfig()" style="cursor:pointer; font-size:24px;">⚙️</div>
-    </div>
-
-    <div id="image-preview-container"><img id="image-preview" src=""></div>
+    <div class="version-badge">V13.0 STABLE</div>
+    <div class="header"><h1>SACO.pt</h1></div>
 
     <div class="input-zone">
-        <button class="btn-main btn-camera" onclick="document.getElementById('file-input').click()">📸 FOTO AO PRODUTO</button>
-        <input type="file" id="file-input" style="display:none" accept="image/*" capture="environment" onchange="handleGeminiVision(event)">
+        <button class="btn btn-cam" onclick="document.getElementById('file-input').click()">📸 TIRAR FOTO</button>
+        <input type="file" id="file-input" style="display:none" accept="image/*" capture="environment" onchange="handleGemini(event)">
         
-        <input type="text" id="product-input" placeholder="Ou digite o nome aqui...">
-        <button class="btn-main btn-search" onclick="runGeminiSearch()">🔍 VER PREÇOS REAIS</button>
+        <input type="text" id="product-input" placeholder="Produto...">
+        <button class="btn btn-search" onclick="runSearch()">🔍 VER PREÇOS</button>
+        
+        <div style="text-align:center; margin-top:10px;">
+            <small onclick="toggleConfig()" style="color:#666; cursor:pointer;">⚙️ Configurar Keys</small>
+        </div>
     </div>
 
     <div id="ia-output"></div>
 </div>
 
-<!-- Configurações -->
 <div id="config-panel">
-    <h2>Configurações</h2>
-    <p>API do Google (Gemini):</p>
-    <input type="password" id="gemini-key" placeholder="Insere a Gemini API Key" style="width:100%; padding:15px; margin-bottom:15px; border:1px solid #ddd; border-radius:10px;">
-    <p>API de Pesquisa (Tavily):</p>
-    <input type="password" id="tavily-key" placeholder="Insere a Tavily API Key" style="width:100%; padding:15px; margin-bottom:25px; border:1px solid #ddd; border-radius:10px;">
-    <button class="btn-main btn-camera" onclick="saveKeys()">GUARDAR E FECHAR</button>
+    <h2>Definições</h2>
+    <input type="text" id="gem-key" placeholder="Gemini API Key (Google)">
+    <input type="text" id="tav-key" placeholder="Tavily API Key">
+    <button class="btn btn-cam" onclick="save()">GUARDAR</button>
 </div>
 
 <script>
-    function toggleConfig() {
-        const p = document.getElementById('config-panel');
-        p.style.display = p.style.display === 'block' ? 'none' : 'block';
-        document.getElementById('gemini-key').value = localStorage.getItem('gemini_key') || '';
-        document.getElementById('tavily-key').value = localStorage.getItem('tavily_key') || '';
+    function toggleConfig() { document.getElementById('config-panel').style.display = 'block'; }
+    function save() {
+        localStorage.setItem('gem_key', document.getElementById('gem-key').value.trim());
+        localStorage.setItem('tav_key', document.getElementById('tav-key').value.trim());
+        document.getElementById('config-panel').style.display = 'none';
     }
 
-    function saveKeys() {
-        localStorage.setItem('gemini_key', document.getElementById('gemini-key').value);
-        localStorage.setItem('tavily_key', document.getElementById('tavily-key').value);
-        toggleConfig();
-    }
-
-    async function encodeImage(file) {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result.split(',')[1]);
-            reader.readAsDataURL(file);
-        });
-    }
-
-    async function handleGeminiVision(event) {
+    async function handleGemini(event) {
         const file = event.target.files[0];
-        const key = localStorage.getItem('gemini_key');
-        if (!file || !key) return alert("Configura a tua Gemini Key na ⚙️");
-
-        document.getElementById('image-preview').src = URL.createObjectURL(file);
-        document.getElementById('image-preview-container').style.display = 'block';
-
+        const key = localStorage.getItem('gem_key');
         const out = document.getElementById('ia-output');
+        
+        if (!key) return alert("Falta a Gemini Key!");
         out.style.display = "block";
-        out.innerHTML = '<span class="loader">🤖 Gemini a identificar produto...</span>';
+        out.innerHTML = "⌛ A ler imagem...";
 
         try {
-            const base64 = await encodeImage(file);
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
-            
-            const res = await fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [
-                            { text: "Identifica este produto de supermercado. Devolve APENAS o Nome e a Marca. Exemplo: 'Arroz Cigala 1kg'." },
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = async () => {
+                const base64 = reader.result.split(',')[1];
+                const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${key}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: [{ parts: [
+                            { text: "Identifica este produto (marca e nome). Responde apenas o nome do produto." },
                             { inline_data: { mime_type: "image/jpeg", data: base64 } }
-                        ]
-                    }]
-                })
-            });
+                        ]}]
+                    })
+                });
 
-            const data = await res.json();
-            const productName = data.candidates[0].content.parts[0].text.trim();
-            document.getElementById('product-input').value = productName;
-            runGeminiSearch();
-
-        } catch (e) {
-            out.innerHTML = "❌ Erro na Visão Gemini. Verifica a tua chave API.";
-        }
+                const data = await resp.json();
+                if (data.error) throw new Error(data.error.message);
+                
+                const name = data.candidates[0].content.parts[0].text;
+                document.getElementById('product-input').value = name;
+                runSearch();
+            };
+        } catch (e) { out.innerHTML = "❌ Erro Google: " + e.message; }
     }
 
-    async function runGeminiSearch() {
-        const query = document.getElementById('product-input').value;
-        const geminiKey = localStorage.getItem('gemini_key');
-        const tavilyKey = localStorage.getItem('tavily_key');
+    async function runSearch() {
+        const q = document.getElementById('product-input').value;
+        const gK = localStorage.getItem('gem_key');
+        const tK = localStorage.getItem('tav_key');
         const out = document.getElementById('ia-output');
 
-        if (!query || !tavilyKey) return alert("Produto ou Tavily Key em falta!");
-
+        if (!tK) return alert("Falta Tavily Key!");
         out.style.display = "block";
-        out.innerHTML = `<span class="loader">🌐 A pesquisar preços reais para:<br>"${query}"...</span>`;
+        out.innerHTML = "🌐 A pesquisar preços reais...";
 
         try {
-            // 1. Scraping via Tavily
-            const search = await fetch("https://api.tavily.com/search", {
+            const s = await fetch("https://api.tavily.com/search", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ api_key: tK, query: `preço euros "${q}" continente.pt pingo-doce.pt auchan.pt`, search_depth: "advanced" })
+            });
+            const sData = await s.json();
+
+            const final = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${gK}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    api_key: tavilyKey,
-                    query: `preço atual "${query}" em continente.pt, auchan.pt, pingo-doce.pt, elcorteingles.pt`,
-                    search_depth: "advanced",
-                    max_results: 5
+                    contents: [{ parts: [{ text: `Cria uma lista simples de preços para ${q}. Dados: ${JSON.stringify(sData.results)}. Formato: Loja: Preço. Nada de conversa.` }]}]
                 })
             });
-            const sData = await search.json();
-
-            // 2. Extração via Gemini (mais inteligente para tabelas)
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
-            const final = await fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [{ 
-                            text: `Cria uma tabela HTML simples (Loja, Preço €) para o produto ${query} usando estes dados reais: ${JSON.stringify(sData.results)}. Não dês conselhos nem fales nada extra.` 
-                        }]
-                    }]
-                })
-            });
-
             const fData = await final.json();
-            const htmlTable = fData.candidates[0].content.parts[0].text;
-            
-            out.innerHTML = `<b>💰 RESULTADOS DE HOJE:</b><br>${htmlTable}`;
-
-        } catch (e) {
-            out.innerHTML = "❌ Erro ao obter preços reais.";
-        }
+            out.innerHTML = "<b>💰 PREÇOS HOJE:</b><br>" + fData.candidates[0].content.parts[0].text.replace(/\n/g, '<br>');
+        } catch (e) { out.innerHTML = "❌ Erro Pesquisa."; }
     }
 </script>
 </body>
