@@ -3,104 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | Inteligência de Compras 2026</title>
+    <title>SACO.pt | Sniper vs Cabaz</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <style>
         :root { 
-            --primary: #007aff; 
-            --success: #34c759; 
-            --warning: #ffcc00; 
-            --danger: #ff3b30; 
-            --bg: #f2f2f7;
-            --card: #ffffff;
+            --primary: #007aff; --success: #34c759; --warning: #ffcc00; 
+            --danger: #ff3b30; --bg: #f2f2f7; --card: #ffffff;
         }
         
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            background: var(--bg); 
-            margin: 0; 
-            padding: env(safe-area-inset-top) 15px 40px 15px;
-            color: #1c1c1e;
+            font-family: -apple-system, system-ui, sans-serif; 
+            background: var(--bg); margin: 0; padding: 15px; color: #1c1c1e;
         }
 
         .app-container { max-width: 480px; margin: 0 auto; }
 
         /* Header */
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; }
-        .header h1 { font-size: 28px; font-weight: 800; margin: 0; color: var(--primary); letter-spacing: -1px; }
-        .config-btn { font-size: 24px; cursor: pointer; filter: grayscale(1); opacity: 0.6; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0 20px; }
+        .header h1 { font-size: 26px; font-weight: 800; margin: 0; color: var(--primary); }
+        .config-btn { font-size: 22px; cursor: pointer; opacity: 0.5; }
 
-        /* Card Perfil Familiar */
+        /* Card Perfil */
         .card-perfil { 
-            background: var(--card); 
-            border-radius: 22px; 
-            padding: 18px; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            background: var(--card); border-radius: 20px; padding: 15px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center;
         }
-        .perfil-info { display: flex; gap: 15px; }
-        .perfil-info div { display: flex; align-items: center; gap: 5px; font-weight: 600; }
-        .perfil-info input { width: 35px; border: 1px solid #eee; border-radius: 6px; text-align: center; padding: 3px; font-size: 14px; }
+        .inputs-perfil { display: flex; gap: 10px; align-items: center; font-weight: bold; }
+        .inputs-perfil input { width: 35px; border: 1px solid #ddd; border-radius: 8px; text-align: center; padding: 4px; }
 
-        /* Scanner View */
+        /* Scanner */
         #scanner-view { 
-            width: 100%; height: 0; overflow: hidden; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
-            border-radius: 24px; background: #000; position: relative; margin-bottom: 0;
+            width: 100%; height: 0; overflow: hidden; transition: 0.3s; 
+            border-radius: 20px; background: #000; position: relative;
         }
-        #scanner-view.active { height: 260px; margin-bottom: 15px; border: 4px solid var(--primary); }
+        #scanner-view.active { height: 250px; margin-bottom: 15px; border: 3px solid var(--primary); }
         #torch-btn { 
             position: absolute; top: 15px; right: 15px; z-index: 10; 
-            background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); color: white; 
-            border: none; padding: 12px; border-radius: 50%; display: none; font-size: 20px;
+            background: rgba(0,0,0,0.5); color: white; border: none; padding: 12px; border-radius: 50%;
         }
 
-        /* Input Area */
-        .input-box { display: flex; gap: 10px; margin-bottom: 15px; }
+        /* Inputs */
+        .input-box { display: flex; gap: 8px; margin-bottom: 15px; }
         input[type="text"] { 
-            flex: 1; padding: 16px; border: none; border-radius: 18px; 
-            font-size: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); outline: none;
+            flex: 1; padding: 16px; border: none; border-radius: 15px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); outline: none;
         }
-        .btn-main { 
-            background: var(--card); border: none; border-radius: 18px; 
-            padding: 0 18px; font-size: 22px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-        }
-        .btn-add { background: var(--primary); color: white; font-weight: bold; font-size: 24px; }
+        .btn-round { background: var(--card); border: none; border-radius: 15px; padding: 0 15px; font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .btn-add { background: var(--primary); color: white; font-weight: bold; }
 
-        /* List Items */
-        .list-container { margin-bottom: 20px; }
-        .item-card { 
-            background: var(--card); padding: 14px 18px; border-radius: 18px; 
+        /* Lista */
+        .list-area { margin-bottom: 20px; }
+        .item-tag { 
+            background: var(--card); padding: 12px 15px; border-radius: 12px; 
             margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02); border-left: 5px solid #d1d1d6;
+            border-left: 5px solid #ccc;
         }
-        .item-card.selected { border-left-color: var(--primary); background: #f0f7ff; }
+        .item-tag.latest { border-left-color: var(--success); background: #f0fff4; }
 
-        /* Action Buttons */
-        .actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        /* SEÇÕES DE AÇÃO */
+        .section-title { font-size: 12px; font-weight: 800; color: #8e8e93; margin: 15px 0 8px 5px; text-transform: uppercase; }
+        
         .btn-action { 
-            padding: 18px; border-radius: 20px; border: none; font-weight: 700; 
-            font-size: 14px; cursor: pointer; transition: 0.2s;
+            width: 100%; padding: 18px; border-radius: 18px; border: none; 
+            font-weight: 700; font-size: 15px; cursor: pointer; margin-bottom: 10px;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
         }
-        .btn-full { grid-column: span 2; background: var(--success); color: white; font-size: 16px; }
-        .btn-full:active { transform: scale(0.98); opacity: 0.9; }
-        .btn-sec { background: #e5e5ea; color: #3a3a3c; }
+        .btn-sniper { background: var(--success); color: white; box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3); }
+        .btn-familiar { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3); }
+        .btn-clear { background: #e5e5ea; color: #ff3b30; padding: 12px; font-size: 13px; }
 
-        /* Result Panel */
-        #res-panel { 
-            margin-top: 20px; padding: 20px; background: var(--card); border-radius: 24px; 
-            display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid #eee;
-            line-height: 1.6; animation: slideUp 0.4s ease;
+        /* Resultado */
+        #res-box { 
+            margin-top: 20px; padding: 20px; background: white; border-radius: 20px; 
+            display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid #eee;
         }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        /* Modal Config */
-        #modal-config { 
-            display: none; position: fixed; inset: 0; background: white; z-index: 1000; 
-            padding: 40px 25px; box-sizing: border-box;
-        }
+        /* Config */
+        #modal-config { display: none; position: fixed; inset: 0; background: white; z-index: 100; padding: 30px; }
     </style>
 </head>
 <body>
@@ -111,13 +91,12 @@
         <div class="config-btn" onclick="toggleConfig()">⚙️</div>
     </div>
 
-    <!-- Perfil -->
     <div class="card-perfil">
-        <div class="perfil-info">
-            <div>👨 <input type="number" id="adultos" value="2"></div>
-            <div>👶 <input type="number" id="criancas" value="1"></div>
+        <div class="inputs-perfil">
+            👨 <input type="number" id="adultos" value="2">
+            👶 <input type="number" id="criancas" value="1">
         </div>
-        <div style="font-size: 11px; font-weight: 800; color: #8e8e93; text-transform: uppercase;">Agregado Familiar</div>
+        <div style="font-size: 11px; color: #888;">PERFIL FAMILIAR</div>
     </div>
 
     <div id="scanner-view">
@@ -125,39 +104,33 @@
     </div>
 
     <div class="input-box">
-        <button class="btn-main" onclick="openScanner()">📷</button>
-        <input type="text" id="main-input" placeholder="O que vais comprar?">
-        <button class="btn-main btn-add" onclick="addItem()">+</button>
+        <button class="btn-round" onclick="openScanner()">📷</button>
+        <input type="text" id="main-input" placeholder="Produto ou scan...">
+        <button class="btn-round btn-add" onclick="addItem()">+</button>
     </div>
 
-    <div id="lista-compras" class="list-container"></div>
+    <div id="lista-compras" class="list-area"></div>
 
-    <div class="actions-grid">
-        <button class="btn-action btn-full" id="btn-compare" onclick="compararArtigo()">🔍 COMPARAR ARTIGO SELECIONADO</button>
-        <button class="btn-action btn-sec" onclick="gerarCabazMensal()">📦 CABAZ MENSAL</button>
-        <button class="btn-action btn-sec" style="color:var(--danger)" onclick="limparTudo()">🗑️ LIMPAR</button>
-    </div>
+    <div class="section-title">Modo Sniper (Decisão Rápida)</div>
+    <button class="btn-action btn-sniper" onclick="modoSniper()">🎯 Comparar Último Artigo</button>
 
-    <div id="res-panel"></div>
+    <div class="section-title">Modo Familiar (Planeamento)</div>
+    <button class="btn-action btn-familiar" onclick="modoFamiliar()">📦 Cabaz & Timing Mensal</button>
+    
+    <button class="btn-action btn-clear" onclick="limpar()">🗑️ Limpar Lista</button>
+
+    <div id="res-box"></div>
 </div>
 
-<!-- Config -->
+<!-- Modal Config -->
 <div id="modal-config">
-    <div style="text-align: right; font-size: 32px;" onclick="toggleConfig()">✕</div>
-    <h2 style="font-size: 28px; letter-spacing: -1px;">Definições de API</h2>
-    <p style="color:#666; margin-bottom: 30px;">Introduz as tuas chaves para pesquisa em tempo real.</p>
-    
-    <div style="margin-bottom: 20px;">
-        <label style="display:block; font-weight:bold; margin-bottom:8px;">Groq Key:</label>
-        <input type="password" id="key-groq" style="width:100%; padding:15px; border-radius:12px; border:1px solid #ddd;">
-    </div>
-    
-    <div style="margin-bottom: 30px;">
-        <label style="display:block; font-weight:bold; margin-bottom:8px;">Tavily Key:</label>
-        <input type="password" id="key-tavily" style="width:100%; padding:15px; border-radius:12px; border:1px solid #ddd;">
-    </div>
-
-    <button class="btn-action btn-full" onclick="saveKeys()">GUARDAR E FECHAR</button>
+    <h2 style="margin-top:0">Configurações</h2>
+    <label>Groq Key:</label>
+    <input type="password" id="k-groq" style="width:100%; padding:12px; margin:10px 0 20px; border-radius:10px; border:1px solid #ddd;">
+    <label>Tavily Key:</label>
+    <input type="password" id="k-tavily" style="width:100%; padding:12px; margin:10px 0 20px; border-radius:10px; border:1px solid #ddd;">
+    <button class="btn-action btn-familiar" onclick="saveKeys()">Guardar</button>
+    <center><p onclick="toggleConfig()" style="margin-top:20px; color:#888;">Fechar</p></center>
 </div>
 
 <script>
@@ -167,17 +140,16 @@
     function toggleConfig() {
         const m = document.getElementById('modal-config');
         m.style.display = m.style.display === 'block' ? 'none' : 'block';
-        document.getElementById('key-groq').value = localStorage.getItem('groq_key') || '';
-        document.getElementById('key-tavily').value = localStorage.getItem('tavily_key') || '';
+        document.getElementById('k-groq').value = localStorage.getItem('groq_key') || '';
+        document.getElementById('k-tavily').value = localStorage.getItem('tavily_key') || '';
     }
 
     function saveKeys() {
-        localStorage.setItem('groq_key', document.getElementById('key-groq').value);
-        localStorage.setItem('tavily_key', document.getElementById('key-tavily').value);
+        localStorage.setItem('groq_key', document.getElementById('k-groq').value);
+        localStorage.setItem('tavily_key', document.getElementById('k-tavily').value);
         toggleConfig();
     }
 
-    // Scanner
     function openScanner() {
         const v = document.getElementById('scanner-view');
         v.classList.add('active');
@@ -206,7 +178,6 @@
         addItem(data.codeResult.code);
     });
 
-    // Lista
     function addItem(val) {
         const inp = document.getElementById('main-input');
         const txt = val || inp.value.trim();
@@ -219,31 +190,30 @@
     function render() {
         const cont = document.getElementById('lista-compras');
         cont.innerHTML = list.map((item, i) => `
-            <div class="item-card ${i === list.length-1 ? 'selected' : ''}">
+            <div class="item-tag ${i === list.length-1 ? 'latest' : ''}">
                 <span><b>${item}</b></span>
                 <span style="color:var(--danger); font-weight:bold; cursor:pointer;" onclick="list.splice(${i},1);render()">✕</span>
             </div>
         `).join('');
     }
 
-    function limparTudo() { list = []; render(); document.getElementById('res-panel').style.display="none"; }
+    function limpar() { list = []; render(); document.getElementById('res-box').style.display="none"; }
 
-    // APIs Lógica
-    async function compararArtigo() {
+    // --- LÓGICA SNIPER (ARTIGO ÚNICO) ---
+    async function modoSniper() {
         const gKey = localStorage.getItem('groq_key');
         const tKey = localStorage.getItem('tavily_key');
-        if(!gKey || !tKey) return toggleConfig();
-        if(list.length === 0) return alert("Lista vazia!");
+        if(!gKey || !tKey || list.length === 0) return alert("Verifica as chaves e a lista!");
 
         const item = list[list.length - 1];
-        const res = document.getElementById('res-panel');
+        const res = document.getElementById('res-box');
         res.style.display = "block";
-        res.innerHTML = `⏳ <b>A pesquisar preços reais de hoje para: ${item}...</b>`;
+        res.innerHTML = `🎯 <b>Sniper: A comparar preços para ${item}...</b>`;
 
         try {
             const s = await fetch("https://api.tavily.com/search", {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ api_key: tKey, query: `preço atual hoje Portugal para o artigo: ${item} no Continente Pingo Doce Lidl Auchan Mercadona`, search_depth: "advanced" })
+                body: JSON.stringify({ api_key: tKey, query: `preço hoje Portugal: ${item} Continente Pingo Doce Lidl Mercadona`, search_depth: "advanced" })
             });
             const sD = await s.json();
 
@@ -251,22 +221,23 @@
                 method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${gKey}` },
                 body: JSON.stringify({
                     model: "llama-3.3-70b-versatile",
-                    messages: [{ role: "system", content: "És um comparador de preços sniper. Dá o preço real de hoje nos supermercados em Portugal para o artigo indicado. Formata em tabela ou lista curta." },
+                    messages: [{ role: "system", content: "És um comparador Sniper. Dá apenas o preço do artigo selecionado nos vários supermercados. Sê curto e direto." },
                                { role: "user", content: `Artigo: ${item} \n\n Dados: ${sD.results.map(r=>r.content).join("\n")}` }]
                 })
             });
             const gD = await g.json();
-            res.innerHTML = `<b>📍 Comparação: ${item}</b><br><br>` + gD.choices[0].message.content.replace(/\n/g, '<br>');
-        } catch(e) { res.innerHTML = "❌ Erro na pesquisa."; }
+            res.innerHTML = `<b>📍 Sniper Veredito: ${item}</b><br><br>` + gD.choices[0].message.content.replace(/\n/g, '<br>');
+        } catch(e) { res.innerHTML = "❌ Erro Sniper."; }
     }
 
-    async function gerarCabazMensal() {
+    // --- LÓGICA FAMILIAR (CABAZ E TIMING) ---
+    async function modoFamiliar() {
         const gKey = localStorage.getItem('groq_key');
         if(!gKey) return toggleConfig();
         
-        const res = document.getElementById('res-panel');
+        const res = document.getElementById('res-box');
         res.style.display = "block";
-        res.innerHTML = "📅 <b>A analisar calendário e sugerir cabaz...</b>";
+        res.innerHTML = "📦 <b>Familiar: A analisar quantidades e calendário...</b>";
 
         const hoje = new Date();
         const perfil = `${document.getElementById('adultos').value} adultos e ${document.getElementById('criancas').value} crianças`;
@@ -276,76 +247,14 @@
                 method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${gKey}` },
                 body: JSON.stringify({
                     model: "llama-3.3-70b-versatile",
-                    messages: [{ role: "system", content: `Data: ${hoje.toLocaleDateString()}. Indica se hoje é o dia ideal para a compra mensal em Portugal (novos folhetos saem à Terça no Pingo Doce/Continente). Sugere o cabaz essencial para o perfil.` },
+                    messages: [{ role: "system", content: `Data: ${hoje.toLocaleDateString()}. Diz se hoje é o dia ideal para a compra mensal e sugere o cabaz essencial para o perfil.` },
                                { role: "user", content: `Perfil: ${perfil}` }]
                 })
             });
             const gD = await g.json();
-            res.innerHTML = "<b>🕒 Veredito e Cabaz:</b><br><br>" + gD.choices[0].message.content.replace(/\n/g, '<br>');
-        } catch(e) { res.innerHTML = "❌ Erro ao gerar plano."; }
+            res.innerHTML = "<b>🕒 Cabaz & Timing Familiar:</b><br><br>" + gD.choices[0].message.content.replace(/\n/g, '<br>');
+        } catch(e) { res.innerHTML = "❌ Erro Familiar."; }
     }
 </script>
-</body>
-</html>
-api_key: tKey, 
-                    query: `preço atual portugal continente pingo doce lidl mercadona: ${shoppingList.join(', ')}`,
-                    search_depth: "advanced"
-                })
-            });
-            const sData = await search.json();
-            const contexto = sData.results.map(r => r.content).join("\n");
-
-            // Passo 2: Groq Analysis
-            resDiv.innerHTML = "🧠 <b>A calcular poupança familiar...</b>";
-            const adultos = document.getElementById('adultos').value;
-            const criancas = document.getElementById('criancas').value;
-
-            const ai = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${gKey}` },
-                body: JSON.stringify({
-                    model: "llama-3.3-70b-versatile",
-                    messages: [{
-                        role: "system",
-                        content: `És o assistente do SACO.pt. Perfil: ${adultos} adultos e ${criancas} crianças. 
-                        Usa os dados da internet fornecidos para indicar os preços exatos de hoje nos supermercados em Portugal. 
-                        Diz qual o supermercado mais barato no total e dá dicas de quantidades para este perfil familiar.`
-                    }, {
-                        role: "user", content: `Dados da Web: ${contexto} \n\n Itens: ${shoppingList.join(', ')}`
-                    }]
-                })
-            });
-            const aiData = await ai.json();
-            resDiv.innerHTML = "<b>✅ Relatório de Poupança:</b><br><br>" + aiData.choices[0].message.content.replace(/\n/g, '<br>');
-        } catch (e) { resDiv.innerHTML = "❌ Erro na ligação às APIs."; }
-    }
-
-    async function gerarSugestaoMensal() {
-        const gKey = localStorage.getItem('groq_key');
-        if (!gKey) return toggleConfig();
-        
-        const adultos = document.getElementById('adultos').value;
-        const criancas = document.getElementById('criancas').value;
-        const resDiv = document.getElementById('resultado-ia');
-        
-        resDiv.style.display = "block";
-        resDiv.innerHTML = "📋 <b>A planear cabaz para " + adultos + " adultos e " + criancas + " crianças...</b>";
-
-        try {
-            const ai = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${gKey}` },
-                body: JSON.stringify({
-                    model: "llama-3.3-70b-versatile",
-                    messages: [{
-                        role: "user",
-                        content: `Gera uma lista de compras mensal indispensável em Portugal para ${adultos} adultos e ${criancas} crianças. Inclui quantidades estimadas (ex: 12L leite) e marcas brancas recomendadas.`
-                    }]
-                })
-            });
-            const data = await ai.json();
-            resDiv.innerHTML = "<b>📦 Cabaz Sugerido:</b><br><br>" + data.choices[0].message.content.replace(/\n/g, '<br>');
-        } catch (e) { alert("Erro de IA."); }
-    }
-</script>
-
 </body>
 </html>
