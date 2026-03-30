@@ -3,157 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V17</title>
+    <title>SACO.pt | V18.5 Sniper</title>
     <style>
-        :root { --blue: #4285f4; --green: #1a8a4a; --bg: #f8f9fa; --red: #d93025; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); padding: 15px; margin: 0; color: #3c4043; }
-        .container { max-width: 440px; margin: 0 auto; }
+        :root { --blue: #4285f4; --green: #34a853; --bg: #f8f9fa; --text: #202124; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; color: var(--text); }
+        .container { max-width: 420px; margin: 0 auto; }
         
-        /* UI Elements */
-        .card { background: white; border-radius: 24px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .badge-v { font-size: 10px; background: #333; color: white; padding: 4px 10px; border-radius: 20px; }
-        
-        .btn { width: 100%; padding: 16px; border-radius: 14px; border: none; font-weight: bold; cursor: pointer; font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
-        .btn-scan { background: var(--blue); color: white; }
-        .btn-search { background: var(--green); color: white; }
-        input { width: 100%; padding: 15px; border: 1.5px solid #eee; border-radius: 14px; margin-bottom: 10px; outline: none; box-sizing: border-box; }
-        
-        /* Output Styles */
-        #output { display: none; margin-top: 10px; }
-        .price-row { display: flex; justify-content: space-between; align-items: center; padding: 14px; border-bottom: 1px solid #f1f3f4; background: white; }
-        .price-row:last-child { border-bottom: none; border-radius: 0 0 16px 16px; }
-        .price-row:first-child { border-radius: 16px 16px 0 0; }
-        
-        .loja-nome { font-weight: 600; font-size: 15px; }
-        .preco-val { font-weight: 800; color: var(--blue); font-size: 16px; }
-        
-        /* Badge Mais Barato */
-        .best { background: #e6f4ea !important; border: 1px solid var(--green); }
-        .best .preco-val { color: var(--green); }
-        .badge-best { background: var(--green); color: white; font-size: 10px; padding: 3px 8px; border-radius: 10px; margin-left: 8px; }
+        /* Header */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 5px; }
+        .logo { font-size: 26px; font-weight: 900; color: var(--blue); margin: 0; letter-spacing: -1.5px; }
+        .status { font-size: 10px; font-weight: 800; background: #e8f0fe; color: var(--blue); padding: 4px 10px; border-radius: 20px; }
 
-        .loader { text-align: center; padding: 20px; color: var(--blue); font-weight: bold; }
-        #config-modal { display: none; position: fixed; inset: 0; background: white; z-index: 100; padding: 30px; }
+        /* Main Card */
+        .card { background: white; border-radius: 28px; padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.05); }
+        
+        .btn-main { 
+            width: 100%; padding: 22px; border-radius: 20px; border: none; 
+            background: var(--blue); color: white; font-weight: 800; font-size: 16px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px;
+            box-shadow: 0 8px 20px rgba(66, 133, 244, 0.25); transition: 0.2s;
+        }
+        .btn-main:active { transform: scale(0.97); box-shadow: none; }
+
+        .input-group { position: relative; margin-top: 20px; }
+        input { 
+            width: 100%; padding: 18px; border: 2px solid #f1f3f4; border-radius: 16px; 
+            font-size: 16px; outline: none; box-sizing: border-box; transition: 0.3s; background: #fdfdfd;
+        }
+        input:focus { border-color: var(--blue); background: #fff; }
+
+        /* Results Area */
+        #output { display: none; margin-top: 15px; animation: fadeIn 0.4s ease; }
+        .result-box { background: white; border-radius: 24px; overflow: hidden; border: 1px solid #eee; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+        
+        .row { display: flex; justify-content: space-between; align-items: center; padding: 18px; border-bottom: 1px solid #f8f9fa; }
+        .row:last-child { border-bottom: none; }
+        .row.best { background: #e6f4ea; position: relative; }
+        
+        .loja { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 10px; }
+        .preco { font-weight: 900; font-size: 18px; color: var(--blue); }
+        .best .preco { color: var(--green); }
+        
+        .badge-best { background: var(--green); color: white; font-size: 10px; padding: 4px 10px; border-radius: 8px; font-weight: 900; letter-spacing: 0.5px; }
+        
+        /* Utils */
+        .loader { text-align: center; padding: 40px; color: #5f6368; }
+        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid var(--blue); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; display: inline-block; margin-bottom: 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #cfg-btn { text-align: center; color: #bdc1c6; font-size: 12px; margin-top: 20px; cursor: pointer; padding: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <h1 style="color:var(--blue); margin:0;">SACO.pt</h1>
-        <span class="badge-v">V17.0 SNIPER</span>
+        <h1 class="logo">SACO<span style="color:#bdc1c6">.pt</span></h1>
+        <div class="status">V18.5 LIVE</div>
     </div>
 
     <div class="card">
-        <button class="btn btn-scan" onclick="document.getElementById('file-in').click()">📸 SCAN / FOTO</button>
-        <input type="file" id="file-in" style="display:none" accept="image/*" capture="environment" onchange="handleImage(event)">
+        <!-- Gatilho On-The-Fly -->
+        <button class="btn-main" onclick="document.getElementById('cam-trigger').click()">
+            📸 TIRAR FOTO À EMBALAGEM
+        </button>
+        <!-- Capture environment garante que abre a câmara traseira diretamente no telemóvel -->
+        <input type="file" id="cam-trigger" style="display:none" accept="image/*" capture="environment" onchange="processOnTheFly(event)">
         
-        <input type="text" id="prod-q" placeholder="Nome do produto...">
-        <button class="btn btn-search" onclick="runSearch()">🔍 COMPARAR PREÇOS</button>
-        <p style="text-align:center; font-size:12px; color:#999; cursor:pointer" onclick="openCfg()">⚙️ Configurar API Key</p>
+        <div class="input-group">
+            <input type="text" id="prod-name" placeholder="Ou digita o produto aqui...">
+        </div>
+        
+        <button class="btn-main" style="background: var(--green); padding: 16px; font-size: 14px; box-shadow: 0 4px 12px rgba(52, 168, 83, 0.2);" onclick="manualSearch()">
+            🔍 PESQUISA MANUAL
+        </button>
+
+        <div id="cfg-btn" onclick="setupKey()">⚙️ CONFIGURAR API KEY</div>
     </div>
 
     <div id="output"></div>
 </div>
 
-<div id="config-modal" id="cfg">
-    <h2>Configurações</h2>
-    <input type="password" id="key-in" placeholder="Gemini API Key (AIza...)">
-    <button class="btn btn-scan" onclick="saveCfg()">GUARDAR</button>
-</div>
-
 <script>
-const MODEL = "gemini-2.5-flash";
+// Configuração do Modelo Estável para 2026
+const MODEL_ID = "gemini-2.5-flash";
 
-function openCfg() { document.getElementById('config-modal').style.display='block'; }
-function saveCfg() { 
-    localStorage.setItem('gem_key', document.getElementById('key-in').value.trim());
-    document.getElementById('config-modal').style.display='none';
+function setupKey() {
+    const key = prompt("Insere a tua Gemini API Key (AIza...):", localStorage.getItem('gem_key') || "");
+    if(key) {
+        localStorage.setItem('gem_key', key.trim());
+        alert("✅ Chave configurada com sucesso!");
+    }
 }
 
-async function handleImage(event) {
+// FLUXO ON-THE-FLY (Zero Storage)
+async function processOnTheFly(event) {
     const file = event.target.files[0];
     const key = localStorage.getItem('gem_key');
-    if(!key) return openCfg();
     
+    if(!key) {
+        alert("⚠️ Configura primeiro a tua API Key nas definições.");
+        return setupKey();
+    }
+    if(!file) return;
+
     const out = document.getElementById('output');
     out.style.display = 'block';
-    out.innerHTML = '<div class="loader">⌛ Identificando...</div>';
+    out.innerHTML = `<div class="loader"><div class="spinner"></div><br><b>A analisar embalagem...</b></div>`;
 
     const reader = new FileReader();
-    reader.readAsDataURL(file);
     reader.onload = async () => {
         const base64 = reader.result.split(',')[1];
+        const mimeType = file.type;
+
+        // LIMPEZA IMEDIATA: O browser esquece o ficheiro para não ocupar memória/disco
+        event.target.value = ""; 
+
         try {
-            const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`, {
+            // PASSO 1: IDENTIFICAR PRODUTO (Visão Computacional)
+            const visionResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_ID}:generateContent?key=${key}`, {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({
-                    contents: [{ parts: [
-                        { inline_data: { mime_type: file.type, data: base64 } },
-                        { text: "Lê o código de barras ou identifica o produto. Responde APENAS o nome e marca." }
-                    ]}]
-                })
-            });
-            const data = await resp.json();
-            const name = data.candidates[0].content.parts[0].text.trim();
-            document.getElementById('prod-q').value = name;
-            runSearch();
-        } catch (e) { out.innerHTML = "❌ Erro na leitura."; }
-    };
-}
-
-async function runSearch() {
-    const q = document.getElementById('prod-q').value;
-    const key = localStorage.getItem('gem_key');
-    const out = document.getElementById('output');
-    if(!q || !key) return;
-
-    out.style.display = 'block';
-    out.innerHTML = '<div class="loader">🌐 Pesquisando Preços Reais...</div>';
-
-    try {
-        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`, {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: `Pesquisa o preço de "${q}" em Portugal (Continente, Pingo Doce, Auchan, Lidl, Intermarché). 
-                Responde APENAS um objeto JSON puro como este: 
-                {"resultados": [{"loja": "Continente", "preco": 1.99}, {"loja": "Pingo Doce", "preco": 1.85}]}. 
-                Se não houver preço, usa null. Não fales nada.` }] }],
-                tools: [{ google_search: {} }]
-            })
-        });
-        const data = await resp.json();
-        const jsonStr = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '');
-        const { resultados } = JSON.parse(jsonStr);
-
-        // Filtrar apenas quem tem preço e ordenar do mais barato
-        const validos = resultados.filter(r => r.preco !== null).sort((a, b) => a.preco - b.preco);
-        
-        if(validos.length === 0) {
-            out.innerHTML = "❌ Nenhum preço encontrado.";
-            return;
-        }
-
-        let html = '<div style="border-radius:16px; overflow:hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05)">';
-        validos.forEach((r, index) => {
-            const isBest = index === 0;
-            html += `
-                <div class="price-row ${isBest ? 'best' : ''}">
-                    <div class="loja-nome">
-                        ${r.loja} ${isBest ? '<span class="badge-best">MAIS BARATO</span>' : ''}
-                    </div>
-                    <div class="preco-val">${r.preco.toFixed(2)}€</div>
-                </div>
-            `;
-        });
-        html += '</div>';
-        out.innerHTML = html;
-
-    } catch (e) { out.innerHTML = "❌ Falha ao obter dados."; }
-}
-</script>
-</body>
-</html>
