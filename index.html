@@ -3,80 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | Sniper & Planeamento</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <title>SACO.pt | V9.0 Sniper Scraper</title>
     <style>
-        :root { 
-            --primary: #007aff; --sniper: #34c759; --bg: #f2f2f7; --card: #ffffff; --text: #1c1c1e;
-        }
-        body { 
-            font-family: -apple-system, system-ui, sans-serif; 
-            background: var(--bg); margin: 0; padding: 15px; color: var(--text);
-            padding-bottom: 50px;
-        }
+        :root { --primary: #007aff; --sniper: #34c759; --bg: #f2f2f7; --card: #ffffff; --accent: #ff9500; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding: 15px; color: #1c1c1e; }
         .container { max-width: 480px; margin: 0 auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0 20px; }
+        
+        /* Indicador de Versão */
+        .version-badge { 
+            font-size: 10px; font-weight: 800; background: #e5e5ea; color: #8e8e93; 
+            padding: 4px 8px; border-radius: 6px; float: right; margin-top: 10px;
+        }
+
+        .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; }
         .header h1 { font-size: 28px; font-weight: 800; margin: 0; color: var(--primary); letter-spacing: -1px; }
-        .config-icon { font-size: 24px; cursor: pointer; opacity: 0.4; }
 
-        /* Perfil Familiar */
+        /* Card de Perfil Familiar */
         .card-perfil { 
-            background: var(--card); border-radius: 20px; padding: 15px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px;
+            background: var(--card); border-radius: 18px; padding: 15px; 
             display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 15px;
         }
-        .family-counts { display: flex; gap: 12px; align-items: center; font-weight: 700; }
-        .family-counts input { width: 35px; border: 1px solid #ddd; border-radius: 8px; text-align: center; padding: 5px; font-size: 15px; }
+        .family-counts input { width: 35px; border: 1px solid #ddd; border-radius: 8px; text-align: center; padding: 5px; font-weight: bold; }
 
-        /* Scanner */
-        #scanner-container { 
-            width: 100%; height: 0; overflow: hidden; transition: 0.3s ease-in-out; 
-            border-radius: 22px; background: #000; position: relative;
+        /* Zona de Visão/Câmara */
+        #image-preview-container { 
+            width: 100%; height: 220px; background: #000; border-radius: 22px; 
+            margin-bottom: 15px; display: none; overflow: hidden; position: relative;
+            border: 3px solid var(--sniper);
         }
-        #scanner-container.active { height: 250px; margin-bottom: 15px; border: 3px solid var(--primary); }
-        #btn-torch { position: absolute; top: 15px; right: 15px; z-index: 10; background: rgba(0,0,0,0.6); color: white; border: none; padding: 12px; border-radius: 50%; display: none; }
+        #image-preview { width: 100%; height: 100%; object-fit: cover; }
 
-        /* Inputs */
-        .input-bar { display: flex; gap: 10px; margin-bottom: 15px; }
-        input[type="text"] { flex: 1; padding: 16px; border: none; border-radius: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); outline: none; font-size: 16px; }
-        .btn-action-icon { background: var(--card); border: none; border-radius: 16px; padding: 0 15px; font-size: 22px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
-        .btn-add-item { background: var(--primary); color: white; font-weight: 900; }
-
-        /* Lista */
-        .shopping-list { margin-bottom: 20px; }
-        .list-item { 
-            background: var(--card); padding: 14px 18px; border-radius: 15px; 
-            margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.02); border-left: 5px solid #d1d1d6;
+        /* Input Zone */
+        .input-zone { background: var(--card); border-radius: 20px; padding: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        .btn-main { 
+            width: 100%; padding: 16px; border-radius: 16px; border: none; 
+            font-weight: 800; font-size: 16px; cursor: pointer; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
         }
-        .list-item.target { border-left-color: var(--sniper); background: #fafffa; }
-
-        /* Botões de Ação */
-        .label-section { font-size: 11px; font-weight: 800; color: #8e8e93; margin: 20px 0 10px 5px; text-transform: uppercase; letter-spacing: 1px; }
-        .action-card { 
-            width: 100%; padding: 20px; border-radius: 20px; border: none; 
-            font-weight: 700; font-size: 16px; cursor: pointer; margin-bottom: 12px;
-            display: flex; align-items: center; justify-content: center; gap: 12px; transition: 0.2s;
+        .btn-camera { background: var(--primary); color: white; margin-bottom: 12px; }
+        .btn-search { background: var(--sniper); color: white; }
+        
+        #product-input { 
+            width: 100%; padding: 15px; border: 1px solid #eee; border-radius: 12px; 
+            margin-bottom: 12px; box-sizing: border-box; font-size: 16px;
         }
-        .btn-sniper-mode { background: var(--sniper); color: white; box-shadow: 0 6px 20px rgba(52, 199, 89, 0.2); }
-        .btn-family-mode { background: var(--primary); color: white; box-shadow: 0 6px 20px rgba(0, 122, 255, 0.2); }
-        .btn-reset { background: #e5e5ea; color: #ff3b30; padding: 12px; font-size: 14px; margin-top: 10px; }
 
-        /* Saída IA */
+        /* Resultados IA */
         #ia-output { 
-            margin-top: 25px; padding: 20px; background: white; border-radius: 22px; 
+            margin-top: 20px; padding: 20px; background: white; border-radius: 22px; 
             display: none; box-shadow: 0 15px 40px rgba(0,0,0,0.1); border: 1px solid #eee;
-            line-height: 1.6; font-size: 15px;
+            line-height: 1.6;
         }
+        .price-tag { color: var(--sniper); font-weight: bold; }
+        
+        /* Config */
         #config-panel { display: none; position: fixed; inset: 0; background: white; z-index: 1000; padding: 40px 25px; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <div class="version-badge">VERSÃO 9.0</div>
     <div class="header">
         <h1>SACO.pt</h1>
-        <div class="config-icon" onclick="toggleConfig()">⚙️</div>
+        <div onclick="toggleConfig()" style="cursor:pointer; font-size: 20px;">⚙️</div>
     </div>
 
     <div class="card-perfil">
@@ -84,42 +76,41 @@
             <span>👨 <input type="number" id="num-adultos" value="2"></span>
             <span>👶 <input type="number" id="num-criancas" value="1"></span>
         </div>
-        <div style="font-size: 11px; font-weight: 700; color: #999;">MODO FAMÍLIA</div>
+        <div style="font-size: 11px; font-weight: 700; color: #999;">MODO POUPANÇA PORTUGAL</div>
     </div>
 
-    <div id="scanner-container"><button id="btn-torch" onclick="toggleFlash()">🔦</button></div>
-
-    <div class="input-bar">
-        <button class="btn-action-icon" onclick="startCamera()">📷</button>
-        <input type="text" id="product-input" placeholder="Produto ou scan...">
-        <button class="btn-action-icon btn-add-item" onclick="addNewItem()">+</button>
+    <!-- Preview da Foto -->
+    <div id="image-preview-container">
+        <img id="image-preview" src="">
     </div>
 
-    <div id="display-list" class="shopping-list"></div>
-
-    <div class="label-section">No Supermercado (Sniper)</div>
-    <button class="action-card btn-sniper-mode" onclick="runSniper()">🎯 Comparar este Artigo</button>
-
-    <div class="label-section">Planeamento (Onde & Quais Marcas)</div>
-    <button class="action-card btn-family-mode" onclick="runFamilyPlan()">📦 Cabaz, Marcas & Locais</button>
-    
-    <button class="action-card btn-reset" onclick="resetAll()">🗑️ Limpar Tudo</button>
+    <div class="input-zone">
+        <button class="btn-main btn-camera" onclick="document.getElementById('file-input').click()">
+            📸 IDENTIFICAR POR FOTO
+        </button>
+        <input type="file" id="file-input" class="hidden" accept="image/*" capture="environment" onchange="handleVision(event)">
+        
+        <input type="text" id="product-input" placeholder="Ou escreve o produto aqui...">
+        
+        <button class="btn-main btn-search" onclick="runManualSearch()">
+            🎯 PESQUISAR PREÇOS REAIS
+        </button>
+    </div>
 
     <div id="ia-output"></div>
 </div>
 
+<!-- Configurações -->
 <div id="config-panel">
-    <div onclick="toggleConfig()" style="text-align: right; font-size: 30px; cursor: pointer;">✕</div>
-    <h2>Configuração</h2>
-    <input type="password" id="save-groq" placeholder="Groq API Key" style="width:100%; padding:15px; margin-bottom:10px; border-radius:10px; border:1px solid #ddd;">
-    <input type="password" id="save-tavily" placeholder="Tavily API Key" style="width:100%; padding:15px; margin-bottom:20px; border-radius:10px; border:1px solid #ddd;">
-    <button class="action-card btn-family-mode" onclick="confirmKeys()">GUARDAR</button>
+    <h2 onclick="toggleConfig()">✕ Fechar</h2>
+    <p>Insere as tuas chaves de API:</p>
+    <input type="password" id="save-groq" placeholder="Groq API Key" style="width:100%; padding:15px; margin-bottom:10px; border-radius:10px;">
+    <input type="password" id="save-tavily" placeholder="Tavily API Key" style="width:100%; padding:15px; margin-bottom:20px; border-radius:10px;">
+    <button class="btn-main btn-camera" onclick="confirmKeys()">GUARDAR DEFINIÇÕES</button>
 </div>
 
 <script>
-    let myItems = [];
-    let lightTrack = null;
-
+    // --- UTILITÁRIOS ---
     function toggleConfig() {
         const p = document.getElementById('config-panel');
         p.style.display = p.style.display === 'block' ? 'none' : 'block';
@@ -133,111 +124,103 @@
         toggleConfig();
     }
 
-    function startCamera() {
-        const c = document.getElementById('scanner-container');
-        c.classList.add('active');
-        document.getElementById('btn-torch').style.display = "block";
-        Quagga.init({
-            inputStream: { name: "Live", type: "LiveStream", target: c, constraints: { facingMode: "environment" } },
-            decoder: { readers: ["ean_reader", "ean_8_reader"] }
-        }, (err) => {
-            if(!err) Quagga.start();
-            setTimeout(() => {
-                const v = document.querySelector('video');
-                if(v) lightTrack = v.srcObject.getVideoTracks()[0];
-            }, 1000);
+    async function encodeImage(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.readAsDataURL(file);
         });
     }
 
-    function toggleFlash() {
-        if(lightTrack && lightTrack.getCapabilities().torch) {
-            lightTrack.applyConstraints({ advanced: [{ torch: !lightTrack.getSettings().torch }] });
-        }
+    // --- LÓGICA PRINCIPAL (SCRAPER & VISION) ---
+
+    async function handleVision(event) {
+        const file = event.target.files[0];
+        const gK = localStorage.getItem('groq_key');
+        if (!file || !gK) return alert("Configura a Groq Key!");
+
+        // Mostrar Preview
+        document.getElementById('image-preview').src = URL.createObjectURL(file);
+        document.getElementById('image-preview-container').style.display = 'block';
+
+        const out = document.getElementById('ia-output');
+        out.style.display = "block";
+        out.innerHTML = "👁️ <b>V9.0 Vision:</b> A identificar produto...";
+
+        try {
+            const base64 = await encodeImage(file);
+            // PASSO 1: Identificar o produto via Groq Llama 3.2 Vision
+            const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${gK}` },
+                body: JSON.stringify({
+                    model: "llama-3.2-11b-vision-preview",
+                    messages: [{
+                        role: "user",
+                        content: [
+                            { type: "text", text: "Diz apenas o NOME e MARCA deste produto. Sê breve." },
+                            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64}` } }
+                        ]
+                    }]
+                })
+            });
+            const data = await res.json();
+            const name = data.choices[0].message.content;
+            document.getElementById('product-input').value = name;
+            
+            // Salta automaticamente para a procura de preços reais
+            runManualSearch();
+
+        } catch (e) { out.innerHTML = "❌ Erro na visão."; }
     }
 
-    Quagga.onDetected((res) => {
-        Quagga.stop();
-        document.getElementById('scanner-container').classList.remove('active');
-        addNewItem(res.codeResult.code);
-    });
-
-    function addNewItem(v) {
-        const input = document.getElementById('product-input');
-        const name = v || input.value.trim();
-        if(!name) return;
-        myItems.push(name);
-        input.value = '';
-        updateDisplay();
-    }
-
-    function updateDisplay() {
-        const d = document.getElementById('display-list');
-        d.innerHTML = myItems.map((it, i) => `
-            <div class="list-item ${i === myItems.length-1 ? 'target' : ''}">
-                <span><b>${it}</b></span>
-                <span style="color:red; font-weight:bold; cursor:pointer;" onclick="myItems.splice(${i},1);updateDisplay()">✕</span>
-            </div>
-        `).join('');
-    }
-
-    function resetAll() { myItems = []; updateDisplay(); document.getElementById('ia-output').style.display="none"; }
-
-    async function runSniper() {
+    async function runManualSearch() {
+        const query = document.getElementById('product-input').value;
         const gK = localStorage.getItem('groq_key');
         const tK = localStorage.getItem('tavily_key');
-        if(!gK || !tK || myItems.length === 0) return alert("Configura as chaves!");
-
-        const target = myItems[myItems.length - 1];
         const out = document.getElementById('ia-output');
+
+        if (!query || !tK) return alert("Escreve o produto ou configura o Tavily!");
+
         out.style.display = "block";
-        out.innerHTML = `🎯 <b>Sniper: A pesquisar ${target} em Portugal...</b>`;
+        out.innerHTML = `🌐 <b>Scraper V9.0:</b> A procurar preços reais de hoje para: <b>${query}</b>...`;
 
         try {
-            const s = await fetch("https://api.tavily.com/search", {
-                method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ api_key: tK, query: `preço atual em € Portugal hoje: ${target} no Continente Pingo Doce Lidl Auchan Mercadona`, search_depth: "advanced" })
-            });
-            const sD = await s.json();
-            const g = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${gK}` },
+            // PASSO 2: Scrape via Tavily em sites portugueses
+            const search = await fetch("https://api.tavily.com/search", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    model: "llama-3.3-70b-versatile",
-                    messages: [{ role: "system", content: "És um comparador Sniper de Portugal. Indica o preço em € do artigo e diz qual o supermercado mais barato hoje. Sê breve." },
-                               { role: "user", content: `Artigo: ${target} \n\n Dados: ${sD.results.map(r=>r.content).join("\n")}` }]
+                    api_key: tK,
+                    query: `preço hoje "${query}" Portugal site:continente.pt OR site:auchan.pt OR site:pingo-doce.pt OR site:elcorteingles.pt OR "folheto Lidl"`,
+                    search_depth: "advanced"
                 })
             });
-            const gD = await g.json();
-            out.innerHTML = `<b>📍 Veredito Sniper:</b><br><br>` + gD.choices[0].message.content.replace(/\n/g, '<br>');
-        } catch(e) { out.innerHTML = "❌ Erro Sniper."; }
-    }
+            const sData = await search.json();
 
-    async function runFamilyPlan() {
-        const gK = localStorage.getItem('groq_key');
-        if(!gK) return toggleConfig();
-        
-        const out = document.getElementById('ia-output');
-        out.style.display = "block";
-        out.innerHTML = "📦 <b>A calcular cabaz ideal, locais e melhores marcas...</b>";
-
-        const today = new Date();
-        const profile = `${document.getElementById('num-adultos').value} adultos e ${document.getElementById('num-criancas').value} crianças`;
-
-        try {
-            const g = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${gK}` },
+            // PASSO 3: Formatação Final via Groq (para garantir que os dados são lidos corretamente)
+            const final = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${gK}` },
                 body: JSON.stringify({
                     model: "llama-3.3-70b-versatile",
-                    messages: [{ role: "system", content: `És um especialista em poupança em Portugal. DATA: ${today.toLocaleDateString()}. 
-                    1. Sugere o cabaz mensal para ${profile}. 
-                    2. Indica ONDE comprar cada categoria (ex: Frescos no Lidl, Limpeza na Mercadona). 
-                    3. Sugere MARCAS brancas recomendadas (ex: É, Milbona, Deliplus, Pingo Doce) vs quando comprar marcas líderes (Dodot, Fairy). 
-                    4. Diz se hoje é um bom dia para comprar baseando-te no ciclo de folhetos (Terça-feira é chave).` },
-                               { role: "user", content: `Gera o plano para ${profile}` }]
+                    messages: [
+                        { role: "system", content: "És um comparador de preços real. Com base nos dados, cria uma tabela: Loja | Preço | Obs. Usa apenas dados reais. Se não houver preço, ignora a loja. Indica qual a melhor marca branca equivalente no Lidl ou Mercadona." },
+                        { role: "user", content: `Dados extraídos: ${JSON.stringify(sData.results)}` }
+                    ]
                 })
             });
-            const gD = await g.json();
-            out.innerHTML = "<b>🕒 Plano de Poupança Familiar:</b><br><br>" + gD.choices[0].message.content.replace(/\n/g, '<br>');
-        } catch(e) { out.innerHTML = "❌ Erro no plano familiar."; }
+            const fData = await final.json();
+
+            out.innerHTML = `
+                <div style="background:#fafffa; padding:15px; border-radius:15px; border:1px solid var(--sniper);">
+                    <h3 style="margin-top:0;">📊 Comparativo Real (V9.0)</h3>
+                    ${fData.choices[0].message.content.replace(/\n/g, '<br>')}
+                </div>
+                <button class="btn-main" style="margin-top:15px; background:#eee; color:#333;" onclick="location.reload()">NOVA PESQUISA</button>
+            `;
+
+        } catch (e) { out.innerHTML = "❌ Erro ao obter dados reais."; }
     }
 </script>
 </body>
