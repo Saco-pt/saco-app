@@ -3,100 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | Scanner Pro</title>
+    <title>SACO.pt | Gestor de Poupança Familiar</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <style>
-        :root { --primary: #007aff; --success: #34c759; --dark: #1c1c1e; --bg: #f2f2f7; }
-        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding: 15px; color: var(--dark); }
-        .container { max-width: 450px; margin: 0 auto; background: white; border-radius: 30px; padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); position: relative; }
+        :root { --primary: #007aff; --success: #34c759; --warning: #ffcc00; --danger: #ff3b30; --bg: #f2f2f7; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #1c1c1e; }
+        .app-container { max-width: 500px; margin: 0 auto; background: white; border-radius: 35px; padding: 20px; box-shadow: 0 15px 50px rgba(0,0,0,0.1); position: relative; min-height: 90vh; }
         
-        h1 { text-align: center; color: var(--primary); margin-bottom: 5px; font-size: 26px; }
-        .subtitle { text-align: center; font-size: 12px; color: #8e8e93; margin-bottom: 20px; }
+        /* Cabeçalho e Perfil */
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { color: var(--primary); margin: 0; font-size: 28px; letter-spacing: -1px; }
+        .perfil-bar { background: #f8f9fa; border-radius: 20px; padding: 15px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border: 1px solid #eee; font-size: 14px; }
+        .perfil-inputs { display: flex; gap: 10px; }
+        .perfil-inputs input { width: 40px; border: 1px solid #ddd; border-radius: 8px; text-align: center; padding: 5px; font-weight: bold; }
 
         /* Scanner */
         #scanner-view { width: 100%; height: 0; overflow: hidden; transition: 0.3s; border-radius: 20px; background: #000; position: relative; }
         #scanner-view.active { height: 250px; margin-bottom: 15px; border: 3px solid var(--primary); }
-        #scanner-view video { width: 100%; height: 100%; object-fit: cover; }
-        
-        /* Botão Lanterna */
-        #torch-btn { position: absolute; top: 10px; right: 10px; z-index: 10; background: rgba(0,0,0,0.6); color: white; border: none; padding: 10px; border-radius: 50%; display: none; cursor: pointer; font-size: 20px; }
+        #torch-btn { position: absolute; top: 15px; right: 15px; z-index: 10; background: rgba(0,0,0,0.5); color: white; border: none; padding: 12px; border-radius: 50%; display: none; cursor: pointer; font-size: 20px; }
 
-        .input-group { display: flex; gap: 8px; margin-bottom: 20px; }
-        input { flex: 1; padding: 15px; border: 1.5px solid #e5e5ea; border-radius: 15px; outline: none; font-size: 16px; }
-        .btn { border: none; border-radius: 15px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .btn-scan { background: #f2f2f7; color: var(--primary); padding: 0 15px; font-size: 22px; }
-        .btn-add { background: var(--primary); color: white; padding: 0 20px; }
+        /* Inputs */
+        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        input[type="text"] { flex: 1; padding: 15px; border: 1.5px solid #e5e5ea; border-radius: 18px; outline: none; font-size: 16px; transition: 0.2s; }
+        input[type="text"]:focus { border-color: var(--primary); }
+        .btn-icon { background: #f2f2f7; border: none; padding: 15px; border-radius: 18px; cursor: pointer; font-size: 22px; }
+        .btn-add { background: var(--primary); color: white; border: none; padding: 0 20px; border-radius: 18px; font-weight: bold; }
 
-        .item { background: #f9f9f9; padding: 12px 18px; margin-bottom: 8px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--primary); }
-        
-        .compare-btn { width: 100%; background: var(--success); color: white; padding: 20px; border-radius: 18px; font-size: 17px; font-weight: 800; border: none; cursor: pointer; margin-top: 10px; }
+        /* Lista */
+        #lista-compras { margin-bottom: 20px; }
+        .item-row { background: #f9f9f9; padding: 14px; margin-bottom: 8px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid var(--primary); animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity:0; transform: translateY(5px); } to { opacity:1; transform: translateY(0); } }
 
-        #res { margin-top: 25px; padding: 20px; background: #fafffa; border-radius: 20px; border: 1px solid #dcf5e1; display: none; font-size: 15px; line-height: 1.6; }
+        /* Ações */
+        .main-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-action { border: none; padding: 18px; border-radius: 20px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 14px; }
+        .btn-compare { background: var(--success); color: white; grid-column: span 2; font-size: 16px; box-shadow: 0 5px 15px rgba(52, 199, 89, 0.3); }
+        .btn-monthly { background: #fff; color: var(--primary); border: 2px solid var(--primary); }
+        .btn-reset { background: #fff; color: var(--danger); border: 2px solid var(--danger); }
 
-        /* Configurações */
-        #config-panel { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 100; padding: 30px; box-sizing: border-box; }
-        .close-config { float: right; font-size: 24px; font-weight: bold; cursor: pointer; }
-        .config-input { width: 100%; padding: 12px; margin: 10px 0 20px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
+        /* Resultados */
+        #resultado-ia { margin-top: 25px; padding: 20px; background: #f0f9ff; border-radius: 25px; border: 1px solid #d0e8ff; display: none; line-height: 1.6; font-size: 15px; }
+
+        /* Configurações Overlay */
+        #config-overlay { display: none; position: fixed; inset: 0; background: white; z-index: 1000; padding: 40px 20px; }
+        .config-field { margin-bottom: 20px; }
+        .config-field label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 14px; }
+        .config-field input { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ddd; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <span style="position: absolute; right: 25px; top: 25px; cursor: pointer; font-size: 20px;" onclick="toggleConfig()">⚙️</span>
-    <h1>🛒 SACO.pt</h1>
-    <p class="subtitle">Preços Reais com Pesquisa Google (Tavily)</p>
+<div class="app-container">
+    <div style="position: absolute; right: 25px; top: 25px; cursor: pointer; font-size: 22px;" onclick="toggleConfig()">⚙️</div>
+    
+    <div class="header">
+        <h1>SACO.pt</h1>
+        <p style="font-size: 12px; color: #888;">Inteligência Alimentar Portugal 2026</p>
+    </div>
+
+    <!-- Painel Familiar -->
+    <div class="perfil-bar">
+        <div class="perfil-inputs">
+            <span>👨 <input type="number" id="adultos" value="2"></span>
+            <span>👶 <input type="number" id="criancas" value="1"></span>
+        </div>
+        <div style="font-weight: bold; color: var(--primary); font-size: 12px;">PERFIL FAMILIAR</div>
+    </div>
 
     <div id="scanner-view">
         <button id="torch-btn" onclick="toggleTorch()">🔦</button>
     </div>
 
     <div class="input-group">
-        <button class="btn btn-scan" onclick="startScanner()">📷</button>
-        <input type="text" id="inp" placeholder="O que vais comprar?">
-        <button class="btn btn-add" onclick="add()">+</button>
+        <button class="btn-icon" onclick="openScanner()">📷</button>
+        <input type="text" id="item-input" placeholder="Produto ou scan...">
+        <button class="btn-add" onclick="addItem()">+</button>
     </div>
 
-    <div id="lista"></div>
-    <button class="compare-btn" id="go" onclick="procurar()">PESQUISAR PREÇOS DE HOJE</button>
-    <div id="res"></div>
+    <div id="lista-compras"></div>
+
+    <div class="main-actions">
+        <button class="btn-action btn-monthly" onclick="gerarSugestaoMensal()">📦 Sugestão Mensal</button>
+        <button class="btn-action btn-reset" onclick="clearList()">🗑️ Limpar</button>
+        <button class="btn-action btn-compare" id="btn-search" onclick="analisarTudo()">🔍 COMPARAR PREÇOS REAIS</button>
+    </div>
+
+    <div id="resultado-ia"></div>
 </div>
 
-<div id="config-panel">
-    <span class="close-config" onclick="toggleConfig()">✕</span>
+<!-- Configurações -->
+<div id="config-overlay">
+    <div onclick="toggleConfig()" style="text-align: right; font-size: 30px; cursor: pointer;">✕</div>
     <h2>Configurações APIs</h2>
-    <p style="font-size: 13px; color: #666;">Insira as suas chaves para a app funcionar:</p>
-    
-    <label>Groq API Key (Llama):</label>
-    <input type="password" id="conf-groq" class="config-input" placeholder="gsk_...">
-    
-    <label>Tavily API Key (Google Search):</label>
-    <input type="password" id="conf-tavily" class="config-input" placeholder="tvly-...">
-    
-    <button class="compare-btn" onclick="saveKeys()">GUARDAR DEFINIÇÕES</button>
-    <p style="text-align:center; color:red; margin-top:20px; cursor:pointer;" onclick="localStorage.clear(); location.reload();">Limpar Tudo</p>
+    <div class="config-field">
+        <label>Groq API Key:</label>
+        <input type="password" id="key-groq" placeholder="gsk_...">
+    </div>
+    <div class="config-field">
+        <label>Tavily API Key (Google Search):</label>
+        <input type="password" id="key-tavily" placeholder="tvly-...">
+    </div>
+    <button class="btn-action btn-compare" style="width: 100%;" onclick="saveKeys()">GUARDAR DEFINIÇÕES</button>
+    <p style="text-align:center; margin-top:30px; font-size:12px; color:#999;">SACO.pt v2.5 - 2026</p>
 </div>
 
 <script>
-    let items = [];
-    let track = null;
+    let shoppingList = [];
+    let videoTrack = null;
 
-    // --- CONFIGURAÇÕES ---
+    // --- SISTEMA DE CONFIGURAÇÃO ---
     function toggleConfig() {
-        const panel = document.getElementById('config-panel');
-        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
-        document.getElementById('conf-groq').value = localStorage.getItem('groq_key') || '';
-        document.getElementById('conf-tavily').value = localStorage.getItem('tavily_key') || '';
+        const overlay = document.getElementById('config-overlay');
+        overlay.style.display = overlay.style.display === 'block' ? 'none' : 'block';
+        document.getElementById('key-groq').value = localStorage.getItem('groq_key') || '';
+        document.getElementById('key-tavily').value = localStorage.getItem('tavily_key') || '';
     }
 
     function saveKeys() {
-        localStorage.setItem('groq_key', document.getElementById('conf-groq').value);
-        localStorage.setItem('tavily_key', document.getElementById('conf-tavily').value);
-        alert("Chaves guardadas!");
+        localStorage.setItem('groq_key', document.getElementById('key-groq').value);
+        localStorage.setItem('tavily_key', document.getElementById('key-tavily').value);
+        alert("Configurações atualizadas!");
         toggleConfig();
     }
 
     // --- SCANNER E LANTERNA ---
-    function startScanner() {
+    function openScanner() {
         const view = document.getElementById('scanner-view');
         view.classList.add('active');
         document.getElementById('torch-btn').style.display = "block";
@@ -105,76 +136,127 @@
             inputStream: { name: "Live", type: "LiveStream", target: view, constraints: { facingMode: "environment" } },
             decoder: { readers: ["ean_reader", "ean_8_reader"] }
         }, (err) => {
-            if (err) return alert("Erro câmara");
+            if (err) return alert("Erro ao abrir câmara.");
             Quagga.start();
-            // Aceder ao track para a lanterna
             setTimeout(() => {
                 const video = document.querySelector('video');
-                if (video && video.srcObject) {
-                    track = video.srcObject.getVideoTracks()[0];
-                }
+                if (video && video.srcObject) videoTrack = video.srcObject.getVideoTracks()[0];
             }, 1000);
         });
     }
 
     function toggleTorch() {
-        if (track && track.getCapabilities().torch) {
-            const current = track.getSettings().torch || false;
-            track.applyConstraints({ advanced: [{ torch: !current }] });
-        } else {
-            alert("Lanterna não suportada neste browser/aparelho.");
+        if (videoTrack && videoTrack.getCapabilities().torch) {
+            const isOn = videoTrack.getSettings().torch;
+            videoTrack.applyConstraints({ advanced: [{ torch: !isOn }] });
         }
     }
 
-    Quagga.onDetected(async (res) => {
-        const code = res.codeResult.code;
+    Quagga.onDetected((data) => {
+        const code = data.codeResult.code;
         Quagga.stop();
         document.getElementById('scanner-view').classList.remove('active');
-        add(code);
+        addItem(code);
     });
 
-    // --- LÓGICA ---
-    function add(txt) {
-        const val = txt || document.getElementById('inp').value.trim();
-        if (!val) return;
-        items.push(val);
-        document.getElementById('lista').innerHTML = items.map((it, i) => `
-            <div class="item"><span>${it}</span><span onclick="items.splice(${i},1);add('')">✕</span></div>
-        `).join('');
-        document.getElementById('inp').value = '';
+    // --- GESTÃO DA LISTA ---
+    function addItem(val) {
+        const input = document.getElementById('item-input');
+        const text = val || input.value.trim();
+        if (!text) return;
+        shoppingList.push(text);
+        renderList();
+        input.value = '';
     }
 
-    async function procurar() {
-        const groqKey = localStorage.getItem('groq_key');
-        const tavilyKey = localStorage.getItem('tavily_key');
-        if (!groqKey || !tavilyKey) return toggleConfig();
+    function renderList() {
+        const container = document.getElementById('lista-compras');
+        container.innerHTML = shoppingList.map((it, i) => `
+            <div class="item-row">
+                <span><b>${it}</b></span>
+                <span style="color:var(--danger); font-weight:bold; cursor:pointer" onclick="removeItem(${i})">✕</span>
+            </div>
+        `).join('');
+    }
 
-        const resDiv = document.getElementById('res');
+    function removeItem(i) { shoppingList.splice(i, 1); renderList(); }
+    function clearList() { shoppingList = []; renderList(); document.getElementById('resultado-ia').style.display = "none"; }
+
+    // --- INTELIGÊNCIA ARTIFICIAL (GROQ + TAVILY) ---
+    async function analisarTudo() {
+        const gKey = localStorage.getItem('groq_key');
+        const tKey = localStorage.getItem('tavily_key');
+        if (!gKey || !tKey) return toggleConfig();
+        if (shoppingList.length === 0) return alert("Adicione produtos primeiro!");
+
+        const resDiv = document.getElementById('resultado-ia');
         resDiv.style.display = "block";
-        resDiv.innerHTML = "🌐 <b>A pesquisar folhetos no Google...</b>";
+        resDiv.innerHTML = "🌐 <b>A pesquisar preços reais no Google...</b>";
 
         try {
-            // 1. Pesquisa Tavily
-            const s = await fetch("https://api.tavily.com/search", {
+            // Passo 1: Tavily Search
+            const search = await fetch("https://api.tavily.com/search", {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ api_key: tavilyKey, query: `preço hoje Portugal Continente Pingo Doce Lidl: ${items.join(', ')}`, include_answer: true })
-            });
-            const sData = await s.json();
-
-            // 2. Análise Groq
-            resDiv.innerHTML = "🧠 <b>A analisar preços reais...</b>";
-            const g = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${groqKey}` },
-                body: JSON.stringify({
-                    model: "llama-3.3-70b-versatile",
-                    messages: [{ role: "system", content: "És o SACO.pt. Usa os dados da pesquisa para dar os preços reais de hoje nos supermercados em Portugal. Sê breve e direto." },
-                               { role: "user", content: `Dados: ${sData.answer || ''} \n\n Itens: ${items.join(', ')}` }]
+                body: JSON.stringify({ 
+                    api_key: tKey, 
+                    query: `preço atual portugal continente pingo doce lidl mercadona: ${shoppingList.join(', ')}`,
+                    search_depth: "advanced"
                 })
             });
-            const gData = await g.json();
-            resDiv.innerHTML = "<b>✅ Resultados:</b><br><br>" + gData.choices[0].message.content.replace(/\n/g, '<br>');
-        } catch (e) { resDiv.innerHTML = "❌ Erro nas APIs. Verifique as chaves."; }
+            const sData = await search.json();
+            const contexto = sData.results.map(r => r.content).join("\n");
+
+            // Passo 2: Groq Analysis
+            resDiv.innerHTML = "🧠 <b>A calcular poupança familiar...</b>";
+            const adultos = document.getElementById('adultos').value;
+            const criancas = document.getElementById('criancas').value;
+
+            const ai = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${gKey}` },
+                body: JSON.stringify({
+                    model: "llama-3.3-70b-versatile",
+                    messages: [{
+                        role: "system",
+                        content: `És o assistente do SACO.pt. Perfil: ${adultos} adultos e ${criancas} crianças. 
+                        Usa os dados da internet fornecidos para indicar os preços exatos de hoje nos supermercados em Portugal. 
+                        Diz qual o supermercado mais barato no total e dá dicas de quantidades para este perfil familiar.`
+                    }, {
+                        role: "user", content: `Dados da Web: ${contexto} \n\n Itens: ${shoppingList.join(', ')}`
+                    }]
+                })
+            });
+            const aiData = await ai.json();
+            resDiv.innerHTML = "<b>✅ Relatório de Poupança:</b><br><br>" + aiData.choices[0].message.content.replace(/\n/g, '<br>');
+        } catch (e) { resDiv.innerHTML = "❌ Erro na ligação às APIs."; }
+    }
+
+    async function gerarSugestaoMensal() {
+        const gKey = localStorage.getItem('groq_key');
+        if (!gKey) return toggleConfig();
+        
+        const adultos = document.getElementById('adultos').value;
+        const criancas = document.getElementById('criancas').value;
+        const resDiv = document.getElementById('resultado-ia');
+        
+        resDiv.style.display = "block";
+        resDiv.innerHTML = "📋 <b>A planear cabaz para " + adultos + " adultos e " + criancas + " crianças...</b>";
+
+        try {
+            const ai = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${gKey}` },
+                body: JSON.stringify({
+                    model: "llama-3.3-70b-versatile",
+                    messages: [{
+                        role: "user",
+                        content: `Gera uma lista de compras mensal indispensável em Portugal para ${adultos} adultos e ${criancas} crianças. Inclui quantidades estimadas (ex: 12L leite) e marcas brancas recomendadas.`
+                    }]
+                })
+            });
+            const data = await ai.json();
+            resDiv.innerHTML = "<b>📦 Cabaz Sugerido:</b><br><br>" + data.choices[0].message.content.replace(/\n/g, '<br>');
+        } catch (e) { alert("Erro de IA."); }
     }
 </script>
+
 </body>
 </html>
