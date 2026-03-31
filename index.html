@@ -3,86 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V22 NUTRI-SAVE</title>
+    <title>SACO.pt | V24 BALANCE</title>
     <style>
-        :root { --blue: #4285f4; --green: #1a8a4a; --bg: #f8f9fa; --card: #fff; --grey: #5f6368; --apple: #4caf50; }
+        :root { --blue: #4285f4; --green: #1a8a4a; --bg: #f8f9fa; --card: #fff; --grey: #5f6368; --red: #d93025; }
         * { box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); margin: 0; padding-bottom: 90px; color: #202124; }
+        
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; height: 75px; box-shadow: 0 -2px 15px rgba(0,0,0,0.08); z-index: 1000; border-top: 1px solid #eee; }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--grey); cursor: pointer; }
         .nav-item.active { color: var(--blue); }
         .nav-item span { font-size: 22px; margin-bottom: 4px; }
+
         .view { display: none; padding: 20px; max-width: 500px; margin: 0 auto; animation: fadeIn 0.2s; }
         .view.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
         .card { background: white; border-radius: 24px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 16px; border: 1px solid rgba(0,0,0,0.02); }
-        .btn { border: none; border-radius: 16px; padding: 16px; font-weight: 700; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; transition: 0.2s; }
+        .btn { border: none; border-radius: 16px; padding: 14px; font-weight: 700; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 14px; transition: 0.2s; }
         .btn-blue { background: var(--blue); color: white; }
         .btn-green { background: var(--green); color: white; }
-        .btn:active { transform: scale(0.97); }
-        .badge-nutri { display: inline-block; background: #e8f5e9; color: var(--apple); padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 800; margin-bottom: 10px; }
-        input, textarea { width: 100%; padding: 15px; border: 2px solid #eee; border-radius: 12px; margin-bottom: 10px; outline: none; font-size: 16px; background: #fff; }
+        
+        /* Lista Interativa */
+        .list-item { display: flex; align-items: center; justify-content: space-between; background: #f8f9fa; margin-bottom: 8px; padding: 12px 15px; border-radius: 12px; border: 1px solid #eee; }
+        .list-item input { border: none; background: transparent; font-size: 14px; width: 80%; padding: 0; margin: 0; }
+        .remove-btn { color: var(--red); font-weight: bold; cursor: pointer; padding: 5px; }
+
+        .counter-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: #eee; padding: 12px; border-radius: 15px; }
+        .c-btn { width: 30px; height: 30px; border-radius: 50%; border: none; background: white; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        
+        input, textarea { width: 100%; padding: 15px; border: 2px solid #eee; border-radius: 12px; margin-bottom: 10px; outline: none; font-size: 16px; }
         .spin { animation: rotate 1s linear infinite; display: inline-block; }
         @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
 </head>
-<body>
+<body onload="initLocation()">
 
 <div id="view-home" class="view active">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h2 style="color:var(--blue); margin:0;">🛒 SACO.pt</h2>
-        <span style="font-size:10px; background:#e8f0fe; color:var(--blue); padding:4px 8px; border-radius:8px; font-weight:bold;">V22 NUTRITIONAL</span>
-    </div>
+    <h2 style="color:var(--blue); margin:0;">🛒 SACO.pt</h2>
+    <p id="loc-text" style="font-size:11px; color:var(--grey); margin-bottom:15px;">📍 Localizando...</p>
+    
     <div class="card">
-        <button class="btn btn-blue" onclick="document.getElementById('i-cam').click()"><span>📸</span> Analisar Produto Físico</button>
+        <button class="btn btn-blue" onclick="document.getElementById('i-cam').click()"><span>📸</span> Foto do Produto</button>
         <input type="file" id="i-cam" style="display:none" accept="image/*" capture="environment" onchange="processMedia(this)">
-        <input type="text" id="q-home" placeholder="Procurar preço manual...">
-        <button class="btn btn-green" onclick="runSingleSearch()">Comparar Preço</button>
+        <input type="text" id="q-home" placeholder="Pesquisa rápida..." style="margin-top:15px">
+        <button class="btn btn-green" onclick="runSingleSearch()">Ver Preços na Zona</button>
     </div>
     <div id="out-home"></div>
 </div>
 
 <div id="view-gen" class="view">
-    <span class="badge-nutri">🥗 ALIMENTAÇÃO CONSCIENTE</span>
-    <h2>Gerador Nutricional</h2>
+    <h2>✨ Gestor Familiar</h2>
     <div class="card">
-        <p style="font-size:13px; color:var(--grey); margin-bottom:15px;">Este gerador prioriza <b>Marcas Brancas</b> (Poupança) e alimentos de <b>Alto Valor Nutricional</b> (Saúde).</p>
-        
-        <div style="display:flex; justify-content:space-between; margin-bottom:15px; background:#f1f3f4; padding:15px; border-radius:15px;">
-            <span>👨 Adultos: <b id="c-a">2</b></span>
-            <div><button class="btn" style="width:30px; height:30px; padding:0; display:inline-flex" onclick="upCount('adults',-1)">-</button> <button class="btn" style="width:30px; height:30px; padding:0; display:inline-flex" onclick="upCount('adults',1)">+</button></div>
+        <p style="font-size:12px; color:var(--grey)">Gerar lista de <b>Nutrição + Higiene + Limpeza</b></p>
+        <div class="counter-row">
+            <span>👨 Adultos</span>
+            <div><button class="c-btn" onclick="upCount('adults',-1)">-</button> <b id="c-a">2</b> <button class="c-btn" onclick="upCount('adults',1)">+</button></div>
         </div>
-        <div style="display:flex; justify-content:space-between; margin-bottom:15px; background:#f1f3f4; padding:15px; border-radius:15px;">
-            <span>👶 Crianças: <b id="c-k">1</b></span>
-            <div><button class="btn" style="width:30px; height:30px; padding:0; display:inline-flex" onclick="upCount('kids',-1)">-</button> <button class="btn" style="width:30px; height:30px; padding:0; display:inline-flex" onclick="upCount('kids',1)">+</button></div>
+        <div class="counter-row">
+            <span>👶 Crianças</span>
+            <div><button class="c-btn" onclick="upCount('kids',-1)">-</button> <b id="c-k">1</b> <button class="c-btn" onclick="upCount('kids',1)">+</button></div>
         </div>
-        
-        <button class="btn btn-blue" onclick="generateList()">✨ Gerar Plano de Poupança</button>
+        <button class="btn btn-blue" onclick="generateSmartList()">Gerar Lista Equilibrada</button>
     </div>
-    <div id="out-gen"></div>
+    <div id="editable-list-container"></div>
 </div>
 
 <div id="view-list" class="view">
-    <h2>📝 Comparador de Carrinho</h2>
+    <h2>📝 Comparar Carrinho</h2>
     <div class="card">
-        <textarea id="list-input" placeholder="Lista para comparação..." rows="8"></textarea>
-        <button class="btn btn-green" onclick="compareFullList()">🔍 Calcular Total por Loja</button>
+        <textarea id="list-input" placeholder="Lista final aqui..." rows="10"></textarea>
+        <button class="btn btn-green" onclick="compareFullList()">🔍 Calcular Melhor Hipermercado</button>
     </div>
     <div id="out-list"></div>
 </div>
 
 <div id="view-config" class="view">
-    <h2>⚙️ Configuração</h2>
+    <h2>⚙️ Config</h2>
     <div class="card">
-        <label style="font-size:12px; font-weight:bold; color:var(--grey)">Gemini API Key:</label>
-        <input type="password" id="key-input" placeholder="AIzaSy...">
-        <button class="btn btn-blue" onclick="saveKey()">Guardar Definições</button>
+        <input type="password" id="key-input" placeholder="Gemini API Key...">
+        <button class="btn btn-blue" onclick="saveKey()">Guardar</button>
     </div>
 </div>
 
 <nav class="bottom-nav">
     <div class="nav-item active" onclick="switchV('home', this)"><span>🏠</span>Início</div>
-    <div class="nav-item" onclick="switchV('gen', this)"><span>🥗</span>Nutrição</div>
+    <div class="nav-item" onclick="switchV('gen', this)"><span>✨</span>Gerador</div>
     <div class="nav-item" onclick="switchV('list', this)"><span>📝</span>Lista</div>
     <div class="nav-item" onclick="switchV('config', this)"><span>⚙️</span>Config</div>
 </nav>
@@ -90,6 +95,20 @@
 <script>
 const MODEL = "gemini-2.5-flash";
 let counts = { adults: 2, kids: 1 };
+let userCity = "Portugal";
+let currentList = [];
+
+async function initLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            try {
+                const res = await callAI({ contents: [{ parts: [{ text: `Coordenadas ${pos.coords.latitude}, ${pos.coords.longitude}. Responde apenas: Cidade, Portugal.` }] }] });
+                userCity = res.trim();
+                document.getElementById('loc-text').innerText = "📍 " + userCity;
+            } catch(e) { document.getElementById('loc-text').innerText = "📍 Portugal (Geral)"; }
+        });
+    }
+}
 
 function switchV(id, el) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -104,14 +123,11 @@ function upCount(t, v) {
     document.getElementById('c-k').innerText = counts.kids;
 }
 
-function saveKey() {
-    localStorage.setItem('saco_key', document.getElementById('key-input').value.trim());
-    alert("Configurações atualizadas!");
-}
+function saveKey() { localStorage.setItem('saco_key', document.getElementById('key-input').value.trim()); alert("OK!"); }
 
 async function callAI(payload) {
     const key = localStorage.getItem('saco_key');
-    if(!key) return alert("Insere a API Key no menu Config!");
+    if(!key) throw new Error("Falta Key");
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`, {
         method: 'POST', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(payload)
@@ -120,72 +136,84 @@ async function callAI(payload) {
     return d.candidates[0].content.parts[0].text;
 }
 
-async function processMedia(input) {
-    if(!input.files[0]) return;
-    const out = document.getElementById('out-home');
-    out.innerHTML = '<div class="card" style="text-align:center"><span class="spin">⌛</span> Reconhecendo produto...</div>';
+async function generateSmartList() {
+    const container = document.getElementById('editable-list-container');
+    container.innerHTML = '<div class="card" style="text-align:center"><span class="spin">⌛</span> Criando lista de Nutrição e Higiene...</div>';
+    
     try {
-        const b64 = await toB64(input.files[0]);
-        const res = await callAI({ contents: [{ parts: [{ inline_data: { mime_type: input.files[0].type, data: b64 } }, { text: "Diz apenas o nome e marca deste produto." }] }] });
-        document.getElementById('q-home').value = res.trim();
-        runSingleSearch();
-    } catch(e) { out.innerHTML = "Erro ao ler imagem."; }
-}
-
-async function runSingleSearch() {
-    const q = document.getElementById('q-home').value;
-    const out = document.getElementById('out-home');
-    out.innerHTML = '<div style="text-align:center; padding:20px;"><span class="spin">⌛</span></div>';
-    try {
-        const res = await callAI({
-            contents: [{ parts: [{ text: `Pesquisa preço de "${q}" em Portugal. Responde JSON: [{"loja":"Nome","preco":0.00}]` }] }],
-            tools: [{ google_search: {} }]
-        });
-        const data = JSON.parse(res.match(/\[[\s\S]*\]/)[0]);
-        out.innerHTML = data.map(i => `<div class="card" style="display:flex;justify-content:space-between"><b>${i.loja}</b> <span style="color:var(--green)">${i.preco.toFixed(2)}€</span></div>`).join('');
-    } catch(e) { out.innerHTML = "Erro na pesquisa."; }
-}
-
-async function generateList() {
-    const out = document.getElementById('out-gen');
-    out.innerHTML = '<div class="card" style="text-align:center"><span class="spin">⌛</span> Planeando compras saudáveis e baratas...</div>';
-    try {
-        const prompt = `Cria uma lista de compras mensal para ${counts.adults} adultos e ${counts.kids} crianças em Portugal. 
-        CRITÉRIOS: 
-        1. Prioridade a Marcas Brancas para poupança.
-        2. Alta densidade nutricional (proteínas acessíveis como ovos/leguminosas, hidratos complexos, frutas da época).
-        3. Evita processados caros. 
-        Responde APENAS com os nomes dos produtos, um por linha.`;
+        const prompt = `Cria uma lista mensal para ${counts.adults} adultos e ${counts.kids} crianças em Portugal. 
+        Inclui: 1. Alimentação altamente nutritiva (proteínas baratas, frescos, grãos). 
+        2. Artigos de higiene (papel higiénico, champô, pasta dentes). 
+        3. Limpeza (detergente loiça/roupa). 
+        Foco: Melhor relação Qualidade/Poupança (Marcas Brancas de topo). 
+        Responde APENAS uma lista simples, um item por linha.`;
         
         const res = await callAI({ contents: [{ parts: [{ text: prompt }] }] });
-        out.innerHTML = `<div class="card"><h3>🍎 Sugestão Equilibrada:</h3><div style="font-size:13px; max-height:200px; overflow:auto; margin-bottom:15px; line-height:1.6">${res.replace(/\n/g,'<br>')}</div><button class="btn btn-green" onclick="useList(\`${res.replace(/`/g,"'")}\`)">Transferir para Comparador</button></div>`;
-    } catch(e) { out.innerHTML = "Erro no gerador."; }
+        currentList = res.trim().split('\n').filter(i => i.length > 2);
+        renderEditableList();
+    } catch(e) { container.innerHTML = "Erro ao gerar lista."; }
 }
 
-function useList(t) { 
-    document.getElementById('list-input').value = t; 
-    switchV('list', document.querySelectorAll('.nav-item')[2]); 
+function renderEditableList() {
+    const container = document.getElementById('editable-list-container');
+    let html = `<div class="card"><h3>Personalizar Lista:</h3>`;
+    currentList.forEach((item, idx) => {
+        html += `<div class="list-item">
+            <input type="text" value="${item}" onchange="updateItem(${idx}, this.value)">
+            <span class="remove-btn" onclick="removeItem(${idx})">✕</span>
+        </div>`;
+    });
+    html += `<button class="btn btn-green" style="margin-top:15px" onclick="finalizeList()">✅ Finalizar e Comparar Preços</button></div>`;
+    container.innerHTML = html;
+}
+
+function updateItem(idx, val) { currentList[idx] = val; }
+function removeItem(idx) { currentList.splice(idx, 1); renderEditableList(); }
+
+function finalizeList() {
+    document.getElementById('list-input').value = currentList.join('\n');
+    switchV('list', document.querySelectorAll('.nav-item')[2]);
 }
 
 async function compareFullList() {
     const t = document.getElementById('list-input').value.trim();
-    if(!t) return;
     const out = document.getElementById('out-list');
-    out.innerHTML = '<div class="card" style="text-align:center"><span class="spin">⌛</span> A calcular melhor total...</div>';
+    out.innerHTML = '<div class="card" style="text-align:center"><span class="spin">⌛</span> Pesquisando melhor preço em ' + userCity + '...</div>';
     try {
         const res = await callAI({
-            contents: [{ parts: [{ text: `Analisa: ${t}. Compara o total no Continente, Pingo Doce, Auchan e Lidl (Portugal). Responde JSON: {"lojas":[{"nome":"Loja","total":0.00}],"vencedor":"Nome"}` }] }],
+            contents: [{ parts: [{ text: `Analisa: ${t}. Compara total no Continente, Pingo Doce, Auchan e Lidl em ${userCity}. Responde APENAS JSON: {"lojas":[{"nome":"Loja","total":0.00}],"vencedor":"Nome"}` }] }],
             tools: [{ google_search: {} }]
         });
         const data = JSON.parse(res.match(/\{[\s\S]*\}/)[0]);
         let h = `<div class="card"><h3>🏆 Melhor Opção: ${data.vencedor}</h3><hr style="border:0;border-top:1px solid #eee;margin:10px 0">`;
         data.lojas.sort((a,b)=>a.total-b.total).forEach(l => {
-            h += `<div style="display:flex;justify-content:space-between;padding:8px 0"><span>${l.nome}</span><b>${l.total.toFixed(2)}€</b></div>`;
+            h += `<div style="display:flex;justify-content:space-between;padding:10px 0"><span>${l.nome}</span><b>${l.total.toFixed(2)}€</b></div>`;
         });
         out.innerHTML = h + `</div>`;
     } catch(e) { out.innerHTML = "Erro na comparação."; }
 }
 
+async function runSingleSearch() {
+    const q = document.getElementById('q-home').value;
+    const out = document.getElementById('out-home');
+    out.innerHTML = '<div style="text-align:center; padding:20px"><span class="spin">⌛</span></div>';
+    try {
+        const res = await callAI({
+            contents: [{ parts: [{ text: `Preço de "${q}" em ${userCity}. Responde JSON: [{"loja":"Nome","preco":0.00}]` }] }],
+            tools: [{ google_search: {} }]
+        });
+        const data = JSON.parse(res.match(/\[[\s\S]*\]/)[0]);
+        out.innerHTML = data.map(i => `<div class="card" style="display:flex;justify-content:space-between"><b>${i.loja}</b> <span>${i.preco.toFixed(2)}€</span></div>`).join('');
+    } catch(e) { out.innerHTML = "Erro."; }
+}
+
+async function processMedia(input) {
+    if(!input.files[0]) return;
+    const b64 = await toB64(input.files[0]);
+    const res = await callAI({ contents: [{ parts: [{ inline_data: { mime_type: input.files[0].type, data: b64 } }, { text: "Produto e marca?" }] }] });
+    document.getElementById('q-home').value = res.trim();
+    runSingleSearch();
+}
 function toB64(f) { return new Promise(r => { const rd = new FileReader(); rd.onload = () => r(rd.result.split(',')[1]); rd.readAsDataURL(f); }); }
 </script>
 </body>
