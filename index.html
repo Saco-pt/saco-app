@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V32.1 QUOTA MONITOR</title>
+    <title>SACO.pt | V32.2 STABLE</title>
     <style>
         :root { --blue: #1a73e8; --green: #1e8e3e; --bg: #f8f9fa; --card: #ffffff; --grey: #5f6368; --red: #d93025; --orange: #e67e22; }
         * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -51,14 +51,14 @@
         <input type="file" id="i-cam" style="display:none" accept="image/*" capture="environment" onchange="handleMedia(this)">
         <input type="text" id="q-home" placeholder="O que procuras hoje?">
         <button class="btn btn-green" onclick="runGlobalSearch()">🔍 Pesquisar em Portugal</button>
-        <div id="key-info" style="color:var(--grey)">Monitor de Cota Ativo</div>
+        <div id="key-info" style="color:var(--grey)">Diagnóstico: OK</div>
     </div>
     <div id="out-home"></div>
 </div>
 
 <div id="view-gen" class="view">
     <div class="card">
-        <h3>🪄 Gerador Inteligente</h3>
+        <h3>🪄 Gerador Familiar</h3>
         <div style="display:flex; gap:10px; margin-bottom:15px;">
             <div style="flex:1; text-align:center; background:#eee; padding:10px; border-radius:15px;">
                 <small>Adultos</small><br>
@@ -69,14 +69,14 @@
                 <button onclick="upCount('kids',-1)">-</button> <b id="c-k">1</b> <button onclick="upCount('kids',1)">+</button>
             </div>
         </div>
-        <button class="btn btn-blue" onclick="generateUltimateList()">Gerar Lista Sugerida</button>
+        <button class="btn btn-blue" onclick="generateUltimateList()">Gerar Lista Nutritiva</button>
     </div>
     <div id="editable-list-container"></div>
 </div>
 
 <div id="view-list" class="view">
     <div class="card">
-        <h3>🛒 Carrinho</h3>
+        <h3>🛒 Carrinho Inteligente</h3>
         <textarea id="list-input" placeholder="Itens para comparar..." rows="8"></textarea>
         <button class="btn btn-green" onclick="analyzeStrategy()">🚀 Onde comprar mais barato?</button>
     </div>
@@ -85,13 +85,13 @@
 
 <div id="view-config" class="view">
     <div class="card">
-        <h3>⚙️ Configuração (G3)</h3>
+        <h3>⚙️ Configuração (1.5 Flash)</h3>
         <p style="font-size:12px; color:var(--grey)">Insere as API Keys do AI Studio (separa com vírgula).</p>
         <textarea id="keys-input" placeholder="AIzaSy..., AIzaSy..." rows="5"></textarea>
         <button class="btn btn-blue" onclick="saveKeys()">Guardar Chaves</button>
         <div style="margin-top:15px; font-size:11px; color:var(--grey)">
-            <b>Modelo:</b> gemini-3-flash (v1beta)<br>
-            <b>Limite:</b> 15 Pedidos/Minuto por Chave
+            <b>Modelo Ativo:</b> gemini-1.5-flash (Estável)<br>
+            <b>Dica:</b> Se usares 3 chaves, tens 45 pedidos/min.
         </div>
     </div>
 </div>
@@ -104,7 +104,7 @@
 </nav>
 
 <script>
-// --- LÓGICA DE MONITORIZAÇÃO V32.1 ---
+// --- MOTOR CORE V32.2 (ESTÁVEL) ---
 const MODEL_ID = "gemini-1.5-flash"; 
 let state = { adults: 2, kids: 1, city: "Portugal", scanMode: 'prod', cooldown: false };
 
@@ -117,12 +117,12 @@ async function callAI(payload) {
     if(state.cooldown) { alert("Aguarde o Cooldown das chaves!"); return null; }
     
     const rawKeys = localStorage.getItem('saco_keys');
-    if(!rawKeys) { updateStatus("⚠️ Sem Keys configuradas!", "red"); return null; }
+    if(!rawKeys) { updateStatus("⚠️ Sem Keys!", "red"); return null; }
     const keys = rawKeys.split(',').map(k => k.trim()).filter(k => k.length > 10);
     
     for (let i = 0; i < keys.length; i++) {
         let key = keys[i];
-        updateStatus(`<div class="spin"></div> Key ${i + 1}: Enviando...`, "orange");
+        updateStatus(`<div class="spin"></div> K${i + 1}: Processando...`, "orange");
 
         try {
             const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_ID}:generateContent?key=${key}`, {
@@ -134,20 +134,20 @@ async function callAI(payload) {
             const d = await r.json();
 
             if (d.candidates && d.candidates[0]) {
-                updateStatus(`✅ Key ${i+1}: Online (Cota OK)`, "green");
+                updateStatus(`✅ K${i+1}: Online`, "green");
                 return d.candidates[0].content.parts[0].text;
             }
 
             if (d.error) {
                 const status = d.error.status || d.error.code;
                 if (status === "RESOURCE_EXHAUSTED" || status === 429) {
-                    updateStatus(`⚠️ Key ${i+1}: ESGOTADA`, "red");
+                    updateStatus(`⚠️ K${i+1}: Sem Cota`, "red");
                     if (i === keys.length - 1) startCooldown();
                     continue; 
                 }
                 updateStatus(`Erro K${i+1}: ${status}`, "red");
             }
-        } catch (err) { updateStatus("Erro de Rede", "red"); }
+        } catch (err) { updateStatus("Erro de Ligação", "red"); }
     }
     return null;
 }
@@ -157,19 +157,19 @@ function startCooldown() {
     let seg = 60;
     const timer = setInterval(() => {
         seg--;
-        updateStatus(`⏳ Todas as Keys em Cooldown... (${seg}s)`, "orange");
-        if(seg <= 0) { clearInterval(timer); state.cooldown = false; updateStatus("✨ Keys Prontas!", "green"); }
+        updateStatus(`⏳ Aguardar renovação... (${seg}s)`, "orange");
+        if(seg <= 0) { clearInterval(timer); state.cooldown = false; updateStatus("✨ Pronta!", "green"); }
     }, 1000);
 }
 
 function updateStatus(msg, color) {
     const el = document.getElementById('key-info');
-    const colors = { green: "#1e8e3e", orange: "#e67e22", red: "#d93025", grey: "#5f6368" };
+    const colors = { green: "#1e8e3e", orange: "#e67e22", red: "#d93025" };
     el.innerHTML = msg;
     el.style.color = colors[color] || "grey";
 }
 
-// --- FUNÇÕES DE NAVEGAÇÃO E AÇÃO ---
+// --- FUNÇÕES DE INTERFACE ---
 function switchV(id, el) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
@@ -223,22 +223,24 @@ async function runGlobalSearch() {
     const q = document.getElementById('q-home').value;
     const out = document.getElementById('out-home');
     const res = await callAI({
-        contents: [{ parts: [{ text: `Preços de "${q}" em supermercados de Portugal (Continente, Pingo Doce, Auchan). Responde JSON: [{"loja":"Nome","preco":0.00,"url":"..."}]` }] }],
+        contents: [{ parts: [{ text: `Pesquisa o preço de "${q}" em lojas online de supermercados de Portugal. Responde JSON: [{"loja":"Nome","preco":0.00,"url":"..."}]` }] }],
         tools: [{ google_search: {} }]
     });
     if(!res) return;
     try {
-        const data = JSON.parse(res.match(/\[[\s\S]*\]/)[0]);
+        const match = res.match(/\[[\s\S]*\]/);
+        if(!match) return;
+        const data = JSON.parse(match[0]);
         out.innerHTML += data.map(i => `<div class="card" style="display:flex; justify-content:space-between"><b>${i.loja}</b> <span style="color:var(--green); font-weight:bold">${i.preco.toFixed(2)}€</span></div>`).join('');
     } catch(e) {}
 }
 
 async function generateUltimateList() {
     const cont = document.getElementById('editable-list-container');
-    cont.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div> Gerando Nutrição...</div>';
-    const res = await callAI({ contents: [{ parts: [{ text: `Lista de compras para ${state.adults} adultos e ${state.kids} crianças em Portugal. Responde apenas a lista.` }] }] });
+    cont.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div> Criando Lista...</div>';
+    const res = await callAI({ contents: [{ parts: [{ text: `Gera lista essencial para ${state.adults} adultos e ${state.kids} crianças em Portugal. Marcas brancas.` }] }] });
     if(!res) return;
-    cont.innerHTML = `<div class="card"><h3>Sugestão G3</h3>` + res.split('\n').filter(l=>l.length>3).map(it => `<div class="list-row">${it}</div>`).join('') + `<button class="btn btn-green" onclick="confirmList('${res.replace(/'/g,"")}')">Passar para Carrinho</button></div>`;
+    cont.innerHTML = `<div class="card"><h3>Sugestão Nutritiva</h3>` + res.split('\n').filter(l=>l.length>3).map(it => `<div class="list-row">${it}</div>`).join('') + `<button class="btn btn-green" onclick="confirmList('${res.replace(/'/g,"")}')">Usar Lista</button></div>`;
 }
 
 function confirmList(txt) {
@@ -248,17 +250,17 @@ function confirmList(txt) {
 
 async function analyzeStrategy() {
     const out = document.getElementById('out-list');
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div> Consultando folhetos...</div>';
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div> Analisando Mercados...</div>';
     const res = await callAI({
-        contents: [{ parts: [{ text: `Analisa estes itens e indica o supermercado mais barato em Portugal hoje: ${document.getElementById('list-input').value}` }] }],
+        contents: [{ parts: [{ text: `Onde comprar mais barato em ${state.city} estes itens: ${document.getElementById('list-input').value}` }] }],
         tools: [{ google_search: {} }]
     });
-    out.innerHTML = `<div class="card" style="border-left:5px solid var(--blue)"><b>💡 Estratégia:</b><br><small>${res}</small></div>`;
+    out.innerHTML = `<div class="card" style="border-left:5px solid var(--blue)"><b>💡 Estratégia de Poupança:</b><br><small>${res}</small></div>`;
 }
 
 function saveKeys() {
     localStorage.setItem('saco_keys', document.getElementById('keys-input').value.trim());
-    alert("Configuração Guardada!");
+    alert("Keys Guardadas!");
 }
 </script>
 </body>
