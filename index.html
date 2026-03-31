@@ -3,10 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V32.6 Pesquisa Corrigida</title>
+    <title>SACO.pt | V32.7 Corrigido</title>
     <style>
-        :root { --blue: #1a73e8; --green: #1e8e3e; --bg: #f8f9fa; --card: #ffffff; --grey: #5f6368; --red: #d93025; --orange: #e67e22; }
-        * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+        :root { 
+            --blue: #1a73e8; 
+            --green: #1e8e3e; 
+            --bg: #f8f9fa; 
+            --card: #ffffff; 
+            --grey: #5f6368; 
+            --red: #d93025; 
+            --orange: #e67e22; 
+        }
+        * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
         body { background: var(--bg); margin: 0; padding-bottom: 100px; color: #202124; }
         
         .header { background: var(--card); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1001; }
@@ -17,20 +25,22 @@
         .nav-item.active { color: var(--blue); font-weight: bold; }
         .nav-item span { font-size: 24px; margin-bottom: 4px; }
 
-        .view { display: none; padding: 15px; max-width: 600px; margin: 0 auto; animation: fadeIn 0.2s; }
+        .view { display: none; padding: 15px; max-width: 600px; margin: 0 auto; }
         .view.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .card { background: var(--card); border-radius: 20px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 15px; border: 1px solid rgba(0,0,0,0.05); }
-        .btn { border: none; border-radius: 12px; padding: 14px; font-weight: bold; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; transition: 0.2s; }
+        .btn { border: none; border-radius: 12px; padding: 14px; font-weight: bold; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; }
         .btn-blue { background: var(--blue); color: white; }
         .btn-green { background: var(--green); color: white; }
         
         input, textarea { width: 100%; padding: 14px; border: 1px solid #dadce0; border-radius: 12px; font-size: 16px; margin-bottom: 10px; outline: none; }
         
-        #key-info { font-size: 11px; text-align: center; margin-top: 10px; min-height: 20px; font-weight: bold; }
-        .spin { width: 14px; height: 14px; border: 2px solid #f3f3f3; border-top: 2px solid var(--blue); border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #key-info { font-size: 12px; text-align: center; margin-top: 10px; min-height: 24px; font-weight: bold; }
+        .spin { width: 16px; height: 16px; border: 3px solid #f3f3f3; border-top: 3px solid var(--blue); border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .error { color: var(--red); }
+        .success { color: var(--green); }
     </style>
 </head>
 <body onload="initApp()">
@@ -46,10 +56,9 @@
             <button class="btn btn-blue" onclick="triggerCam('prod')">📸 Produto</button>
             <button class="btn btn-blue" style="background:#5f6368" onclick="triggerCam('bill')">🧾 Fatura</button>
         </div>
-        <input type="file" id="i-cam" style="display:none" accept="image/*" capture="environment" onchange="handleMedia(this)">
-        <input type="text" id="q-home" placeholder="O que procuras hoje? Ex: leite mimosa 1L">
+        <input type="text" id="q-home" placeholder="Ex: sal fino 1kg ou leite mimosa" value="Sal">
         <button class="btn btn-green" onclick="runGlobalSearch()">🔍 Pesquisar em Portugal</button>
-        <div id="key-info" style="color:var(--grey)">Pronto para poupar...</div>
+        <div id="key-info"></div>
     </div>
     <div id="out-home"></div>
 </div>
@@ -57,16 +66,6 @@
 <div id="view-gen" class="view">
     <div class="card">
         <h3>🪄 Gerador Familiar</h3>
-        <div style="display:flex; gap:10px; margin-bottom:15px;">
-            <div style="flex:1; text-align:center; background:#eee; padding:10px; border-radius:15px;">
-                <small>Adultos</small><br>
-                <button onclick="upCount('adults',-1)">-</button> <b id="c-a">2</b> <button onclick="upCount('adults',1)">+</button>
-            </div>
-            <div style="flex:1; text-align:center; background:#eee; padding:10px; border-radius:15px;">
-                <small>Crianças</small><br>
-                <button onclick="upCount('kids',-1)">-</button> <b id="c-k">1</b> <button onclick="upCount('kids',1)">+</button>
-            </div>
-        </div>
         <button class="btn btn-blue" onclick="generateUltimateList()">Gerar Lista Nutritiva</button>
     </div>
     <div id="editable-list-container"></div>
@@ -75,7 +74,7 @@
 <div id="view-list" class="view">
     <div class="card">
         <h3>🛒 Carrinho Inteligente</h3>
-        <textarea id="list-input" placeholder="Cola aqui os itens da tua lista..." rows="8"></textarea>
+        <textarea id="list-input" placeholder="Cola aqui os itens..." rows="8"></textarea>
         <button class="btn btn-green" onclick="analyzeStrategy()">🚀 Onde comprar mais barato?</button>
     </div>
     <div id="out-list"></div>
@@ -83,12 +82,11 @@
 
 <div id="view-config" class="view">
     <div class="card">
-        <h3>⚙️ Configuração Multi-Motor</h3>
-        <textarea id="keys-input" placeholder="Cole as chaves API separadas por vírgula&#10;AIzaSy..., AIzaSy..." rows="5"></textarea>
+        <h3>⚙️ Configuração das Chaves API</h3>
+        <p style="font-size:13px; color:#666; margin-bottom:10px;">Cole as tuas chaves Gemini (separadas por vírgula):</p>
+        <textarea id="keys-input" placeholder="AIzaSyxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx, AIzaSy..." rows="6"></textarea>
         <button class="btn btn-blue" onclick="saveKeys()">Guardar Chaves</button>
-        <div id="active-model-display" style="margin-top:15px; font-size:11px; color:var(--grey)">
-            Modelo ativo: gemini-2.5-flash
-        </div>
+        <div id="active-model-display" style="margin-top:15px; font-size:12px; color:var(--grey)"></div>
     </div>
 </div>
 
@@ -100,89 +98,105 @@
 </nav>
 
 <script>
-// --- CONFIGURAÇÃO ---
-const ENGINES = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.5-pro"];
+// ====================== CONFIG ======================
+const ENGINES = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-1.5-pro"];
 let currentEngineIdx = 0;
-let state = { adults: 2, kids: 1, scanMode: 'prod', cooldown: false };
+let state = { cooldown: false };
 
 async function initApp() {
     const saved = localStorage.getItem('saco_keys');
-    if (saved) document.getElementById('keys-input').value = saved;
+    if (saved) {
+        document.getElementById('keys-input').value = saved;
+        updateStatus("Chaves carregadas do armazenamento", "success");
+    } else {
+        updateStatus("⚠️ Configure as chaves API na aba Config", "orange");
+    }
 }
 
 async function callAI(payload) {
     if (state.cooldown) {
-        alert("Em cooldown. Aguarde...");
+        updateStatus("⏳ Em cooldown...", "orange");
         return null;
     }
 
     const rawKeys = localStorage.getItem('saco_keys');
     if (!rawKeys || rawKeys.trim() === "") {
-        updateStatus("⚠️ Configure as chaves API primeiro!", "red");
+        updateStatus("❌ Sem chaves API configuradas!", "red");
         return null;
     }
 
-    const keys = rawKeys.split(',').map(k => k.trim()).filter(k => k.length > 10);
+    const keys = rawKeys.split(',').map(k => k.trim()).filter(k => k.length > 15);
+
+    if (keys.length === 0) {
+        updateStatus("❌ Chaves inválidas", "red");
+        return null;
+    }
 
     for (let m = currentEngineIdx; m < ENGINES.length; m++) {
         const model = ENGINES[m];
         for (let i = 0; i < keys.length; i++) {
             const key = keys[i];
-            updateStatus(`<div class="spin"></div> Testando ${model}...`, "orange");
+            updateStatus(`Testando ${model} (Chave ${i+1})...`, "orange");
 
             try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/\( {model}:generateContent?key= \){key}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+                const response = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/\( {model}:generateContent?key= \){key}`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    }
+                );
 
                 const data = await response.json();
 
                 if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
                     currentEngineIdx = m;
-                    updateStatus(`✅ ${model} online`, "green");
+                    updateStatus(`✅ ${model} funcionando`, "success");
                     return data.candidates[0].content.parts[0].text;
                 }
 
                 if (data.error) {
                     if (data.error.code === 429) {
-                        if (i === keys.length - 1) startCooldown();
+                        updateStatus(`Chave ${i+1} sem quota (429)`, "red");
                         continue;
                     }
-                    if (data.error.status === "NOT_FOUND") break;
+                    if (data.error.status === "NOT_FOUND") {
+                        break; // modelo não existe, tenta próximo
+                    }
                 }
             } catch (err) {
-                console.error("Erro na chamada API:", err);
+                console.error("Erro de rede:", err);
             }
         }
     }
+
     updateStatus("❌ Nenhum motor disponível", "red");
     return null;
 }
 
+function updateStatus(msg, type = "grey") {
+    const el = document.getElementById('key-info');
+    const colors = { success: "var(--green)", orange: "var(--orange)", red: "var(--red)" };
+    el.innerHTML = msg;
+    el.style.color = colors[type] || "var(--grey)";
+}
+
 function startCooldown() {
     state.cooldown = true;
-    let seg = 60;
+    let seg = 45;
     const timer = setInterval(() => {
         seg--;
         updateStatus(`⏳ Cooldown (${seg}s)`, "orange");
         if (seg <= 0) {
             clearInterval(timer);
             state.cooldown = false;
-            updateStatus("✨ Pronto!", "green");
+            updateStatus("Pronto para nova pesquisa", "success");
         }
     }, 1000);
 }
 
-function updateStatus(msg, color) {
-    const el = document.getElementById('key-info');
-    const colors = { green: "#1e8e3e", orange: "#e67e22", red: "#d93025" };
-    el.innerHTML = msg;
-    el.style.color = colors[color] || "#5f6368";
-}
-
-// NAVEGAÇÃO
+// ====================== NAVEGAÇÃO ======================
 function switchV(id, el) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
@@ -190,112 +204,85 @@ function switchV(id, el) {
     if (el) el.classList.add('active');
 }
 
-function upCount(type, val) {
-    state[type] = Math.max(0, state[type] + val);
-    document.getElementById('c-a').innerText = state.adults;
-    document.getElementById('c-k').innerText = state.kids;
-}
-
-function triggerCam(mode) {
-    state.scanMode = mode;
-    document.getElementById('i-cam').click();
-}
-
-// --- PESQUISA CORRIGIDA ---
+// ====================== PESQUISA ======================
 async function runGlobalSearch() {
     const q = document.getElementById('q-home').value.trim();
     if (!q) {
-        alert("Escreve o produto que queres pesquisar!");
+        alert("Escreve o que queres pesquisar!");
         return;
     }
 
     const out = document.getElementById('out-home');
-    out.innerHTML += `<div class="card" style="text-align:center"><div class="spin"></div><br><small>A pesquisar preços em Portugal...</small></div>`;
+    out.innerHTML = `<div class="card" style="text-align:center"><div class="spin"></div><br><small>A pesquisar preços de "${q}"...</small></div>`;
 
     const payload = {
         contents: [{
             parts: [{
-                text: `Pesquisa os preços atuais de "${q}" em supermercados portugueses (Continente, Pingo Doce, Auchan, Lidl, Aldi, Intermarché, etc.). 
-Responde APENAS com um JSON válido, sem texto extra, sem markdown, sem explicações.
-Formato exato:
+                text: `Procura os preços atuais de "${q}" em supermercados de Portugal.
+Responde APENAS com JSON válido no seguinte formato, sem qualquer texto extra:
 [
-  {"loja": "Nome da Loja", "preco": 1.99},
-  {"loja": "Outra Loja", "preco": 2.49}
+  {"loja": "Continente", "preco": 1.29},
+  {"loja": "Pingo Doce", "preco": 1.45},
+  {"loja": "Lidl", "preco": 1.19}
 ]`
             }]
         }],
-        tools: [{ google_search: {} }]   // Estrutura correta para Grounding with Google Search
+        tools: [{ google_search: {} }]
     };
 
     const res = await callAI(payload);
+
     if (!res) {
-        out.innerHTML += `<div class="card" style="color:var(--red)">Não foi possível obter resposta. Verifica as chaves API.</div>`;
+        out.innerHTML = `<div class="card error">Não foi possível obter resposta.<br>Verifica as chaves API na aba Config.</div>`;
         return;
     }
 
     try {
         let clean = res.replace(/```json|```/gi, '').trim();
         const match = clean.match(/\[[\s\S]*\]/);
-        if (!match) throw new Error("Sem JSON válido");
+        if (!match) throw new Error("JSON não encontrado");
 
         const data = JSON.parse(match[0]);
 
-        let html = `<div class="card"><h3>Preços para "${q}"</h3>`;
+        let html = `<div class="card"><h3>🔎 Preços para "${q}"</h3>`;
         data.forEach(item => {
             const preco = parseFloat(item.preco) || 0;
             html += `
-                <div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #eee;">
-                    <strong>${item.loja || 'Loja'}</strong>
+                <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #eee;">
+                    <strong>${item.loja}</strong>
                     <span style="color:var(--green); font-weight:bold; font-size:18px;">${preco.toFixed(2)}€</span>
                 </div>`;
         });
         html += `</div>`;
 
-        // Substitui o último card (spinner)
-        const lastCard = out.querySelector('.card:last-child');
-        if (lastCard) lastCard.outerHTML = html;
-        else out.innerHTML += html;
-
+        out.innerHTML = html;
     } catch (e) {
-        console.error("Erro ao processar resposta:", e, res);
-        out.innerHTML += `<div class="card" style="color:var(--orange)">Resposta recebida, mas não em formato JSON.<br><small>${res.substring(0, 200)}...</small></div>`;
+        console.error(e);
+        out.innerHTML = `<div class="card">Resposta recebida, mas não em formato esperado.<br><small>${res.substring(0, 150)}...</small></div>`;
     }
 }
 
-// --- OUTRAS FUNÇÕES (mantidas simplificadas) ---
-async function handleMedia(input) { /* mesma da versão anterior */ 
-    // (podes colar a função handleMedia completa da versão 32.5 se precisares)
-    alert("Funcionalidade de câmara ainda em teste. Usa a pesquisa manual por agora.");
+// ====================== OUTRAS FUNÇÕES (básicas) ======================
+function triggerCam(mode) {
+    alert("📷 Câmara ainda em desenvolvimento.\nUsa a pesquisa manual por agora.");
 }
 
 async function generateUltimateList() {
-    const cont = document.getElementById('editable-list-container');
-    cont.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div> Gerando lista...</div>';
-    // ... (implementação simplificada - podes expandir depois)
     alert("Gerador de lista em desenvolvimento.");
 }
 
 async function analyzeStrategy() {
-    const list = document.getElementById('list-input').value.trim();
-    if (!list) return alert("Insira a lista primeiro.");
-    const out = document.getElementById('out-list');
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div> Analisando...</div>';
     alert("Análise de estratégia em desenvolvimento.");
-}
-
-function confirmList(txt) {
-    document.getElementById('list-input').value = txt;
-    switchV('list', document.querySelectorAll('.nav-item')[2]);
 }
 
 function saveKeys() {
     const keys = document.getElementById('keys-input').value.trim();
     if (keys) {
         localStorage.setItem('saco_keys', keys);
-        alert("Chaves guardadas! Recarregando...");
+        alert("✅ Chaves guardadas com sucesso!\nRecarregando a aplicação...");
         location.reload();
     } else {
-        alert("Insira pelo menos uma chave.");
+        alert("Por favor, insira pelo menos uma chave API.");
     }
 }
 </script>
