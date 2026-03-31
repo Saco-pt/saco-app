@@ -2,289 +2,101 @@
 <html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V32.7 Corrigido</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini API Diagnostic Tool</title>
     <style>
-        :root { 
-            --blue: #1a73e8; 
-            --green: #1e8e3e; 
-            --bg: #f8f9fa; 
-            --card: #ffffff; 
-            --grey: #5f6368; 
-            --red: #d93025; 
-            --orange: #e67e22; 
-        }
-        * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
-        body { background: var(--bg); margin: 0; padding-bottom: 100px; color: #202124; }
-        
-        .header { background: var(--card); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1001; }
-        .status-badge { font-size: 10px; background: #e8f0fe; color: var(--blue); padding: 5px 12px; border-radius: 20px; font-weight: bold; }
-        
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; height: 80px; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; border-top: 1px solid #e0e0e0; }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: var(--grey); cursor: pointer; }
-        .nav-item.active { color: var(--blue); font-weight: bold; }
-        .nav-item span { font-size: 24px; margin-bottom: 4px; }
-
-        .view { display: none; padding: 15px; max-width: 600px; margin: 0 auto; }
-        .view.active { display: block; }
-
-        .card { background: var(--card); border-radius: 20px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 15px; border: 1px solid rgba(0,0,0,0.05); }
-        .btn { border: none; border-radius: 12px; padding: 14px; font-weight: bold; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; }
-        .btn-blue { background: var(--blue); color: white; }
-        .btn-green { background: var(--green); color: white; }
-        
-        input, textarea { width: 100%; padding: 14px; border: 1px solid #dadce0; border-radius: 12px; font-size: 16px; margin-bottom: 10px; outline: none; }
-        
-        #key-info { font-size: 12px; text-align: center; margin-top: 10px; min-height: 24px; font-weight: bold; }
-        .spin { width: 16px; height: 16px; border: 3px solid #f3f3f3; border-top: 3px solid var(--blue); border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .error { color: var(--red); }
-        .success { color: var(--green); }
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f9; color: #333; line-height: 1.6; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { color: #1a73e8; margin-top: 0; }
+        input, select, button { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        button { background: #1a73e8; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #1557b0; }
+        #log { margin-top: 20px; padding: 15px; border-radius: 8px; font-family: monospace; white-space: pre-wrap; font-size: 13px; display: none; }
+        .success { background: #e6ffed; border: 1px solid #28a745; color: #155724; display: block !important; }
+        .error { background: #ffeef0; border: 1px solid #d73a49; color: #86181d; display: block !important; }
+        .loading { background: #fff9e6; border: 1px solid #ffcc00; color: #856404; display: block !important; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
     </style>
 </head>
-<body onload="initApp()">
+<body>
 
-<div class="header">
-    <div style="font-weight:900; font-size:22px;">SACO<span style="color:var(--blue)">.pt</span></div>
-    <div id="status-loc" class="status-badge">📍 Portugal</div>
+<div class="container">
+    <h2>🧪 Gemini Key Tester</h2>
+    <p style="font-size: 14px; color: #666;">Testa se a tua API Key está ativa e qual modelo ela suporta.</p>
+
+    <label>Insere a tua API Key:</label>
+    <input type="text" id="apiKey" placeholder="AIzaSy..." spellcheck="false">
+
+    <label>Escolhe o Modelo para testar:</label>
+    <select id="modelId">
+        <option value="gemini-1.5-flash">Gemini 1.5 Flash (Recomendado)</option>
+        <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+        <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash Exp</option>
+        <option value="gemini-pro">Gemini 1.0 Pro (Antigo)</option>
+    </select>
+
+    <button onclick="testKey()">Executar Teste de Conexão</button>
+
+    <div id="log"></div>
 </div>
-
-<div id="view-home" class="view active">
-    <div class="card">
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
-            <button class="btn btn-blue" onclick="triggerCam('prod')">📸 Produto</button>
-            <button class="btn btn-blue" style="background:#5f6368" onclick="triggerCam('bill')">🧾 Fatura</button>
-        </div>
-        <input type="text" id="q-home" placeholder="Ex: sal fino 1kg ou leite mimosa" value="Sal">
-        <button class="btn btn-green" onclick="runGlobalSearch()">🔍 Pesquisar em Portugal</button>
-        <div id="key-info"></div>
-    </div>
-    <div id="out-home"></div>
-</div>
-
-<div id="view-gen" class="view">
-    <div class="card">
-        <h3>🪄 Gerador Familiar</h3>
-        <button class="btn btn-blue" onclick="generateUltimateList()">Gerar Lista Nutritiva</button>
-    </div>
-    <div id="editable-list-container"></div>
-</div>
-
-<div id="view-list" class="view">
-    <div class="card">
-        <h3>🛒 Carrinho Inteligente</h3>
-        <textarea id="list-input" placeholder="Cola aqui os itens..." rows="8"></textarea>
-        <button class="btn btn-green" onclick="analyzeStrategy()">🚀 Onde comprar mais barato?</button>
-    </div>
-    <div id="out-list"></div>
-</div>
-
-<div id="view-config" class="view">
-    <div class="card">
-        <h3>⚙️ Configuração das Chaves API</h3>
-        <p style="font-size:13px; color:#666; margin-bottom:10px;">Cole as tuas chaves Gemini (separadas por vírgula):</p>
-        <textarea id="keys-input" placeholder="AIzaSyxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx, AIzaSy..." rows="6"></textarea>
-        <button class="btn btn-blue" onclick="saveKeys()">Guardar Chaves</button>
-        <div id="active-model-display" style="margin-top:15px; font-size:12px; color:var(--grey)"></div>
-    </div>
-</div>
-
-<nav class="bottom-nav">
-    <div class="nav-item active" onclick="switchV('home', this)"><span>🔎</span>Início</div>
-    <div class="nav-item" onclick="switchV('gen', this)"><span>🪄</span>Gerar</div>
-    <div class="nav-item" onclick="switchV('list', this)"><span>🛒</span>Lista</div>
-    <div class="nav-item" onclick="switchV('config', this)"><span>⚙️</span>Config</div>
-</nav>
 
 <script>
-// ====================== CONFIG ======================
-const ENGINES = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-1.5-pro"];
-let currentEngineIdx = 0;
-let state = { cooldown: false };
+    async function testKey() {
+        const key = document.getElementById('apiKey').value.trim();
+        const model = document.getElementById('modelId').value;
+        const log = document.getElementById('log');
 
-async function initApp() {
-    const saved = localStorage.getItem('saco_keys');
-    if (saved) {
-        document.getElementById('keys-input').value = saved;
-        updateStatus("Chaves carregadas do armazenamento", "success");
-    } else {
-        updateStatus("⚠️ Configure as chaves API na aba Config", "orange");
-    }
-}
+        if (!key) {
+            alert("Por favor, insere uma chave primeiro!");
+            return;
+        }
 
-async function callAI(payload) {
-    if (state.cooldown) {
-        updateStatus("⏳ Em cooldown...", "orange");
-        return null;
-    }
+        log.className = 'loading';
+        log.innerHTML = `⏳ A contactar Google API via ${model}...`;
 
-    const rawKeys = localStorage.getItem('saco_keys');
-    if (!rawKeys || rawKeys.trim() === "") {
-        updateStatus("❌ Sem chaves API configuradas!", "red");
-        return null;
-    }
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+        
+        const payload = {
+            contents: [{ parts: [{ text: "Diz 'OK' se estiveres a funcionar." }] }]
+        };
 
-    const keys = rawKeys.split(',').map(k => k.trim()).filter(k => k.length > 15);
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
 
-    if (keys.length === 0) {
-        updateStatus("❌ Chaves inválidas", "red");
-        return null;
-    }
+            const data = await response.json();
 
-    for (let m = currentEngineIdx; m < ENGINES.length; m++) {
-        const model = ENGINES[m];
-        for (let i = 0; i < keys.length; i++) {
-            const key = keys[i];
-            updateStatus(`Testando ${model} (Chave ${i+1})...`, "orange");
-
-            try {
-                const response = await fetch(
-                    `https://generativelanguage.googleapis.com/v1beta/models/\( {model}:generateContent?key= \){key}`,
-                    {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    }
-                );
-
-                const data = await response.json();
-
-                if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
-                    currentEngineIdx = m;
-                    updateStatus(`✅ ${model} funcionando`, "success");
-                    return data.candidates[0].content.parts[0].text;
+            if (response.ok) {
+                log.className = 'success';
+                log.innerHTML = `<strong>✅ SUCESSO!</strong>\n\n`;
+                log.innerHTML += `<b>Resposta:</b> ${data.candidates[0].content.parts[0].text}\n`;
+                log.innerHTML += `<b>Modelo:</b> ${model}\n`;
+                log.innerHTML += `<b>Status:</b> 200 OK\n\n`;
+                log.innerHTML += `A tua chave está configurada corretamente para este modelo.`;
+            } else {
+                log.className = 'error';
+                log.innerHTML = `<strong>❌ FALHA NA LIGAÇÃO</strong>\n\n`;
+                log.innerHTML += `<b>Erro:</b> ${data.error.status}\n`;
+                log.innerHTML += `<b>Código:</b> ${data.error.code}\n`;
+                log.innerHTML += `<b>Mensagem:</b> ${data.error.message}\n\n`;
+                
+                if (data.error.status === "NOT_FOUND") {
+                    log.innerHTML += `💡 <b>Dica:</b> O modelo '${model}' não existe ou não está liberado para a tua conta. Tenta o 'gemini-1.5-flash'.`;
+                } else if (data.error.status === "PERMISSION_DENIED") {
+                    log.innerHTML += `💡 <b>Dica:</b> A chave é inválida ou as restrições de IP no Google Cloud estão a bloquear o acesso.`;
+                } else if (data.error.code === 429) {
+                    log.innerHTML += `💡 <b>Dica:</b> Cota esgotada! Espera 60 segundos.`;
                 }
-
-                if (data.error) {
-                    if (data.error.code === 429) {
-                        updateStatus(`Chave ${i+1} sem quota (429)`, "red");
-                        continue;
-                    }
-                    if (data.error.status === "NOT_FOUND") {
-                        break; // modelo não existe, tenta próximo
-                    }
-                }
-            } catch (err) {
-                console.error("Erro de rede:", err);
             }
+        } catch (err) {
+            log.className = 'error';
+            log.innerHTML = `<strong>❌ ERRO DE REDE</strong>\n\n${err.message}`;
         }
     }
-
-    updateStatus("❌ Nenhum motor disponível", "red");
-    return null;
-}
-
-function updateStatus(msg, type = "grey") {
-    const el = document.getElementById('key-info');
-    const colors = { success: "var(--green)", orange: "var(--orange)", red: "var(--red)" };
-    el.innerHTML = msg;
-    el.style.color = colors[type] || "var(--grey)";
-}
-
-function startCooldown() {
-    state.cooldown = true;
-    let seg = 45;
-    const timer = setInterval(() => {
-        seg--;
-        updateStatus(`⏳ Cooldown (${seg}s)`, "orange");
-        if (seg <= 0) {
-            clearInterval(timer);
-            state.cooldown = false;
-            updateStatus("Pronto para nova pesquisa", "success");
-        }
-    }, 1000);
-}
-
-// ====================== NAVEGAÇÃO ======================
-function switchV(id, el) {
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-    document.getElementById('view-' + id).classList.add('active');
-    if (el) el.classList.add('active');
-}
-
-// ====================== PESQUISA ======================
-async function runGlobalSearch() {
-    const q = document.getElementById('q-home').value.trim();
-    if (!q) {
-        alert("Escreve o que queres pesquisar!");
-        return;
-    }
-
-    const out = document.getElementById('out-home');
-    out.innerHTML = `<div class="card" style="text-align:center"><div class="spin"></div><br><small>A pesquisar preços de "${q}"...</small></div>`;
-
-    const payload = {
-        contents: [{
-            parts: [{
-                text: `Procura os preços atuais de "${q}" em supermercados de Portugal.
-Responde APENAS com JSON válido no seguinte formato, sem qualquer texto extra:
-[
-  {"loja": "Continente", "preco": 1.29},
-  {"loja": "Pingo Doce", "preco": 1.45},
-  {"loja": "Lidl", "preco": 1.19}
-]`
-            }]
-        }],
-        tools: [{ google_search: {} }]
-    };
-
-    const res = await callAI(payload);
-
-    if (!res) {
-        out.innerHTML = `<div class="card error">Não foi possível obter resposta.<br>Verifica as chaves API na aba Config.</div>`;
-        return;
-    }
-
-    try {
-        let clean = res.replace(/```json|```/gi, '').trim();
-        const match = clean.match(/\[[\s\S]*\]/);
-        if (!match) throw new Error("JSON não encontrado");
-
-        const data = JSON.parse(match[0]);
-
-        let html = `<div class="card"><h3>🔎 Preços para "${q}"</h3>`;
-        data.forEach(item => {
-            const preco = parseFloat(item.preco) || 0;
-            html += `
-                <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #eee;">
-                    <strong>${item.loja}</strong>
-                    <span style="color:var(--green); font-weight:bold; font-size:18px;">${preco.toFixed(2)}€</span>
-                </div>`;
-        });
-        html += `</div>`;
-
-        out.innerHTML = html;
-    } catch (e) {
-        console.error(e);
-        out.innerHTML = `<div class="card">Resposta recebida, mas não em formato esperado.<br><small>${res.substring(0, 150)}...</small></div>`;
-    }
-}
-
-// ====================== OUTRAS FUNÇÕES (básicas) ======================
-function triggerCam(mode) {
-    alert("📷 Câmara ainda em desenvolvimento.\nUsa a pesquisa manual por agora.");
-}
-
-async function generateUltimateList() {
-    alert("Gerador de lista em desenvolvimento.");
-}
-
-async function analyzeStrategy() {
-    alert("Análise de estratégia em desenvolvimento.");
-}
-
-function saveKeys() {
-    const keys = document.getElementById('keys-input').value.trim();
-    if (keys) {
-        localStorage.setItem('saco_keys', keys);
-        alert("✅ Chaves guardadas com sucesso!\nRecarregando a aplicação...");
-        location.reload();
-    } else {
-        alert("Por favor, insira pelo menos uma chave API.");
-    }
-}
 </script>
+
 </body>
 </html>
