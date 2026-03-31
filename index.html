@@ -2,101 +2,286 @@
 <html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini API Diagnostic Tool</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SACO.pt | V32.5 OMNI-ENGINE</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #f4f4f9; color: #333; line-height: 1.6; }
-        .container { max-width: 600px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { color: #1a73e8; margin-top: 0; }
-        input, select, button { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
-        button { background: #1a73e8; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:hover { background: #1557b0; }
-        #log { margin-top: 20px; padding: 15px; border-radius: 8px; font-family: monospace; white-space: pre-wrap; font-size: 13px; display: none; }
-        .success { background: #e6ffed; border: 1px solid #28a745; color: #155724; display: block !important; }
-        .error { background: #ffeef0; border: 1px solid #d73a49; color: #86181d; display: block !important; }
-        .loading { background: #fff9e6; border: 1px solid #ffcc00; color: #856404; display: block !important; }
-        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
+        :root { --blue: #1a73e8; --green: #1e8e3e; --bg: #f8f9fa; --card: #ffffff; --grey: #5f6368; --red: #d93025; --orange: #e67e22; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); margin: 0; padding-bottom: 100px; color: #202124; }
+        
+        .header { background: var(--card); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1001; }
+        .status-badge { font-size: 10px; background: #e8f0fe; color: var(--blue); padding: 5px 12px; border-radius: 20px; font-weight: bold; }
+        
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; height: 80px; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; border-top: 1px solid #e0e0e0; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: var(--grey); cursor: pointer; }
+        .nav-item.active { color: var(--blue); font-weight: bold; }
+        .nav-item span { font-size: 24px; margin-bottom: 4px; }
+
+        .view { display: none; padding: 15px; max-width: 600px; margin: 0 auto; animation: fadeIn 0.2s; }
+        .view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .card { background: var(--card); border-radius: 20px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 15px; border: 1px solid rgba(0,0,0,0.05); }
+        .btn { border: none; border-radius: 12px; padding: 14px; font-weight: bold; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; transition: 0.2s; }
+        .btn-blue { background: var(--blue); color: white; }
+        .btn-green { background: var(--green); color: white; }
+        
+        input, textarea { width: 100%; padding: 14px; border: 1px solid #dadce0; border-radius: 12px; font-size: 16px; margin-bottom: 10px; outline: none; }
+        
+        #key-info { font-size: 11px; text-align: center; margin-top: 10px; min-height: 15px; font-weight: bold; }
+        .spin { width: 14px; height: 14px; border: 2px solid #f3f3f3; border-top: 2px solid var(--blue); border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 5px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .list-row { background: #f1f3f4; padding: 10px; border-radius: 10px; margin-bottom: 5px; font-size: 14px; border-left: 4px solid var(--blue); }
     </style>
 </head>
-<body>
+<body onload="initApp()">
 
-<div class="container">
-    <h2>🧪 Gemini Key Tester</h2>
-    <p style="font-size: 14px; color: #666;">Testa se a tua API Key está ativa e qual modelo ela suporta.</p>
-
-    <label>Insere a tua API Key:</label>
-    <input type="text" id="apiKey" placeholder="AIzaSy..." spellcheck="false">
-
-    <label>Escolhe o Modelo para testar:</label>
-    <select id="modelId">
-        <option value="gemini-1.5-flash">Gemini 1.5 Flash (Recomendado)</option>
-        <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-        <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash Exp</option>
-        <option value="gemini-pro">Gemini 1.0 Pro (Antigo)</option>
-    </select>
-
-    <button onclick="testKey()">Executar Teste de Conexão</button>
-
-    <div id="log"></div>
+<div class="header">
+    <div style="font-weight:900; font-size:22px;">SACO<span style="color:var(--blue)">.pt</span></div>
+    <div id="status-loc" class="status-badge">📍 Portugal</div>
 </div>
 
+<div id="view-home" class="view active">
+    <div class="card">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+            <button class="btn btn-blue" onclick="triggerCam('prod')">📸 Produto</button>
+            <button class="btn btn-blue" style="background:#5f6368" onclick="triggerCam('bill')">🧾 Fatura</button>
+        </div>
+        <input type="file" id="i-cam" style="display:none" accept="image/*" capture="environment" onchange="handleMedia(this)">
+        <input type="text" id="q-home" placeholder="O que procuras hoje?">
+        <button class="btn btn-green" onclick="runGlobalSearch()">🔍 Pesquisar em Portugal</button>
+        <div id="key-info" style="color:var(--grey)">Pronto para Diagnóstico Automático</div>
+    </div>
+    <div id="out-home"></div>
+</div>
+
+<div id="view-gen" class="view">
+    <div class="card">
+        <h3>🪄 Gerador Familiar</h3>
+        <div style="display:flex; gap:10px; margin-bottom:15px;">
+            <div style="flex:1; text-align:center; background:#eee; padding:10px; border-radius:15px;">
+                <small>Adultos</small><br>
+                <button onclick="upCount('adults',-1)">-</button> <b id="c-a">2</b> <button onclick="upCount('adults',1)">+</button>
+            </div>
+            <div style="flex:1; text-align:center; background:#eee; padding:10px; border-radius:15px;">
+                <small>Crianças</small><br>
+                <button onclick="upCount('kids',-1)">-</button> <b id="c-k">1</b> <button onclick="upCount('kids',1)">+</button>
+            </div>
+        </div>
+        <button class="btn btn-blue" onclick="generateUltimateList()">Gerar Lista Nutritiva</button>
+    </div>
+    <div id="editable-list-container"></div>
+</div>
+
+<div id="view-list" class="view">
+    <div class="card">
+        <h3>🛒 Carrinho Inteligente</h3>
+        <textarea id="list-input" placeholder="Itens para comparar..." rows="8"></textarea>
+        <button class="btn btn-green" onclick="analyzeStrategy()">🚀 Onde comprar mais barato?</button>
+    </div>
+    <div id="out-list"></div>
+</div>
+
+<div id="view-config" class="view">
+    <div class="card">
+        <h3>⚙️ Configuração (Auto-Detect)</h3>
+        <p style="font-size:12px; color:var(--grey)">Insere as API Keys (separa com vírgula se tiveres várias).</p>
+        <textarea id="keys-input" placeholder="AIzaSy..., AIzaSy..." rows="5"></textarea>
+        <button class="btn btn-blue" onclick="saveKeys()">Guardar Chaves</button>
+        <div style="margin-top:15px; font-size:11px; color:var(--grey)">
+            <b>Prioridade de Motores:</b><br>
+            1. Gemini 3 Flash<br>
+            2. Gemini 2.0 Flash<br>
+            3. Gemini 1.5 Flash (Fallback)
+        </div>
+    </div>
+</div>
+
+<nav class="bottom-nav">
+    <div class="nav-item active" onclick="switchV('home', this)"><span>🔎</span>Início</div>
+    <div class="nav-item" onclick="switchV('gen', this)"><span>🪄</span>Gerar</div>
+    <div class="nav-item" onclick="switchV('list', this)"><span>🛒</span>Lista</div>
+    <div class="nav-item" onclick="switchV('config', this)"><span>⚙️</span>Config</div>
+</nav>
+
 <script>
-    async function testKey() {
-        const key = document.getElementById('apiKey').value.trim();
-        const model = document.getElementById('modelId').value;
-        const log = document.getElementById('log');
+// --- MOTOR OMNI-ENGINE V32.5 ---
+const ENGINES = ["gemini-3-flash", "gemini-2.0-flash-exp", "gemini-1.5-flash", "gemini-pro"];
+let state = { adults: 2, kids: 1, city: "Portugal", scanMode: 'prod', cooldown: false };
 
-        if (!key) {
-            alert("Por favor, insere uma chave primeiro!");
-            return;
-        }
+async function initApp() {
+    const saved = localStorage.getItem('saco_keys');
+    if(saved) document.getElementById('keys-input').value = saved;
+}
 
-        log.className = 'loading';
-        log.innerHTML = `⏳ A contactar Google API via ${model}...`;
+async function callAI(payload) {
+    if(state.cooldown) { alert("Cooldown ativo. Aguarda 1 minuto."); return null; }
+    
+    const rawKeys = localStorage.getItem('saco_keys');
+    if(!rawKeys) { updateStatus("⚠️ Insere as Keys em Config!", "red"); return null; }
+    const keys = rawKeys.split(',').map(k => k.trim()).filter(k => k.length > 5);
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+    // Ciclo de Motores (Tenta o melhor primeiro)
+    for (let m = 0; m < ENGINES.length; m++) {
+        let model = ENGINES[m];
         
-        const payload = {
-            contents: [{ parts: [{ text: "Diz 'OK' se estiveres a funcionar." }] }]
-        };
+        // Ciclo de Keys
+        for (let i = 0; i < keys.length; i++) {
+            let key = keys[i];
+            updateStatus(`<div class="spin"></div> Testando ${model}...`, "orange");
 
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                log.className = 'success';
-                log.innerHTML = `<strong>✅ SUCESSO!</strong>\n\n`;
-                log.innerHTML += `<b>Resposta:</b> ${data.candidates[0].content.parts[0].text}\n`;
-                log.innerHTML += `<b>Modelo:</b> ${model}\n`;
-                log.innerHTML += `<b>Status:</b> 200 OK\n\n`;
-                log.innerHTML += `A tua chave está configurada corretamente para este modelo.`;
-            } else {
-                log.className = 'error';
-                log.innerHTML = `<strong>❌ FALHA NA LIGAÇÃO</strong>\n\n`;
-                log.innerHTML += `<b>Erro:</b> ${data.error.status}\n`;
-                log.innerHTML += `<b>Código:</b> ${data.error.code}\n`;
-                log.innerHTML += `<b>Mensagem:</b> ${data.error.message}\n\n`;
+            try {
+                const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
                 
-                if (data.error.status === "NOT_FOUND") {
-                    log.innerHTML += `💡 <b>Dica:</b> O modelo '${model}' não existe ou não está liberado para a tua conta. Tenta o 'gemini-1.5-flash'.`;
-                } else if (data.error.status === "PERMISSION_DENIED") {
-                    log.innerHTML += `💡 <b>Dica:</b> A chave é inválida ou as restrições de IP no Google Cloud estão a bloquear o acesso.`;
-                } else if (data.error.code === 429) {
-                    log.innerHTML += `💡 <b>Dica:</b> Cota esgotada! Espera 60 segundos.`;
+                const d = await r.json();
+
+                // SUCESSO
+                if (d.candidates && d.candidates[0]) {
+                    updateStatus(`✅ Ligado via ${model}`, "green");
+                    return d.candidates[0].content.parts[0].text;
                 }
-            }
-        } catch (err) {
-            log.className = 'error';
-            log.innerHTML = `<strong>❌ ERRO DE REDE</strong>\n\n${err.message}`;
+
+                // ERRO: Modelo Não Existe (NOT_FOUND) -> Salta para o próximo motor
+                if (d.error && (d.error.status === "NOT_FOUND" || d.error.code === 404)) {
+                    console.warn(`Motor ${model} indisponível nesta conta. Tentando próximo...`);
+                    break; // Sai do loop de keys e avança no loop de motores
+                }
+
+                // ERRO: Sem Cota -> Tenta a próxima Key para o mesmo motor
+                if (d.error && (d.error.code === 429)) {
+                    updateStatus(`⚠️ K${i+1} sem cota. Rodando...`, "red");
+                    if (i === keys.length - 1) startCooldown();
+                    continue; 
+                }
+
+                // ERRO: Chave Inválida
+                if (d.error && d.error.status === "PERMISSION_DENIED") {
+                    updateStatus(`❌ K${i+1} inválida`, "red");
+                    continue;
+                }
+            } catch (err) { console.error("Falha técnica de rede"); }
         }
     }
-</script>
+    updateStatus("❌ Todos os motores falharam", "red");
+    return null;
+}
 
+function startCooldown() {
+    state.cooldown = true;
+    let seg = 60;
+    const timer = setInterval(() => {
+        seg--;
+        updateStatus(`⏳ Cooldown (${seg}s)`, "orange");
+        if(seg <= 0) { clearInterval(timer); state.cooldown = false; updateStatus("✨ Pronto!", "green"); }
+    }, 1000);
+}
+
+function updateStatus(msg, color) {
+    const el = document.getElementById('key-info');
+    const colors = { green: "#1e8e3e", orange: "#e67e22", red: "#d93025" };
+    el.innerHTML = msg;
+    el.style.color = colors[color] || "grey";
+}
+
+// --- FUNÇÕES DE INTERFACE ---
+function switchV(id, el) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    document.getElementById('view-' + id).classList.add('active');
+    el.classList.add('active');
+}
+
+function upCount(type, val) {
+    state[type] = Math.max(0, state[type] + val);
+    document.getElementById('c-a').innerText = state.adults;
+    document.getElementById('c-k').innerText = state.kids;
+}
+
+function triggerCam(mode) { state.scanMode = mode; document.getElementById('i-cam').click(); }
+
+async function handleMedia(input) {
+    if(!input.files[0]) return;
+    const out = document.getElementById('out-home');
+    out.innerHTML = `<div class="card" style="text-align:center"><div class="spin"></div> Analisando Imagem...</div>`;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const img = new Image();
+        img.onload = async () => {
+            const canvas = document.createElement('canvas');
+            const scale = 800 / img.width;
+            canvas.width = 800; canvas.height = img.height * scale;
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+            const b64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+            
+            const prompt = state.scanMode === 'prod' ? "Identifica produto e marca." : "Lista os itens desta fatura de Portugal.";
+            const res = await callAI({ contents: [{ parts: [{ inline_data: { mime_type: "image/jpeg", data: b64 } }, { text: prompt }] }] });
+            
+            if(res) {
+                if(state.scanMode === 'prod') {
+                    document.getElementById('q-home').value = res.split('\n')[0];
+                    out.innerHTML = `<div class="card"><small>${res}</small></div>`;
+                    runGlobalSearch();
+                } else {
+                    document.getElementById('list-input').value = res;
+                    switchV('list', document.querySelectorAll('.nav-item')[2]);
+                }
+            }
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(input.files[0]);
+}
+
+async function runGlobalSearch() {
+    const q = document.getElementById('q-home').value;
+    const out = document.getElementById('out-home');
+    const res = await callAI({
+        contents: [{ parts: [{ text: `Preço online de "${q}" em supermercados de Portugal (Continente, Pingo Doce, Auchan, Mercadona). Responde apenas JSON: [{"loja":"Nome","preco":0.00,"url":"..."}]` }] }],
+        tools: [{ google_search: {} }]
+    });
+    if(!res) return;
+    try {
+        const match = res.match(/\[[\s\S]*\]/);
+        if(!match) return;
+        const data = JSON.parse(match[0]);
+        out.innerHTML += data.map(i => `<div class="card" style="display:flex; justify-content:space-between"><b>${i.loja}</b> <span style="color:var(--green); font-weight:bold">${i.preco.toFixed(2)}€</span></div>`).join('');
+    } catch(e) {}
+}
+
+async function generateUltimateList() {
+    const cont = document.getElementById('editable-list-container');
+    cont.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div> Otimizando para o agregado...</div>';
+    const res = await callAI({ contents: [{ parts: [{ text: `Gera uma lista de compras otimizada para ${state.adults} adultos e ${state.kids} crianças em Portugal. Marcas brancas.` }] }] });
+    if(!res) return;
+    cont.innerHTML = `<div class="card"><h3>Sugestão AI</h3>` + res.split('\n').filter(l=>l.length>3).map(it => `<div class="list-row">${it}</div>`).join('') + `<button class="btn btn-green" onclick="confirmList('${res.replace(/'/g,"")}')">Usar no Carrinho</button></div>`;
+}
+
+function confirmList(txt) {
+    document.getElementById('list-input').value = txt;
+    switchV('list', document.querySelectorAll('.nav-item')[2]);
+}
+
+async function analyzeStrategy() {
+    const out = document.getElementById('out-list');
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div> Consultando mercados...</div>';
+    const res = await callAI({
+        contents: [{ parts: [{ text: `Diz-me qual o supermercado mais barato para estes itens em Portugal hoje: ${document.getElementById('list-input').value}` }] }],
+        tools: [{ google_search: {} }]
+    });
+    out.innerHTML = `<div class="card" style="border-left:5px solid var(--blue)"><b>💡 Estratégia Recomendada:</b><br><small>${res}</small></div>`;
+}
+
+function saveKeys() {
+    localStorage.setItem('saco_keys', document.getElementById('keys-input').value.trim());
+    alert("Keys Gravadas! A App vai reiniciar para aplicar as novas configurações.");
+    location.reload();
+}
+</script>
 </body>
 </html>
