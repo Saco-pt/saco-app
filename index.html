@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V32.6 GEMINI 2.5</title>
+    <title>SACO.pt | V32.7 RETAIL-FOCUS</title>
     <style>
         :root { --blue: #1a73e8; --green: #1e8e3e; --bg: #f8f9fa; --card: #ffffff; --grey: #5f6368; --red: #d93025; --orange: #e67e22; }
         * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -50,8 +50,8 @@
         </div>
         <input type="file" id="i-cam" style="display:none" accept="image/*" capture="environment" onchange="handleMedia(this)">
         <input type="text" id="q-home" placeholder="O que procuras hoje?">
-        <button class="btn btn-green" onclick="runGlobalSearch()">🔍 Pesquisar em Portugal</button>
-        <div id="key-info" style="color:var(--grey)">Motor 2.5 Ativado</div>
+        <button class="btn btn-green" onclick="runGlobalSearch()">🔍 Comparar Preços</button>
+        <div id="key-info" style="color:var(--grey)">Motores: Continente, Lidl, Aldi, Mercadona, Pingo Doce, Auchan</div>
     </div>
     <div id="out-home"></div>
 </div>
@@ -76,23 +76,20 @@
 
 <div id="view-list" class="view">
     <div class="card">
-        <h3>🛒 Carrinho Inteligente</h3>
+        <h3>🛒 Onde é mais barato?</h3>
         <textarea id="list-input" placeholder="Itens para comparar..." rows="8"></textarea>
-        <button class="btn btn-green" onclick="analyzeStrategy()">🚀 Onde comprar mais barato?</button>
+        <button class="btn btn-green" onclick="analyzeStrategy()">🚀 Analisar nestes 6 Hipermercados</button>
     </div>
     <div id="out-list"></div>
 </div>
 
 <div id="view-config" class="view">
     <div class="card">
-        <h3>⚙️ Configuração Gemini 2.5</h3>
+        <h3>⚙️ Configuração</h3>
         <textarea id="keys-input" placeholder="AIzaSy..., AIzaSy..." rows="5"></textarea>
         <button class="btn btn-blue" onclick="saveKeys()">Guardar Chaves</button>
         <div style="margin-top:15px; font-size:11px; color:var(--grey)">
-            <b>Motores em Prioridade:</b><br>
-            1. Gemini 2.5 Flash (Topo)<br>
-            2. Gemini 2.0 Flash<br>
-            3. Gemini 1.5 Flash
+            <b>Supermercados Alvo:</b> Continente, Lidl, Aldi, Mercadona, Pingo Doce e Auchan.
         </div>
     </div>
 </div>
@@ -105,7 +102,7 @@
 </nav>
 
 <script>
-// --- MOTOR TURBO V32.6 (GEMINI 2.5 PRIORITÁRIO) ---
+// --- MOTOR TURBO V32.7 (ESTABILIZADO + FILTRO DE LOJAS) ---
 const ENGINES = ["gemini-2.5-flash", "gemini-2.0-flash-exp", "gemini-1.5-flash"];
 let state = { adults: 2, kids: 1, city: "Portugal", scanMode: 'prod', cooldown: false };
 
@@ -115,47 +112,35 @@ async function initApp() {
 }
 
 async function callAI(payload) {
-    if(state.cooldown) { alert("Cooldown ativo."); return null; }
-    
+    if(state.cooldown) { alert("Aguarde a renovação da cota (60s)."); return null; }
     const rawKeys = localStorage.getItem('saco_keys');
-    if(!rawKeys) { updateStatus("⚠️ Insere as Keys em Config!", "red"); return null; }
+    if(!rawKeys) { updateStatus("⚠️ Sem Keys!", "red"); return null; }
     const keys = rawKeys.split(',').map(k => k.trim()).filter(k => k.length > 5);
 
     for (let m = 0; m < ENGINES.length; m++) {
         let model = ENGINES[m];
-        
         for (let i = 0; i < keys.length; i++) {
             let key = keys[i];
-            updateStatus(`<div class="spin"></div> Tentando ${model}...`, "orange");
-
+            updateStatus(`<div class="spin"></div> Consultando ${model}...`, "orange");
             try {
                 const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(payload)
                 });
-                
                 const d = await r.json();
-
                 if (d.candidates && d.candidates[0]) {
                     updateStatus(`✅ Ligado: ${model}`, "green");
                     return d.candidates[0].content.parts[0].text;
                 }
-
-                if (d.error && (d.error.status === "NOT_FOUND" || d.error.code === 404)) {
-                    console.warn(`Motor ${model} indisponível. Tentando próximo...`);
-                    break; 
-                }
-
+                if (d.error && (d.error.status === "NOT_FOUND")) break;
                 if (d.error && (d.error.code === 429)) {
-                    updateStatus(`⚠️ K${i+1} sem cota.`, "red");
                     if (i === keys.length - 1) startCooldown();
                     continue; 
                 }
-            } catch (err) { console.error("Falha técnica."); }
+            } catch (err) { console.error("Erro técnico."); }
         }
     }
-    updateStatus("❌ Todos os motores falharam", "red");
     return null;
 }
 
@@ -164,7 +149,7 @@ function startCooldown() {
     let seg = 60;
     const timer = setInterval(() => {
         seg--;
-        updateStatus(`⏳ Cooldown (${seg}s)`, "orange");
+        updateStatus(`⏳ Pausa de Segurança (${seg}s)`, "orange");
         if(seg <= 0) { clearInterval(timer); state.cooldown = false; updateStatus("✨ Pronto!", "green"); }
     }, 1000);
 }
@@ -176,27 +161,58 @@ function updateStatus(msg, color) {
     el.style.color = colors[color] || "grey";
 }
 
-// --- FUNÇÕES DE INTERFACE ---
+// --- FUNÇÕES DE LÓGICA DE NEGÓCIO ---
+
+async function runGlobalSearch() {
+    const q = document.getElementById('q-home').value;
+    const out = document.getElementById('out-home');
+    out.innerHTML = `<div class="card"><div class="spin"></div> Comparando preços em Portugal...</div>`;
+    
+    // Prompt focado exclusivamente nas lojas pedidas
+    const res = await callAI({
+        contents: [{ parts: [{ text: `Pesquisa o preço de "${q}" exclusivamente nos supermercados Continente, Lidl, Aldi, Mercadona, Pingo Doce e Auchan em Portugal. Responde APENAS um array JSON: [{"loja":"Nome da Loja","preco":0.00,"url":"link"}]` }] }],
+        tools: [{ google_search: {} }]
+    });
+    
+    if(!res) return;
+    try {
+        const match = res.match(/\[[\s\S]*\]/);
+        const data = JSON.parse(match[0]);
+        out.innerHTML = data.map(i => `<div class="card" style="display:flex; justify-content:space-between; align-items:center">
+            <div><b>${i.loja}</b></div>
+            <div style="color:var(--green); font-weight:900; font-size:18px;">${i.preco.toFixed(2)}€</div>
+        </div>`).join('');
+    } catch(e) { out.innerHTML = `<div class="card">Ocorreu um erro na formatação. Tente novamente.</div>`; }
+}
+
+async function analyzeStrategy() {
+    const out = document.getElementById('out-list');
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div> Analisando folhetos e sites...</div>';
+    
+    const res = await callAI({
+        contents: [{ parts: [{ text: `Analisa estes itens: ${document.getElementById('list-input').value}. Com base nos preços atuais em Portugal, diz qual destes é o mais barato hoje: Continente, Lidl, Aldi, Mercadona, Pingo Doce ou Auchan. Justifica brevemente.` }] }],
+        tools: [{ google_search: {} }]
+    });
+    out.innerHTML = `<div class="card" style="border-left:5px solid var(--blue)"><b>💡 Melhor Opção Hoje:</b><br><small>${res}</small></div>`;
+}
+
+// --- RESTANTE DAS FUNÇÕES IGUAIS (CAM, GEN, ETC) ---
 function switchV(id, el) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
     document.getElementById('view-' + id).classList.add('active');
     el.classList.add('active');
 }
-
 function upCount(type, val) {
     state[type] = Math.max(0, state[type] + val);
     document.getElementById('c-a').innerText = state.adults;
     document.getElementById('c-k').innerText = state.kids;
 }
-
 function triggerCam(mode) { state.scanMode = mode; document.getElementById('i-cam').click(); }
-
 async function handleMedia(input) {
     if(!input.files[0]) return;
     const out = document.getElementById('out-home');
-    out.innerHTML = `<div class="card" style="text-align:center"><div class="spin"></div> Analisando via 2.5...</div>`;
-    
+    out.innerHTML = `<div class="card" style="text-align:center"><div class="spin"></div> Processando imagem...</div>`;
     const reader = new FileReader();
     reader.onload = (e) => {
         const img = new Image();
@@ -206,14 +222,11 @@ async function handleMedia(input) {
             canvas.width = 800; canvas.height = img.height * scale;
             canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
             const b64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
-            
-            const prompt = state.scanMode === 'prod' ? "Identifica produto e marca." : "Lista os itens desta fatura de Portugal.";
+            const prompt = state.scanMode === 'prod' ? "O que é este produto? Responde só o nome." : "Lista itens desta fatura.";
             const res = await callAI({ contents: [{ parts: [{ inline_data: { mime_type: "image/jpeg", data: b64 } }, { text: prompt }] }] });
-            
             if(res) {
                 if(state.scanMode === 'prod') {
                     document.getElementById('q-home').value = res.split('\n')[0];
-                    out.innerHTML = `<div class="card"><small>${res}</small></div>`;
                     runGlobalSearch();
                 } else {
                     document.getElementById('list-input').value = res;
@@ -225,52 +238,22 @@ async function handleMedia(input) {
     };
     reader.readAsDataURL(input.files[0]);
 }
-
-async function runGlobalSearch() {
-    const q = document.getElementById('q-home').value;
-    const out = document.getElementById('out-home');
-    const res = await callAI({
-        contents: [{ parts: [{ text: `Preço online de "${q}" em Portugal. Responde apenas JSON: [{"loja":"Nome","preco":0.00,"url":"..."}]` }] }],
-        tools: [{ google_search: {} }]
-    });
-    if(!res) return;
-    try {
-        const match = res.match(/\[[\s\S]*\]/);
-        if(!match) return;
-        const data = JSON.parse(match[0]);
-        out.innerHTML += data.map(i => `<div class="card" style="display:flex; justify-content:space-between"><b>${i.loja}</b> <span style="color:var(--green); font-weight:bold">${i.preco.toFixed(2)}€</span></div>`).join('');
-    } catch(e) {}
-}
-
 async function generateUltimateList() {
     const cont = document.getElementById('editable-list-container');
-    cont.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div> Otimizando via Gemini 2.5...</div>';
-    const res = await callAI({ contents: [{ parts: [{ text: `Gera uma lista essencial para ${state.adults} adultos e ${state.kids} crianças em Portugal.` }] }] });
+    cont.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div> Criando lista económica...</div>';
+    const res = await callAI({ contents: [{ parts: [{ text: `Sugere uma lista de compras semanal para ${state.adults} adultos e ${state.kids} crianças em Portugal, focada em produtos de marca própria do Lidl/Mercadona/Pingo Doce.` }] }] });
     if(!res) return;
-    cont.innerHTML = `<div class="card"><h3>Sugestão Turbo</h3>` + res.split('\n').filter(l=>l.length>3).map(it => `<div class="list-row">${it}</div>`).join('') + `<button class="btn btn-green" onclick="confirmList('${res.replace(/'/g,"")}')">Passar para Carrinho</button></div>`;
+    cont.innerHTML = `<div class="card"><h3>Lista Sugerida</h3>` + res.split('\n').filter(l=>l.length>3).map(it => `<div class="list-row">${it}</div>`).join('') + `<button class="btn btn-green" onclick="confirmList('${res.replace(/'/g,"")}')">Exportar para Carrinho</button></div>`;
 }
-
 function confirmList(txt) {
     document.getElementById('list-input').value = txt;
     switchV('list', document.querySelectorAll('.nav-item')[2]);
 }
-
-async function analyzeStrategy() {
-    const out = document.getElementById('out-list');
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div> Analisando Mercados...</div>';
-    const res = await callAI({
-        contents: [{ parts: [{ text: `Onde comprar mais barato em Portugal hoje estes itens: ${document.getElementById('list-input').value}` }] }],
-        tools: [{ google_search: {} }]
-    });
-    out.innerHTML = `<div class="card" style="border-left:5px solid var(--blue)"><b>💡 Estratégia de Hoje:</b><br><small>${res}</small></div>`;
-}
-
 function saveKeys() {
     localStorage.setItem('saco_keys', document.getElementById('keys-input').value.trim());
-    alert("Keys Gravadas!");
+    alert("Configurações aplicadas com sucesso!");
     location.reload();
 }
 </script>
 </body>
 </html>
-a
