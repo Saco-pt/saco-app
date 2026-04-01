@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V32.5 OMNI-ENGINE</title>
+    <title>SACO.pt | V32.6 GEMINI 2.5</title>
     <style>
         :root { --blue: #1a73e8; --green: #1e8e3e; --bg: #f8f9fa; --card: #ffffff; --grey: #5f6368; --red: #d93025; --orange: #e67e22; }
         * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -51,14 +51,14 @@
         <input type="file" id="i-cam" style="display:none" accept="image/*" capture="environment" onchange="handleMedia(this)">
         <input type="text" id="q-home" placeholder="O que procuras hoje?">
         <button class="btn btn-green" onclick="runGlobalSearch()">🔍 Pesquisar em Portugal</button>
-        <div id="key-info" style="color:var(--grey)">Pronto para Diagnóstico Automático</div>
+        <div id="key-info" style="color:var(--grey)">Motor 2.5 Ativado</div>
     </div>
     <div id="out-home"></div>
 </div>
 
 <div id="view-gen" class="view">
     <div class="card">
-        <h3>🪄 Gerador Familiar</h3>
+        <h3>🪄 Gerador Inteligente</h3>
         <div style="display:flex; gap:10px; margin-bottom:15px;">
             <div style="flex:1; text-align:center; background:#eee; padding:10px; border-radius:15px;">
                 <small>Adultos</small><br>
@@ -85,15 +85,14 @@
 
 <div id="view-config" class="view">
     <div class="card">
-        <h3>⚙️ Configuração (Auto-Detect)</h3>
-        <p style="font-size:12px; color:var(--grey)">Insere as API Keys (separa com vírgula se tiveres várias).</p>
+        <h3>⚙️ Configuração Gemini 2.5</h3>
         <textarea id="keys-input" placeholder="AIzaSy..., AIzaSy..." rows="5"></textarea>
         <button class="btn btn-blue" onclick="saveKeys()">Guardar Chaves</button>
         <div style="margin-top:15px; font-size:11px; color:var(--grey)">
-            <b>Prioridade de Motores:</b><br>
-            1. Gemini 3 Flash<br>
+            <b>Motores em Prioridade:</b><br>
+            1. Gemini 2.5 Flash (Topo)<br>
             2. Gemini 2.0 Flash<br>
-            3. Gemini 1.5 Flash (Fallback)
+            3. Gemini 1.5 Flash
         </div>
     </div>
 </div>
@@ -106,8 +105,8 @@
 </nav>
 
 <script>
-// --- MOTOR OMNI-ENGINE V32.5 ---
-const ENGINES = ["gemini-3-flash", "gemini-2.0-flash-exp", "gemini-1.5-flash", "gemini-pro"];
+// --- MOTOR TURBO V32.6 (GEMINI 2.5 PRIORITÁRIO) ---
+const ENGINES = ["gemini-2.5-flash", "gemini-2.0-flash-exp", "gemini-1.5-flash"];
 let state = { adults: 2, kids: 1, city: "Portugal", scanMode: 'prod', cooldown: false };
 
 async function initApp() {
@@ -116,20 +115,18 @@ async function initApp() {
 }
 
 async function callAI(payload) {
-    if(state.cooldown) { alert("Cooldown ativo. Aguarda 1 minuto."); return null; }
+    if(state.cooldown) { alert("Cooldown ativo."); return null; }
     
     const rawKeys = localStorage.getItem('saco_keys');
     if(!rawKeys) { updateStatus("⚠️ Insere as Keys em Config!", "red"); return null; }
     const keys = rawKeys.split(',').map(k => k.trim()).filter(k => k.length > 5);
 
-    // Ciclo de Motores (Tenta o melhor primeiro)
     for (let m = 0; m < ENGINES.length; m++) {
         let model = ENGINES[m];
         
-        // Ciclo de Keys
         for (let i = 0; i < keys.length; i++) {
             let key = keys[i];
-            updateStatus(`<div class="spin"></div> Testando ${model}...`, "orange");
+            updateStatus(`<div class="spin"></div> Tentando ${model}...`, "orange");
 
             try {
                 const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
@@ -140,31 +137,22 @@ async function callAI(payload) {
                 
                 const d = await r.json();
 
-                // SUCESSO
                 if (d.candidates && d.candidates[0]) {
-                    updateStatus(`✅ Ligado via ${model}`, "green");
+                    updateStatus(`✅ Ligado: ${model}`, "green");
                     return d.candidates[0].content.parts[0].text;
                 }
 
-                // ERRO: Modelo Não Existe (NOT_FOUND) -> Salta para o próximo motor
                 if (d.error && (d.error.status === "NOT_FOUND" || d.error.code === 404)) {
-                    console.warn(`Motor ${model} indisponível nesta conta. Tentando próximo...`);
-                    break; // Sai do loop de keys e avança no loop de motores
+                    console.warn(`Motor ${model} indisponível. Tentando próximo...`);
+                    break; 
                 }
 
-                // ERRO: Sem Cota -> Tenta a próxima Key para o mesmo motor
                 if (d.error && (d.error.code === 429)) {
-                    updateStatus(`⚠️ K${i+1} sem cota. Rodando...`, "red");
+                    updateStatus(`⚠️ K${i+1} sem cota.`, "red");
                     if (i === keys.length - 1) startCooldown();
                     continue; 
                 }
-
-                // ERRO: Chave Inválida
-                if (d.error && d.error.status === "PERMISSION_DENIED") {
-                    updateStatus(`❌ K${i+1} inválida`, "red");
-                    continue;
-                }
-            } catch (err) { console.error("Falha técnica de rede"); }
+            } catch (err) { console.error("Falha técnica."); }
         }
     }
     updateStatus("❌ Todos os motores falharam", "red");
@@ -207,7 +195,7 @@ function triggerCam(mode) { state.scanMode = mode; document.getElementById('i-ca
 async function handleMedia(input) {
     if(!input.files[0]) return;
     const out = document.getElementById('out-home');
-    out.innerHTML = `<div class="card" style="text-align:center"><div class="spin"></div> Analisando Imagem...</div>`;
+    out.innerHTML = `<div class="card" style="text-align:center"><div class="spin"></div> Analisando via 2.5...</div>`;
     
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -242,7 +230,7 @@ async function runGlobalSearch() {
     const q = document.getElementById('q-home').value;
     const out = document.getElementById('out-home');
     const res = await callAI({
-        contents: [{ parts: [{ text: `Preço online de "${q}" em supermercados de Portugal (Continente, Pingo Doce, Auchan, Mercadona). Responde apenas JSON: [{"loja":"Nome","preco":0.00,"url":"..."}]` }] }],
+        contents: [{ parts: [{ text: `Preço online de "${q}" em Portugal. Responde apenas JSON: [{"loja":"Nome","preco":0.00,"url":"..."}]` }] }],
         tools: [{ google_search: {} }]
     });
     if(!res) return;
@@ -256,10 +244,10 @@ async function runGlobalSearch() {
 
 async function generateUltimateList() {
     const cont = document.getElementById('editable-list-container');
-    cont.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div> Otimizando para o agregado...</div>';
-    const res = await callAI({ contents: [{ parts: [{ text: `Gera uma lista de compras otimizada para ${state.adults} adultos e ${state.kids} crianças em Portugal. Marcas brancas.` }] }] });
+    cont.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div> Otimizando via Gemini 2.5...</div>';
+    const res = await callAI({ contents: [{ parts: [{ text: `Gera uma lista essencial para ${state.adults} adultos e ${state.kids} crianças em Portugal.` }] }] });
     if(!res) return;
-    cont.innerHTML = `<div class="card"><h3>Sugestão AI</h3>` + res.split('\n').filter(l=>l.length>3).map(it => `<div class="list-row">${it}</div>`).join('') + `<button class="btn btn-green" onclick="confirmList('${res.replace(/'/g,"")}')">Usar no Carrinho</button></div>`;
+    cont.innerHTML = `<div class="card"><h3>Sugestão Turbo</h3>` + res.split('\n').filter(l=>l.length>3).map(it => `<div class="list-row">${it}</div>`).join('') + `<button class="btn btn-green" onclick="confirmList('${res.replace(/'/g,"")}')">Passar para Carrinho</button></div>`;
 }
 
 function confirmList(txt) {
@@ -269,19 +257,20 @@ function confirmList(txt) {
 
 async function analyzeStrategy() {
     const out = document.getElementById('out-list');
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div> Consultando mercados...</div>';
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div> Analisando Mercados...</div>';
     const res = await callAI({
-        contents: [{ parts: [{ text: `Diz-me qual o supermercado mais barato para estes itens em Portugal hoje: ${document.getElementById('list-input').value}` }] }],
+        contents: [{ parts: [{ text: `Onde comprar mais barato em Portugal hoje estes itens: ${document.getElementById('list-input').value}` }] }],
         tools: [{ google_search: {} }]
     });
-    out.innerHTML = `<div class="card" style="border-left:5px solid var(--blue)"><b>💡 Estratégia Recomendada:</b><br><small>${res}</small></div>`;
+    out.innerHTML = `<div class="card" style="border-left:5px solid var(--blue)"><b>💡 Estratégia de Hoje:</b><br><small>${res}</small></div>`;
 }
 
 function saveKeys() {
     localStorage.setItem('saco_keys', document.getElementById('keys-input').value.trim());
-    alert("Keys Gravadas! A App vai reiniciar para aplicar as novas configurações.");
+    alert("Keys Gravadas!");
     location.reload();
 }
 </script>
 </body>
 </html>
+a
