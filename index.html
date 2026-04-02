@@ -3,241 +3,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V33.4 KEY-SAVER</title>
+    <title>SACO.pt | V34.0 STABLE</title>
     <style>
-        :root { --blue: #1a73e8; --green: #1e8e3e; --bg: #f8f9fa; --card: #ffffff; --grey: #5f6368; --red: #d93025; }
-        * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); margin: 0; padding-bottom: 100px; color: #202124; }
-        .header { background: var(--card); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1001; }
-        .view { display: none; padding: 15px; max-width: 600px; margin: 0 auto; }
+        :root { --blue: #1a73e8; --green: #1e8e3e; --bg: #f8f9fa; --card: #ffffff; --grey: #5f6368; --red: #d93025; --orange: #e67e22; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; }
+        body { background: var(--bg); padding-bottom: 90px; color: #202124; }
+        .header { background: var(--card); padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); sticky: top; }
+        .view { display: none; padding: 15px; max-width: 500px; margin: 0 auto; }
         .view.active { display: block; }
-        .card { background: var(--card); border-radius: 20px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 15px; border: 1px solid rgba(0,0,0,0.05); }
-        .btn { border: none; border-radius: 12px; padding: 14px; font-weight: bold; width: 100%; cursor: pointer; font-size: 14px; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .card { background: var(--card); border-radius: 16px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 12px; border: 1px solid #eee; }
+        .btn { border: none; border-radius: 10px; padding: 12px; font-weight: bold; width: 100%; cursor: pointer; font-size: 14px; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
+        .btn:active { transform: scale(0.98); }
         .btn-blue { background: var(--blue); color: white; }
         .btn-green { background: var(--green); color: white; }
-        textarea, input { width: 100%; padding: 14px; border: 1px solid #dadce0; border-radius: 12px; font-size: 16px; margin-bottom: 10px; outline: none; }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; height: 80px; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); border-top: 1px solid #e0e0e0; z-index: 1000; }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: var(--grey); cursor: pointer; }
+        .btn-orange { background: var(--orange); color: white; }
+        textarea, input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; margin-bottom: 8px; outline: none; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; height: 75px; border-top: 1px solid #eee; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: var(--grey); }
         .nav-item.active { color: var(--blue); font-weight: bold; }
-        .nav-item span { font-size: 22px; margin-bottom: 4px; }
-        .spin { width: 16px; height: 16px; border: 2px solid #f3f3f3; border-top: 2px solid var(--blue); border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .res-table { width: 100%; border-collapse: collapse; }
-        .res-table td { padding: 12px 5px; border-bottom: 1px solid #eee; font-size: 14px; }
-        .winner-card { background: #e6ffed; border: 2px solid var(--green); border-radius: 15px; padding: 15px; text-align: center; margin-bottom: 15px; }
+        .spin { width: 14px; height: 14px; border: 2px solid #f3f3f3; border-top: 2px solid var(--blue); border-radius: 50%; animation: rotate 1s linear infinite; display: inline-block; }
+        @keyframes rotate { 100% { transform: rotate(360deg); } }
+        .res-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
     </style>
 </head>
 <body onload="initApp()">
 
 <div class="header">
-    <div style="font-weight:900; font-size:22px;">SACO<span style="color:var(--blue)">.pt</span></div>
-    <div id="key-info" style="font-size:10px; font-weight:bold; color:var(--grey)">V33.4 - Standby</div>
+    <div style="font-weight:900; font-size:20px;">SACO<span style="color:var(--blue)">.pt</span></div>
+    <div id="api-status" style="font-size:10px; font-weight:bold;">V34.0 STANDBY</div>
 </div>
 
-<div id="view-home" class="view active">
+<div id="v-home" class="view active">
     <div class="card">
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
-            <button class="btn btn-blue" onclick="triggerCam('prod')">📸 Scanner</button>
-            <button class="btn btn-blue" style="background:#5f6368" onclick="triggerCam('bill')">🧾 Fatura</button>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:10px;">
+            <button class="btn btn-blue" onclick="useCam('prod')">📸 Produto</button>
+            <button class="btn btn-blue" style="opacity:0.8" onclick="useCam('bill')">🧾 Fatura</button>
         </div>
-        <input type="file" id="i-cam" style="display:none" accept="image/*" capture="environment" onchange="handleMedia(this)">
-        <input type="text" id="q-home" placeholder="O que procuras?">
-        <button class="btn btn-green" onclick="runGlobalSearch()">🔍 Comparar Preços</button>
+        <input type="file" id="file-in" style="display:none" accept="image/*" capture="environment" onchange="procFile(this)">
+        <input type="text" id="q-in" placeholder="Ex: Arroz Cigala preço">
+        <button class="btn btn-green" onclick="runSearch()">🔍 Comparar 6 Lojas</button>
     </div>
     <div id="out-home"></div>
 </div>
 
-<div id="view-gen" class="view">
+<div id="v-gen" class="view">
     <div class="card">
-        <h3>🪄 Gerador Familiar</h3>
-        <div style="display:flex; gap:10px; margin-bottom:15px; text-align:center;">
-            <div style="flex:1; background:#f1f3f4; padding:10px; border-radius:15px;">
+        <h3>🪄 Gerador Inteligente</h3>
+        <div style="display:flex; gap:10px; margin:15px 0; text-align:center;">
+            <div style="flex:1; background:#f8f9fa; padding:8px; border-radius:10px;">
                 <small>Adultos</small><br>
-                <button onclick="upCount('adults',-1)">-</button> <b id="c-a">2</b> <button onclick="upCount('adults',1)">+</button>
+                <button onclick="changeQty('ad',-1)">-</button> <b id="val-ad">2</b> <button onclick="changeQty('ad',1)">+</button>
             </div>
-            <div style="flex:1; background:#f1f3f4; padding:10px; border-radius:15px;">
+            <div style="flex:1; background:#f8f9fa; padding:8px; border-radius:10px;">
                 <small>Crianças</small><br>
-                <button onclick="upCount('kids',-1)">-</button> <b id="c-k">1</b> <button onclick="upCount('kids',1)">+</button>
+                <button onclick="changeQty('kd',-1)">-</button> <b id="val-kd">1</b> <button onclick="changeQty('kd',1)">+</button>
             </div>
         </div>
-        <button class="btn btn-blue" onclick="generateGenericItems()">Gerar Artigos Base</button>
+        <button class="btn btn-blue" onclick="genList()">Gerar Sugestão Semanal</button>
     </div>
     <div id="out-gen"></div>
 </div>
 
-<div id="view-list" class="view">
+<div id="v-cart" class="view">
     <div class="card">
-        <h3>🛒 Carrinho Inteligente</h3>
-        <textarea id="list-input" rows="8" placeholder="Lista de compras..."></textarea>
-        <button class="btn btn-green" onclick="analyzeMultiStore()">🚀 Calcular em 6 Lojas</button>
+        <h3>🛒 Carrinho e Exportação</h3>
+        <textarea id="cart-txt" rows="8" placeholder="Cola itens aqui..."></textarea>
+        <button class="btn btn-green" onclick="calcTotal()">🚀 Calcular Melhor Loja</button>
+        <button class="btn btn-orange" onclick="exportSuper()">📲 Copiar p/ SuperSave</button>
     </div>
-    <div id="out-list"></div>
+    <div id="out-cart"></div>
 </div>
 
-<div id="view-config" class="view">
+<div id="v-cfg" class="view">
     <div class="card">
-        <h3>⚙️ Gestão de Chaves</h3>
-        <p style="font-size:11px; color:var(--grey)">Insere várias chaves separadas por vírgula para rotação automática.</p>
-        <textarea id="keys-input" placeholder="Chave1, Chave2, Chave3..."></textarea>
-        <button class="btn btn-blue" onclick="saveKeys()">Guardar e Ativar</button>
+        <h3>⚙️ Chaves API (Rotação)</h3>
+        <textarea id="keys-in" placeholder="Chave1, Chave2..."></textarea>
+        <button class="btn btn-blue" onclick="saveCfg()">Guardar Configuração</button>
     </div>
 </div>
 
 <nav class="bottom-nav">
-    <div class="nav-item active" onclick="switchV('home', this)"><span>🔎</span>Início</div>
-    <div class="nav-item" onclick="switchV('gen', this)"><span>🪄</span>Gerar</div>
-    <div class="nav-item" onclick="switchV('list', this)"><span>🛒</span>Lista</div>
-    <div class="nav-item" onclick="switchV('config', this)"><span>⚙️</span>Config</div>
+    <div class="nav-item active" onclick="tab('home',this)"><span>🔎</span>Início</div>
+    <div class="nav-item" onclick="tab('gen',this)"><span>🪄</span>Gerar</div>
+    <div class="nav-item" onclick="tab('cart',this)"><span>🛒</span>Lista</div>
+    <div class="nav-item" onclick="tab('cfg',this)"><span>⚙️</span>Config</div>
 </nav>
 
 <script>
-let state = { adults: 2, kids: 1, scanMode: 'prod', activeKeyIdx: 0, isCooldown: false };
+let app = { ad: 2, kd: 1, mode: 'prod', keyIdx: 0, cooldown: false };
 const STORES = ["Continente", "Lidl", "Aldi", "Mercadona", "Pingo Doce", "Auchan"];
-const MODEL = "gemini-2.0-flash"; // Estável para a maioria das contas 
 
 function initApp() {
-    const saved = localStorage.getItem('saco_keys');
-    if(saved) document.getElementById('keys-input').value = saved;
+    const k = localStorage.getItem('saco_keys');
+    if(k) document.getElementById('keys-in').value = k;
 }
 
-// --- LOGICA DE ROTAÇÃO DE CHAVES (PEDIDO PELO UTILIZADOR) ---
 async function callAI(payload) {
-    if(state.isCooldown) { alert("Em pausa de segurança (60s)..."); return null; }
-    
-    const rawKeys = localStorage.getItem('saco_keys');
-    if(!rawKeys) { updateStatus("⚠️ Sem Keys!", "red"); return null; }
-    const keys = rawKeys.split(',').map(k => k.trim()).filter(k => k.length > 5);
+    if(app.cooldown) return null;
+    const raw = localStorage.getItem('saco_keys');
+    if(!raw) return alert("Falta a API Key!");
+    const keys = raw.split(',').map(x => x.trim()).filter(x => x.length > 5);
 
-    // Tenta usar a chave atual. Se falhar por quota, passa à próxima.
-    while (state.activeKeyIdx < keys.length) {
-        let currentKey = keys[state.activeKeyIdx];
-        updateStatus(`<div class="spin"></div> Chave ${state.activeKeyIdx + 1}/${keys.length}...`, "orange");
-        
+    while(app.keyIdx < keys.length) {
+        status(`Chave ${app.keyIdx+1}...`, "orange");
         try {
-            const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${currentKey}`, {
+            const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${keys[app.keyIdx]}`, {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(payload)
             });
             const d = await r.json();
-
-            if (d.candidates && d.candidates[0]) {
-                updateStatus("✅ Ligado", "green");
-                return d.candidates[0].content.parts[0].text;
-            }
-
-            // Se for erro de quota (429) ou erro de segurança, salta para a próxima chave
-            if (d.error && (d.error.code === 429 || d.error.status === "RESOURCE_EXHAUSTED")) {
-                console.warn(`Chave ${state.activeKeyIdx + 1} esgotada. A saltar...`);
-                state.activeKeyIdx++;
-            } else {
-                // Outro tipo de erro (ex: modelo não existe ou erro de sintaxe)
-                updateStatus("❌ Erro Técnico", "red");
-                return null;
-            }
-        } catch(e) {
-            state.activeKeyIdx++;
-        }
+            if(d.candidates) { status("✅ OK", "green"); return d.candidates[0].content.parts[0].text; }
+            if(d.error && (d.error.code === 429)) app.keyIdx++;
+            else break;
+        } catch(e) { app.keyIdx++; }
     }
-
-    // Se chegou aqui, todas as chaves falharam
-    startGlobalCooldown();
-    return null;
+    app.cooldown = true; setTimeout(() => { app.cooldown = false; app.keyIdx = 0; }, 30000);
+    status("❌ Cooldown", "red"); return null;
 }
 
-function startGlobalCooldown() {
-    state.isCooldown = true;
-    state.activeKeyIdx = 0; // Reset ao índice para a próxima tentativa
-    let seg = 60;
-    const timer = setInterval(() => {
-        seg--;
-        updateStatus(`⏳ Pausa Total (${seg}s)`, "red");
-        if(seg <= 0) { clearInterval(timer); state.isCooldown = false; updateStatus("✨ Pronto", "green"); }
-    }, 1000);
+function status(m, c) { 
+    const e = document.getElementById('api-status');
+    e.innerHTML = m; e.style.color = {green:'#1e8e3e', orange:'#e67e22', red:'#d93025'}[c] || 'grey';
 }
 
-function updateStatus(msg, color) {
-    const el = document.getElementById('key-info');
-    const colors = { green: "#1e8e3e", orange: "#e67e22", red: "#d93025" };
-    el.innerHTML = msg; el.style.color = colors[color] || "grey";
-}
-
-// --- FUNÇÕES DE NEGÓCIO ---
-async function runGlobalSearch() {
-    const q = document.getElementById('q-home').value;
+async function runSearch() {
+    const q = document.getElementById('q-in').value;
     const out = document.getElementById('out-home');
-    out.innerHTML = '<div class="card"><div class="spin"></div> A pesquisar...</div>';
+    if(!q) return;
+    out.innerHTML = '<div class="card"><div class="spin"></div> Pesquisando...</div>';
     const res = await callAI({
-        contents: [{ parts: [{ text: `Preço de "${q}" em Portugal no Continente, Lidl, Aldi, Mercadona, Pingo Doce e Auchan. Responde APENAS JSON: [{"loja":"Nome","preco":0.00}]` }] }],
+        contents: [{ parts: [{ text: `Preço de "${q}" em Portugal: Continente, Lidl, Aldi, Mercadona, Pingo Doce, Auchan. Responde APENAS JSON: [{"loja":"Nome","preco":0.00}]` }] }],
         tools: [{ google_search: {} }]
     });
     try {
         const data = JSON.parse(res.match(/\[[\s\S]*\]/)[0]);
-        out.innerHTML = data.map(i => `<div class="card" style="display:flex; justify-content:space-between"><b>${i.loja}</b> <span>${i.preco.toFixed(2)}€</span></div>`).join('');
+        out.innerHTML = data.map(i => `<div class="card res-row"><b>${i.loja}</b> <span>${i.preco.toFixed(2)}€</span></div>`).join('');
     } catch(e) { out.innerHTML = `<div class="card">${res}</div>`; }
 }
 
-async function analyzeMultiStore() {
-    const input = document.getElementById('list-input').value;
-    const out = document.getElementById('out-list');
-    if(!input) return;
-    out.innerHTML = '<div class="card"><div class="spin"></div> A processar cálculo...</div>';
+async function calcTotal() {
+    const txt = document.getElementById('cart-txt').value;
+    const out = document.getElementById('out-cart');
+    if(!txt) return;
+    out.innerHTML = '<div class="card"><div class="spin"></div> Calculando...</div>';
     const res = await callAI({
-        contents: [{ parts: [{ text: `Para estes itens: "${input}", estima o preço unitário para: ${STORES.join(", ")}. Responde APENAS JSON: [{"item": "nome", "precos": {"Loja": 0.00}}]` }] }]
+        contents: [{ parts: [{ text: `Dada a lista: "${txt}", estima o preço unitário para estas lojas: ${STORES.join(",")}. Responde APENAS JSON: [{"item":"nome","precos":{"Loja":0.00}}]` }] }]
     });
     try {
         const data = JSON.parse(res.match(/\[[\s\S]*\]/)[0]);
-        let totals = {}; STORES.forEach(s => totals[s] = 0);
-        data.forEach(p => { STORES.forEach(s => { if(p.precos[s]) totals[s] += p.precos[s]; }); });
-        let win = STORES.reduce((a, b) => totals[a] < totals[b] ? a : b);
-        out.innerHTML = `<div class="winner-card">🏆 <b>${win}</b><br><span style="font-size:24px">${totals[win].toFixed(2)}€</span></div><div class="card"><table class="res-table">${STORES.sort((a,b)=>totals[a]-totals[b]).map(s=>`<tr><td>${s}</td><td style="text-align:right"><b>${totals[s].toFixed(2)}€</b></td></tr>`).join('')}</table></div>`;
-    } catch(e) { out.innerHTML = `<div class="card">Erro no cálculo.</div>`; }
+        let sums = {}; STORES.forEach(s => sums[s] = 0);
+        data.forEach(p => STORES.forEach(s => sums[s] += (p.precos[s] || 0)));
+        let win = STORES.reduce((a, b) => sums[a] < sums[b] ? a : b);
+        out.innerHTML = `<div class="card" style="border:2px solid var(--green); text-align:center">🏆 <b>${win}</b><br><span style="font-size:22px">${sums[win].toFixed(2)}€</span></div>` + 
+            `<div class="card">${STORES.sort((a,b)=>sums[a]-sums[b]).map(s=>`<div class="res-row"><span>${s}</span><b>${sums[s].toFixed(2)}€</b></div>`).join('')}</div>`;
+    } catch(e) { out.innerHTML = "<div class='card'>Erro no cálculo. Tenta de novo.</div>"; }
 }
 
-async function generateGenericItems() {
+function exportSuper() {
+    const t = document.getElementById('cart-txt').value;
+    const clean = t.replace(/\d+\s?(kg|g|l|un)|[*#\-|]|\d+[.,]\d+€/gi, '').split('\n').filter(l => l.trim().length > 2).join('\n');
+    navigator.clipboard.writeText(clean).then(() => alert("Lista limpa copiada! Cola no SuperSave."));
+}
+
+async function genList() {
     const out = document.getElementById('out-gen');
     out.innerHTML = '<div class="card"><div class="spin"></div> Gerando...</div>';
-    const res = await callAI({ contents: [{ parts: [{ text: `Gera lista semanal de supermercado (apenas nomes separados por vírgula) para ${state.adults} adultos e ${state.kids} crianças em Portugal.` }] }] });
+    const res = await callAI({ contents: [{ parts: [{ text: `Gera lista semanal (só nomes, vírgulas) para ${app.ad} adultos e ${app.kd} crianças em Portugal.` }] }] });
     if(res) {
-        const clean = res.replace(/\*|#|Aqui está/gi, '').trim();
-        out.innerHTML = `<div class="card"><h4>Sugestão:</h4><p>${clean}</p><button class="btn btn-green" onclick="copyTo('${clean.replace(/'/g,"")}')">📥 Usar no Carrinho</button></div>`;
+        const c = res.replace(/[*#]/g, '').trim();
+        out.innerHTML = `<div class="card"><p>${c}</p><button class="btn btn-green" onclick="toCart('${c.replace(/'/g,"")}')">📥 Usar no Carrinho</button></div>`;
     }
 }
 
-// --- UTILITÁRIOS ---
-function triggerCam(m) { state.scanMode = m; document.getElementById('i-cam').click(); }
-async function handleMedia(input) {
-    const out = document.getElementById('out-home');
-    out.innerHTML = '<div class="card"><div class="spin"></div> A analisar...</div>';
-    const reader = new FileReader();
-    reader.onload = (e) => {
+function toCart(t) { document.getElementById('cart-txt').value = t; tab('cart', document.querySelectorAll('.nav-item')[2]); }
+function tab(id, el) { 
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('v-'+id).classList.add('active'); el.classList.add('active');
+}
+function changeQty(t, v) { app[t] = Math.max(0, app[t] + v); document.getElementById('val-'+t).innerText = app[t]; }
+function useCam(m) { app.mode = m; document.getElementById('file-in').click(); }
+function saveCfg() { localStorage.setItem('saco_keys', document.getElementById('keys-in').value); location.reload(); }
+
+async function procFile(inp) {
+    if(!inp.files[0]) return;
+    status("📸 Lendo...", "orange");
+    const r = new FileReader();
+    r.onload = (e) => {
         const img = new Image();
         img.onload = async () => {
-            const canvas = document.createElement('canvas');
-            const scale = 800 / img.width;
-            canvas.width = 800; canvas.height = img.height * scale;
-            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-            const b64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
-            const prompt = state.scanMode === 'prod' ? "O que é este produto? Nome e Marca." : "Lista itens desta fatura separados por vírgula.";
-            const res = await callAI({ contents: [{ parts: [{ inline_data: { mime_type: "image/jpeg", data: b64 } }, { text: prompt }] }] });
+            const cv = document.createElement('canvas'); const s = 800/img.width;
+            cv.width = 800; cv.height = img.height*s;
+            cv.getContext('2d').drawImage(img, 0,0,800,cv.height);
+            const b64 = cv.toDataURL('image/jpeg', 0.8).split(',')[1];
+            const p = app.mode === 'prod' ? "Que produto é este? Nome e Marca." : "Lista itens desta fatura (vírgulas).";
+            const res = await callAI({ contents: [{ parts: [{ inline_data: { mime_type: "image/jpeg", data: b64 } }, { text: p }] }] });
             if(res) {
-                if(state.scanMode === 'prod') { document.getElementById('q-home').value = res.trim(); runGlobalSearch(); }
-                else { document.getElementById('list-input').value = res.trim(); switchV('list', document.querySelectorAll('.nav-item')[2]); }
+                if(app.mode === 'prod') { document.getElementById('q-in').value = res; runSearch(); }
+                else { toCart(res); }
             }
         };
         img.src = e.target.result;
     };
-    reader.readAsDataURL(input.files[0]);
+    r.readAsDataURL(inp.files[0]);
 }
-
-function copyTo(t) { document.getElementById('list-input').value = t; switchV('list', document.querySelectorAll('.nav-item')[2]); }
-function switchV(id, el) {
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-    document.getElementById('view-' + id).classList.add('active');
-    el.classList.add('active');
-}
-function upCount(t, v) { state[t] = Math.max(0, state[t] + v); document.getElementById('c-a').innerText = state.adults; document.getElementById('c-k').innerText = state.kids; }
-function saveKeys() { localStorage.setItem('saco_keys', document.getElementById('keys-input').value.trim()); alert("Configuração Guardada!"); location.reload(); }
 </script>
 </body>
 </html>
