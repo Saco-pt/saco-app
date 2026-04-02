@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V38.0 - Custom Generator</title>
+    <title>SACO.pt | V38.4 - Smart Quantities</title>
     <style>
         :root { --p: #1a73e8; --s: #1e8e3e; --bg: #f8f9fa; --txt: #202124; }
         * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; }
@@ -19,25 +19,23 @@
         .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; height: 75px; border-top: 1px solid #eee; }
         .nav-i { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: #5f6368; cursor: pointer; }
         .nav-i.active { color: var(--p); font-weight: bold; }
-        .res-row { display: flex; flex-direction: column; padding: 10px 0; border-bottom: 1px solid #f1f1f1; }
-        .res-header { display: flex; justify-content: space-between; font-weight: bold; }
-        .price { color: var(--p); font-weight: 900; }
         .badge { font-size: 10px; padding: 2px 6px; border-radius: 5px; font-weight: bold; background: #eee; }
         .spin { width: 16px; height: 16px; border: 2px solid #f3f3f3; border-top: 2px solid var(--p); border-radius: 50%; animation: rot 1s linear infinite; display: inline-block; }
         @keyframes rot { 100% { transform: rotate(360deg); } }
-        .item-line { padding: 4px 0; border-bottom: 1px dashed #eee; font-size: 14px; }
+        .item-line { padding: 10px 14px; border-bottom: 1px solid #f1f1f1; font-size: 14px; background: #fff; display: flex; justify-content: space-between; }
+        .q-badge { color: var(--s); font-weight: bold; font-size: 12px; }
     </style>
 </head>
 <body onload="boot()">
 
 <div class="header">
     <div style="font-weight:900; font-size:20px;">SACO<span style="color:var(--p)">.pt</span></div>
-    <div id="st" class="badge">V38.0</div>
+    <div id="st" class="badge">V38.4</div>
 </div>
 
 <div id="v-home" class="v active">
     <div class="card">
-        <input type="text" id="q-in" placeholder="Ex: Arroz Cigala">
+        <input type="text" id="q-in" placeholder="Pesquisar preço real...">
         <button class="btn btn-s" onclick="doSearch()">🔍 Comparar Preços</button>
     </div>
     <div id="out-home"></div>
@@ -45,26 +43,29 @@
 
 <div id="v-gen" class="v">
     <div class="card">
-        <h3>🛒 Gerador de Lista Mensal</h3>
-        <label style="font-size: 12px; color: #666;">Número de Pessoas:</label>
+        <h3>🪄 Gerador Mensal com Quantidades</h3>
+        <p style="font-size:12px; color:#666; margin-bottom:10px;">Calcula o stock necessário para o mês inteiro.</p>
         <select id="gen-qty" onchange="saveQty()">
-            <option value="1">1 Pessoa</option>
-            <option value="2" selected>2 Pessoas</option>
-            <option value="3">3 Pessoas</option>
-            <option value="4">4 Pessoas</option>
-            <option value="5">5 Pessoas</option>
-            <option value="6">6 Pessoas</option>
+            <option value="1">Para 1 Pessoa</option>
+            <option value="2" selected>Para 2 Pessoas</option>
+            <option value="3">Para 3 Pessoas</option>
+            <option value="4">Para 4 Pessoas</option>
+            <option value="5">Para 5 Pessoas</option>
+            <option value="6">Para 6 Pessoas</option>
         </select>
-        <button class="btn btn-p" onclick="doGen()">🪄 Gerar Lista Mensal</button>
+        <button class="btn btn-p" onclick="doGen()">🪄 Gerar Lista com Doses</button>
     </div>
     <div id="out-gen"></div>
 </div>
 
 <div id="v-cart" class="v">
     <div class="card">
-        <h3>🛒 O Teu Carrinho</h3>
-        <textarea id="cart-txt" rows="10" onchange="saveC()"></textarea>
-        <button class="btn btn-s" onclick="doCalc()">🚀 Calcular Melhor Loja</button>
+        <h3>🛒 Teu Carrinho</h3>
+        <textarea id="cart-txt" rows="12" onchange="saveC()"></textarea>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+            <button class="btn btn-s" onclick="doCalc()">🚀 Melhor Loja</button>
+            <button class="btn btn-p" style="background:#fb8c00" onclick="doSuper()">📲 SuperSave</button>
+        </div>
     </div>
     <div id="out-cart"></div>
 </div>
@@ -100,35 +101,46 @@ function boot() {
 async function ask(p) {
     const k = localStorage.getItem('s_k'), m = localStorage.getItem('s_m');
     if(!k || !m) return alert("Configura a Key e o Motor!");
-    status("...", "orange");
+    status("Pensando...", "orange");
     try {
         const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/${m}:generateContent?key=${k}`, {
             method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(p)
         });
         const d = await r.json();
-        if(d.candidates) { status("OK", "green"); return d.candidates[0].content.parts[0].text; }
-    } catch(e) { status("Erro", "red"); }
-    return null;
-}
-
-function parseJ(t) { try { return JSON.parse(t.replace(/```json|```/g, "").trim()); } catch(e) { return null; } }
-
-async function doSearch() {
-    const q = document.getElementById('q-in').value, out = document.getElementById('out-home');
-    if(!q) return;
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div></div>';
-    const res = await ask({ contents: [{ parts: [{ text: `Preço de "${q}" em Portugal: Continente, Lidl, Aldi, Mercadona, Pingo Doce, Auchan. Responde APENAS JSON: [{"loja":"Nome","preco":0.00,"detalhes":""}]` }] }], tools: [{ google_search: {} }] });
-    const data = parseJ(res);
-    if(data) out.innerHTML = data.map(i => `<div class="card res-row"><div class="res-header"><span>${i.loja}</span><span class="price">${Number(i.preco).toFixed(2)}€</span></div><small>${i.detalhes}</small></div>`).join('');
+        status("OK", "green");
+        return d.candidates[0].content.parts[0].text;
+    } catch(e) { status("Erro", "red"); return null; }
 }
 
 async function doGen() {
     const qty = document.getElementById('gen-qty').value, out = document.getElementById('out-gen');
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div></div>';
-    const res = await ask({ contents: [{ parts: [{ text: `Gera uma lista de compras MENSAL para ${qty} pessoas em Portugal. Foco marcas próprias e economia. Responde apenas os itens separados por vírgula.` }] }] });
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div><br>A calcular stock mensal...</div>';
+    
+    const prompt = `Gera uma lista de compras mensal detalhada para ${qty} pessoas em Portugal. 
+    USA OS ITENS: Arroz, Massa, Azeite, Óleo, Farinha, Açúcar, Sal, Café, Chá, Enlatados (Feijão, Grão, Tomate, Atum, Sardinha), Bolachas, Cereais, Lacticínios (Leite, Ovos, Iogurtes, Queijo, Manteiga), Charcutaria (Fiambre, Bacon), Congelados (Frango, Carne Picada, Bifes Porco, Peixe, Legumes), Frescos (Batatas, Cebolas, Alhos, Cenouras, Brócolos), Padaria e Limpeza.
+    REGRAS:
+    1. INDICA a quantidade total recomendada para o mês entre parênteses à frente de cada item (ex: Arroz (4kg)).
+    2. Responde com um artigo por linha.
+    3. Ajusta as quantidades de forma realista para ${qty} pessoas.`;
+
+    const res = await ask({ contents: [{ parts: [{ text: prompt }] }] });
     if(res) {
-        state.lastItems = res.replace(/[*#]/g, "").split(',').map(i => i.trim());
-        out.innerHTML = `<div class="card"><h4>Sugestão Mensal (${qty} pessoas):</h4><div style="margin:10px 0">${state.lastItems.map(i => `<div class="item-line">${i}</div>`).join('')}</div><button class="btn btn-s" onclick="addC()">📥 Adicionar Tudo</button></div>`;
+        state.lastItems = res.replace(/[*#•-]/g, "").split('\n').map(i => i.trim()).filter(i => i.length > 2);
+        out.innerHTML = `
+            <div class="card" style="padding:0; overflow:hidden;">
+                <div style="padding:15px; background:#f1f3f4; font-weight:bold; border-bottom:1px solid #ddd;">Plano Mensal (${qty} pessoas)</div>
+                <div style="max-height:350px; overflow-y:auto;">
+                    ${state.lastItems.map(i => {
+                        let parts = i.split('(');
+                        let name = parts[0];
+                        let quant = parts[1] ? '(' + parts[1] : '';
+                        return `<div class="item-line"><span>${name}</span><span class="q-badge">${quant}</span></div>`;
+                    }).join('')}
+                </div>
+                <div style="padding:12px;">
+                    <button class="btn btn-s" onclick="addC()">📥 Adicionar ao Carrinho</button>
+                </div>
+            </div>`;
     }
 }
 
@@ -138,11 +150,34 @@ function addC() {
     saveC(); tab('cart', document.querySelectorAll('.nav-i')[2]); 
 }
 
+function parseJ(t) { try { return JSON.parse(t.replace(/```json|```/g, "").trim()); } catch(e) { return null; } }
 function saveQty() { localStorage.setItem('s_q', document.getElementById('gen-qty').value); }
 function saveC() { localStorage.setItem('s_c', document.getElementById('cart-txt').value); }
 function saveA() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); alert("Guardado!"); }
 function tab(id, el) { document.querySelectorAll('.v').forEach(v => v.classList.remove('active')); document.querySelectorAll('.nav-i').forEach(n => n.classList.remove('active')); document.getElementById('v-'+id).classList.add('active'); el.classList.add('active'); }
 function status(m, c) { const e = document.getElementById('st'); e.innerHTML = m; e.style.color = {green:'#1e8e3e', orange:'#fb8c00', red:'#d93025'}[c]; }
+function doSuper() { navigator.clipboard.writeText(document.getElementById('cart-txt').value).then(() => alert("Copiado!")); }
+
+async function doSearch() {
+    const q = document.getElementById('q-in').value, out = document.getElementById('out-home');
+    if(!q) return;
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div></div>';
+    const res = await ask({ contents: [{ parts: [{ text: `Preço de "${q}" em Portugal: Continente, Lidl, Aldi, Mercadona, Pingo Doce, Auchan. Responde APENAS JSON: [{"loja":"Nome","preco":0.00,"detalhes":""}]` }] }] });
+    const data = parseJ(res);
+    if(data) out.innerHTML = data.map(i => `<div class="card"><div style="display:flex; justify-content:space-between"><b>${i.loja}</b><span style="color:var(--p)">${Number(i.preco).toFixed(2)}€</span></div><small>${i.detalhes}</small></div>`).join('');
+}
+
+async function doCalc() {
+    const t = document.getElementById('cart-txt').value, out = document.getElementById('out-cart');
+    if(!t) return;
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div></div>';
+    const res = await ask({ contents: [{ parts: [{ text: `Dada a lista: "${t}", estima o total para: Continente, Lidl, Aldi, Mercadona, Pingo Doces, Auchan. Responde APENAS JSON: [{"loja":"Nome","total":0.00}]` }] }] });
+    const data = parseJ(res);
+    if(data) {
+        data.sort((a,b) => a.total - b.total);
+        out.innerHTML = `<div class="card" style="border:2px solid var(--s); text-align:center">🏆 <b>${data[0].loja}</b><br><span>${data[0].total.toFixed(2)}€</span></div>` + data.map(i => `<div class="card"><b>${i.loja}</b>: ${i.total.toFixed(2)}€</div>`).join('');
+    }
+}
 
 async function fetchM(saved) {
     const k = document.getElementById('key-in').value; if(!k) return;
@@ -155,18 +190,6 @@ async function fetchM(saved) {
             if(m.name === saved) o.selected = true; sel.appendChild(o);
         });
     } catch(e) {}
-}
-
-async function doCalc() {
-    const t = document.getElementById('cart-txt').value, out = document.getElementById('out-cart');
-    if(!t) return;
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div></div>';
-    const res = await ask({ contents: [{ parts: [{ text: `Dada a lista: "${t}", estima o total para: Continente, Lidl, Aldi, Mercadona, Pingo Doce, Auchan. Responde APENAS JSON: [{"loja":"Nome","total":0.00}]` }] }] });
-    const data = parseJ(res);
-    if(data) {
-        data.sort((a,b) => a.total - b.total);
-        out.innerHTML = `<div class="card" style="border:2px solid var(--s); text-align:center">🏆 <b>${data[0].loja}</b><br><span style="font-size:22px">${data[0].total.toFixed(2)}€</span></div>` + data.map(i => `<div class="card res-row"><b>${i.loja}</b> <span>${i.total.toFixed(2)}€</span></div>`).join('');
-    }
 }
 </script>
 </body>
