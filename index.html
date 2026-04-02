@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V37.0 - Final Edition</title>
+    <title>SACO.pt | V38.0 - Custom Generator</title>
     <style>
         :root { --p: #1a73e8; --s: #1e8e3e; --bg: #f8f9fa; --txt: #202124; }
         * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; }
@@ -15,57 +15,56 @@
         .btn { border: none; border-radius: 12px; padding: 14px; font-weight: bold; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; transition: 0.2s; color: white; }
         .btn-p { background: var(--p); }
         .btn-s { background: var(--s); }
-        .btn-w { background: #fb8c00; }
         textarea, input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; margin-bottom: 8px; outline: none; background: white; }
         .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; height: 75px; border-top: 1px solid #eee; }
         .nav-i { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: #5f6368; cursor: pointer; }
         .nav-i.active { color: var(--p); font-weight: bold; }
         .res-row { display: flex; flex-direction: column; padding: 10px 0; border-bottom: 1px solid #f1f1f1; }
-        .res-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 4px; }
-        .res-details { font-size: 12px; color: #666; font-style: italic; }
+        .res-header { display: flex; justify-content: space-between; font-weight: bold; }
         .price { color: var(--p); font-weight: 900; }
         .badge { font-size: 10px; padding: 2px 6px; border-radius: 5px; font-weight: bold; background: #eee; }
         .spin { width: 16px; height: 16px; border: 2px solid #f3f3f3; border-top: 2px solid var(--p); border-radius: 50%; animation: rot 1s linear infinite; display: inline-block; }
         @keyframes rot { 100% { transform: rotate(360deg); } }
+        .item-line { padding: 4px 0; border-bottom: 1px dashed #eee; font-size: 14px; }
     </style>
 </head>
 <body onload="boot()">
 
 <div class="header">
     <div style="font-weight:900; font-size:20px;">SACO<span style="color:var(--p)">.pt</span></div>
-    <div id="st" class="badge">V37.0 PRONTO</div>
+    <div id="st" class="badge">V38.0</div>
 </div>
 
 <div id="v-home" class="v active">
     <div class="card">
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-            <button class="btn btn-p" onclick="cam('prod')">📸 Scanner</button>
-            <button class="btn btn-p" style="opacity:0.7" onclick="cam('bill')">🧾 Fatura</button>
-        </div>
-        <input type="file" id="f-in" style="display:none" accept="image/*" capture="environment" onchange="procFile(this)">
-        <input type="text" id="q-in" placeholder="O que procuras? (ex: Detergente Ariel)">
-        <button class="btn btn-s" onclick="doSearch()">🔍 Comparar Preços Reais</button>
+        <input type="text" id="q-in" placeholder="Ex: Arroz Cigala">
+        <button class="btn btn-s" onclick="doSearch()">🔍 Comparar Preços</button>
     </div>
     <div id="out-home"></div>
 </div>
 
 <div id="v-gen" class="v">
     <div class="card">
-        <h3>🪄 Gerador de Lista</h3>
-        <p style="font-size:12px; color:#666; margin-bottom:10px;">Cria uma lista para 2 adultos (foco marcas próprias).</p>
-        <button class="btn btn-p" onclick="doGen()">Gerar Lista Nutritiva</button>
+        <h3>🛒 Gerador de Lista Mensal</h3>
+        <label style="font-size: 12px; color: #666;">Número de Pessoas:</label>
+        <select id="gen-qty" onchange="saveQty()">
+            <option value="1">1 Pessoa</option>
+            <option value="2" selected>2 Pessoas</option>
+            <option value="3">3 Pessoas</option>
+            <option value="4">4 Pessoas</option>
+            <option value="5">5 Pessoas</option>
+            <option value="6">6 Pessoas</option>
+        </select>
+        <button class="btn btn-p" onclick="doGen()">🪄 Gerar Lista Mensal</button>
     </div>
     <div id="out-gen"></div>
 </div>
 
 <div id="v-cart" class="v">
     <div class="card">
-        <h3>🛒 Lista de Compras</h3>
-        <textarea id="cart-txt" rows="10" placeholder="Itens aqui..." onchange="saveC()"></textarea>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-            <button class="btn btn-s" onclick="doCalc()">🚀 Melhor Loja</button>
-            <button class="btn btn-w" onclick="doSuper()">📲 SuperSave</button>
-        </div>
+        <h3>🛒 O Teu Carrinho</h3>
+        <textarea id="cart-txt" rows="10" onchange="saveC()"></textarea>
+        <button class="btn btn-s" onclick="doCalc()">🚀 Calcular Melhor Loja</button>
     </div>
     <div id="out-cart"></div>
 </div>
@@ -74,9 +73,9 @@
     <div class="card">
         <h3>⚙️ Configuração</h3>
         <textarea id="key-in" placeholder="Chave API..."></textarea>
-        <select id="model-sel"><option value="">Carrega a chave primeiro</option></select>
-        <button class="btn btn-p" onclick="fetchM()">🔄 Atualizar Motores</button>
-        <button class="btn btn-s" style="margin-top:10px" onclick="saveA()">💾 Guardar Tudo</button>
+        <select id="model-sel"></select>
+        <button class="btn btn-p" onclick="fetchM()">🔄 Carregar Motores</button>
+        <button class="btn btn-s" style="margin-top:10px" onclick="saveA()">💾 Guardar</button>
     </div>
 </div>
 
@@ -88,125 +87,86 @@
 </nav>
 
 <script>
-let state = { lastGen: "" };
+let state = { lastItems: [] };
 
 function boot() {
-    const k = localStorage.getItem('s_k');
-    const m = localStorage.getItem('s_m');
-    const c = localStorage.getItem('s_c');
+    const k = localStorage.getItem('s_k'), m = localStorage.getItem('s_m'), c = localStorage.getItem('s_c'), q = localStorage.getItem('s_q');
     if(k) document.getElementById('key-in').value = k;
     if(c) document.getElementById('cart-txt').value = c;
+    if(q) document.getElementById('gen-qty').value = q;
     if(k) fetchM(m);
 }
 
 async function ask(p) {
-    const k = localStorage.getItem('s_k');
-    const m = localStorage.getItem('s_m');
+    const k = localStorage.getItem('s_k'), m = localStorage.getItem('s_m');
     if(!k || !m) return alert("Configura a Key e o Motor!");
-    status("Processando...", "orange");
+    status("...", "orange");
     try {
         const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/${m}:generateContent?key=${k}`, {
             method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(p)
         });
         const d = await r.json();
         if(d.candidates) { status("OK", "green"); return d.candidates[0].content.parts[0].text; }
-        if(d.error?.code === 429) status("Limite atingido! Aguarde 60s", "red");
-    } catch(e) { status("Erro de ligação", "red"); }
+    } catch(e) { status("Erro", "red"); }
     return null;
 }
 
-function parseJ(txt) {
-    try {
-        const clean = txt.replace(/```json|```/g, "").trim();
-        return JSON.parse(clean);
-    } catch(e) { return null; }
-}
+function parseJ(t) { try { return JSON.parse(t.replace(/```json|```/g, "").trim()); } catch(e) { return null; } }
 
 async function doSearch() {
-    const q = document.getElementById('q-in').value;
-    const out = document.getElementById('out-home');
+    const q = document.getElementById('q-in').value, out = document.getElementById('out-home');
     if(!q) return;
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div> Consultando folhetos...</div>';
-    const res = await ask({
-        contents: [{ parts: [{ text: `Preço de "${q}" em Portugal nas lojas: Continente, Lidl, Aldi, Mercadona, Pingo Doce, Auchan. Responde APENAS JSON: [{"loja":"Nome","preco":0.00,"detalhes":"marca/dose"}]` }] }],
-        tools: [{ google_search: {} }]
-    });
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div></div>';
+    const res = await ask({ contents: [{ parts: [{ text: `Preço de "${q}" em Portugal: Continente, Lidl, Aldi, Mercadona, Pingo Doce, Auchan. Responde APENAS JSON: [{"loja":"Nome","preco":0.00,"detalhes":""}]` }] }], tools: [{ google_search: {} }] });
     const data = parseJ(res);
-    if(data) {
-        out.innerHTML = data.map(i => `
-            <div class="card res-row">
-                <div class="res-header"><span>${i.loja}</span><span class="price">${typeof i.preco === 'number' ? i.preco.toFixed(2)+'€' : i.preco}</span></div>
-                <div class="res-details">${i.detalhes || ''}</div>
-            </div>`).join('');
-    } else { out.innerHTML = `<div class="card">${res}</div>`; }
+    if(data) out.innerHTML = data.map(i => `<div class="card res-row"><div class="res-header"><span>${i.loja}</span><span class="price">${Number(i.preco).toFixed(2)}€</span></div><small>${i.detalhes}</small></div>`).join('');
 }
 
 async function doGen() {
-    const out = document.getElementById('out-gen');
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div> Gerando lista ideal...</div>';
-    const res = await ask({ contents: [{ parts: [{ text: `Gera uma lista de compras semanal económica para 2 adultos em Portugal (foco marcas próprias). Apenas nomes separados por vírgula.` }] }] });
+    const qty = document.getElementById('gen-qty').value, out = document.getElementById('out-gen');
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div></div>';
+    const res = await ask({ contents: [{ parts: [{ text: `Gera uma lista de compras MENSAL para ${qty} pessoas em Portugal. Foco marcas próprias e economia. Responde apenas os itens separados por vírgula.` }] }] });
     if(res) {
-        state.lastGen = res.replace(/[*#]/g, "").trim();
-        out.innerHTML = `<div class="card"><p style="font-size:14px; margin-bottom:10px">${state.lastGen}</p><button class="btn btn-s" onclick="addC()">📥 Adicionar à Lista</button></div>`;
+        state.lastItems = res.replace(/[*#]/g, "").split(',').map(i => i.trim());
+        out.innerHTML = `<div class="card"><h4>Sugestão Mensal (${qty} pessoas):</h4><div style="margin:10px 0">${state.lastItems.map(i => `<div class="item-line">${i}</div>`).join('')}</div><button class="btn btn-s" onclick="addC()">📥 Adicionar Tudo</button></div>`;
     }
 }
 
-async function doCalc() {
-    const t = document.getElementById('cart-txt').value;
-    const out = document.getElementById('out-cart');
-    if(!t) return;
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div> Calculando matemática...</div>';
-    const res = await ask({ contents: [{ parts: [{ text: `Dada a lista: "${t}", estima o total para: Continente, Lidl, Aldi, Mercadona, Pingo Doce, Auchan. Responde APENAS JSON: [{"loja":"Nome","total":0.00}]` }] }] });
-    const data = parseJ(res);
-    if(data) {
-        data.sort((a,b) => a.total - b.total);
-        out.innerHTML = `<div class="card" style="border:2px solid var(--s); text-align:center">🏆 <b>${data[0].loja}</b><br><span style="font-size:22px">${data[0].total.toFixed(2)}€</span></div>` + 
-            data.map(i => `<div class="card res-row"><b>${i.loja}</b> <span>${i.total.toFixed(2)}€</span></div>`).join('');
-    }
+function addC() { 
+    const area = document.getElementById('cart-txt');
+    area.value = (area.value + "\n" + state.lastItems.join('\n')).trim();
+    saveC(); tab('cart', document.querySelectorAll('.nav-i')[2]); 
 }
 
-function addC() { document.getElementById('cart-txt').value += "\n" + state.lastGen; saveC(); tab('cart', document.querySelectorAll('.nav-i')[2]); }
+function saveQty() { localStorage.setItem('s_q', document.getElementById('gen-qty').value); }
 function saveC() { localStorage.setItem('s_c', document.getElementById('cart-txt').value); }
-function doSuper() { const t = document.getElementById('cart-txt').value; const clean = t.replace(/\d+\s?(kg|g|l|un)|[*#\-|]|\d+[.,]\d+€/gi, '').split('\n').filter(l => l.trim().length > 2).join('\n'); navigator.clipboard.writeText(clean).then(() => alert("Copiado para SuperSave!")); }
+function saveA() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); alert("Guardado!"); }
 function tab(id, el) { document.querySelectorAll('.v').forEach(v => v.classList.remove('active')); document.querySelectorAll('.nav-i').forEach(n => n.classList.remove('active')); document.getElementById('v-'+id).classList.add('active'); el.classList.add('active'); }
 function status(m, c) { const e = document.getElementById('st'); e.innerHTML = m; e.style.color = {green:'#1e8e3e', orange:'#fb8c00', red:'#d93025'}[c]; }
-function saveA() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); alert("Guardado!"); }
-function cam(m) { state.camM = m; document.getElementById('f-in').click(); }
 
 async function fetchM(saved) {
-    const k = document.getElementById('key-in').value;
-    if(!k) return;
+    const k = document.getElementById('key-in').value; if(!k) return;
     try {
         const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${k}`);
-        const d = await r.json();
-        const sel = document.getElementById('model-sel');
+        const d = await r.json(), sel = document.getElementById('model-sel');
         sel.innerHTML = "";
         d.models.filter(m => m.supportedGenerationMethods.includes("generateContent")).forEach(m => {
             let o = document.createElement('option'); o.value = m.name; o.text = m.displayName || m.name;
-            if(m.name === saved) o.selected = true;
-            sel.appendChild(o);
+            if(m.name === saved) o.selected = true; sel.appendChild(o);
         });
     } catch(e) {}
 }
 
-async function procFile(inp) {
-    if(!inp.files[0]) return;
-    status("Lendo imagem...", "orange");
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const img = new Image();
-        img.onload = async () => {
-            const cv = document.createElement('canvas'); const s = 800/img.width;
-            cv.width = 800; cv.height = img.height*s;
-            cv.getContext('2d').drawImage(img, 0,0,800,cv.height);
-            const b64 = cv.toDataURL('image/jpeg', 0.8).split(',')[1];
-            const p = state.camM === 'prod' ? "Que produto é este? Nome e Marca." : "Lista os artigos desta fatura (vírgulas).";
-            const res = await ask({ contents: [{ parts: [{ inline_data: { mime_type: "image/jpeg", data: b64 } }, { text: p }] }] });
-            if(res) { if(state.camM === 'prod') { document.getElementById('q-in').value = res; doSearch(); } else { document.getElementById('cart-txt').value += "\n" + res; tab('cart', document.querySelectorAll('.nav-i')[2]); } }
-        };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(inp.files[0]);
+async function doCalc() {
+    const t = document.getElementById('cart-txt').value, out = document.getElementById('out-cart');
+    if(!t) return;
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div></div>';
+    const res = await ask({ contents: [{ parts: [{ text: `Dada a lista: "${t}", estima o total para: Continente, Lidl, Aldi, Mercadona, Pingo Doce, Auchan. Responde APENAS JSON: [{"loja":"Nome","total":0.00}]` }] }] });
+    const data = parseJ(res);
+    if(data) {
+        data.sort((a,b) => a.total - b.total);
+        out.innerHTML = `<div class="card" style="border:2px solid var(--s); text-align:center">🏆 <b>${data[0].loja}</b><br><span style="font-size:22px">${data[0].total.toFixed(2)}€</span></div>` + data.map(i => `<div class="card res-row"><b>${i.loja}</b> <span>${i.total.toFixed(2)}€</span></div>`).join('');
+    }
 }
 </script>
 </body>
