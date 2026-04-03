@@ -3,25 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V38.8 - Full Fix</title>
+    <title>SACO.pt | V38.9 - Logic Master</title>
     <style>
         :root { --p: #1a73e8; --s: #1e8e3e; --bg: #f8f9fa; --txt: #202124; }
         * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; }
-        body { background: var(--bg); color: var(--txt); padding-bottom: 90px; overflow-x: hidden; }
+        body { background: var(--bg); color: var(--txt); padding-bottom: 90px; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
         .header { background: #fff; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
-        .v { display: none; padding: 15px; max-width: 500px; margin: 0 auto; }
+        .v { display: none; padding: 15px; max-width: 500px; margin: 0 auto; animation: fadeIn 0.3s; }
         .v.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .card { background: #fff; border-radius: 16px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 12px; border: 1px solid #eee; }
         .btn { border: none; border-radius: 12px; padding: 14px; font-weight: bold; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; transition: 0.2s; color: white; }
+        .btn:active { transform: scale(0.98); opacity: 0.9; }
         .btn-p { background: var(--p); }
         .btn-s { background: var(--s); }
-        textarea, input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; margin-bottom: 8px; outline: none; background: white; }
-        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; height: 75px; border-top: 1px solid #eee; z-index: 100; }
+        textarea, input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; margin-bottom: 8px; outline: none; background: white; transition: border 0.2s; }
+        textarea:focus, input:focus { border-color: var(--p); }
+        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; height: 75px; border-top: 1px solid #eee; z-index: 1000; }
         .nav-i { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: #5f6368; cursor: pointer; }
         .nav-i.active { color: var(--p); font-weight: bold; }
-        .badge { font-size: 10px; padding: 2px 6px; border-radius: 5px; font-weight: bold; background: #eee; }
-        .item-line { padding: 10px; border-bottom: 1px solid #f1f1f1; display: flex; justify-content: space-between; font-size: 14px; align-items: center; }
-        .spin { width: 18px; height: 18px; border: 2px solid #f3f3f3; border-top: 2px solid var(--p); border-radius: 50%; animation: rot 1s linear infinite; display: inline-block; }
+        .badge { font-size: 10px; padding: 2px 8px; border-radius: 6px; font-weight: bold; background: #eee; transition: 0.3s; }
+        .item-line { padding: 12px; border-bottom: 1px solid #f1f1f1; display: flex; justify-content: space-between; font-size: 14px; align-items: center; }
+        .spin { width: 18px; height: 18px; border: 2px solid #f3f3f3; border-top: 2px solid var(--p); border-radius: 50%; animation: rot 1s linear infinite; }
         @keyframes rot { 100% { transform: rotate(360deg); } }
         .q-tag { background: #e8f5e9; color: #2e7d32; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; }
     </style>
@@ -30,7 +33,7 @@
 
 <div class="header">
     <div style="font-weight:900; font-size:20px;">SACO<span style="color:var(--p)">.pt</span></div>
-    <div id="st" class="badge">V38.8</div>
+    <div id="st" class="badge">V38.9 OK</div>
 </div>
 
 <!-- BUSCA -->
@@ -38,11 +41,11 @@
     <div class="card">
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:12px;">
             <button class="btn btn-p" onclick="openCam('prod')">📸 Scanner</button>
-            <button class="btn btn-p" style="opacity:0.8" onclick="openCam('bill')">🧾 Fatura</button>
+            <button class="btn btn-p" style="background:#673ab7" onclick="openCam('bill')">🧾 Fatura</button>
         </div>
         <input type="file" id="f-in" style="display:none" accept="image/*" capture="environment" onchange="handleImage(this)">
-        <input type="text" id="q-in" placeholder="Pesquisar produto ou EAN...">
-        <button class="btn btn-s" onclick="searchPrice()">🔍 Comparar Preços</button>
+        <input type="text" id="q-in" placeholder="Pesquisar produto ou marca...">
+        <button class="btn btn-s" onclick="searchPrice()">🔍 Comparar Lojas Online</button>
     </div>
     <div id="out-home"></div>
 </div>
@@ -50,16 +53,16 @@
 <!-- GERADOR -->
 <div id="v-gen" class="v">
     <div class="card">
-        <h3>🪄 Gerador Mensal</h3>
-        <p style="font-size:12px; color:#666; margin-bottom:10px;">Cria a lista base de 54 itens ajustada ao agregado familiar.</p>
+        <h3>🪄 Gerador Mensal Inteligente</h3>
+        <p style="font-size:12px; color:#666; margin-bottom:10px;">Cálculo de stock baseado no agregado familiar.</p>
         <select id="gen-qty" onchange="localStorage.setItem('s_q', this.value)">
-            <option value="1">1 Pessoa</option>
-            <option value="2" selected>2 Pessoas</option>
-            <option value="3">3 Pessoas</option>
-            <option value="4">4 Pessoas</option>
-            <option value="5">5 Pessoas</option>
+            <option value="1">Para 1 Pessoa</option>
+            <option value="2" selected>Para 2 Pessoas</option>
+            <option value="3">Para 3 Pessoas</option>
+            <option value="4">Para 4 Pessoas</option>
+            <option value="5">Para 5 Pessoas</option>
         </select>
-        <button class="btn btn-p" onclick="generateBase()">🪄 Gerar com Quantidades</button>
+        <button class="btn btn-p" onclick="generateBase()">🪄 Gerar Lista Recomendada</button>
     </div>
     <div id="out-gen"></div>
 </div>
@@ -67,11 +70,11 @@
 <!-- CARRINHO -->
 <div id="v-cart" class="v">
     <div class="card">
-        <h3>🛒 Carrinho e Exportação</h3>
-        <textarea id="cart-txt" rows="12" placeholder="Lista de compras..." onchange="saveC()"></textarea>
+        <h3>🛒 Lista para SuperSave</h3>
+        <textarea id="cart-txt" rows="12" placeholder="Cola aqui a tua lista ou gera uma..." onchange="saveC()"></textarea>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-            <button class="btn btn-s" onclick="compareStores()">🚀 Melhor Loja</button>
-            <button class="btn btn-p" style="background:#fb8c00" onclick="copyToSuper()">📲 SuperSave</button>
+            <button class="btn btn-s" onclick="compareStores()">🚀 Calcular Melhor Loja</button>
+            <button class="btn btn-p" style="background:#fb8c00" onclick="copyToSuper()">📲 Copiar Lista</button>
         </div>
     </div>
     <div id="out-cart"></div>
@@ -81,11 +84,11 @@
 <!-- CONFIG -->
 <div id="v-cfg" class="v">
     <div class="card">
-        <h3>⚙️ Configuração API</h3>
-        <textarea id="key-in" placeholder="Insira a sua Google API Key..."></textarea>
-        <select id="model-sel"></select>
-        <button class="btn btn-p" onclick="loadModels()">🔄 Carregar Modelos</button>
-        <button class="btn btn-s" style="margin-top:10px" onclick="saveConfig()">💾 Guardar Config</button>
+        <h3>⚙️ Configuração Gemini</h3>
+        <textarea id="key-in" placeholder="Google API Key..."></textarea>
+        <select id="model-sel" onchange="localStorage.setItem('s_m', this.value)"></select>
+        <button class="btn btn-p" onclick="loadModels()">🔄 Validar e Carregar</button>
+        <button class="btn btn-s" style="margin-top:10px" onclick="saveConfig()">💾 Guardar Tudo</button>
     </div>
 </div>
 
@@ -104,16 +107,28 @@ function boot() {
     if(k) document.getElementById('key-in').value = k;
     if(c) document.getElementById('cart-txt').value = c;
     if(q) document.getElementById('gen-qty').value = q;
-    if(k) loadModels(m);
+    if(k) loadModels(m || 'gemini-2.0-flash'); // Fallback para modelo estável
+}
+
+// CORREÇÃO: Função de limpeza de JSON mais robusta
+function cleanJSON(text) {
+    try {
+        const jsonMatch = text.match(/\[[\s\S]*\]|\{[\s\S]*\}/);
+        return jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+    } catch(e) { return null; }
 }
 
 async function callAI(payload) {
     const k = localStorage.getItem('s_k'), m = localStorage.getItem('s_m');
-    if(!k || !m) { alert("Configure a API Key e o Modelo primeiro!"); tab('cfg', document.querySelectorAll('.nav-i')[3]); return null; }
+    if(!k || !m) { 
+        alert("Erro: Key ou Modelo em falta!"); 
+        tab('cfg', document.querySelectorAll('.nav-i')[3]); 
+        return null; 
+    }
     
-    updateStatus("A processar...", "orange");
+    updateStatus("AI a trabalhar...", "orange");
     try {
-        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/${m}:generateContent?key=${k}`, {
+        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${k}`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)
@@ -124,7 +139,7 @@ async function callAI(payload) {
         return data.candidates[0].content.parts[0].text;
     } catch(e) {
         updateStatus("Erro API", "red");
-        alert("Erro: " + e.message);
+        console.error(e);
         return null;
     }
 }
@@ -132,30 +147,34 @@ async function callAI(payload) {
 async function generateBase() {
     const qty = document.getElementById('gen-qty').value;
     const out = document.getElementById('out-gen');
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div><br>A calcular stock mensal...</div>';
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin" style="margin:0 auto"></div><br>A calcular stock mensal...</div>';
     
-    const prompt = `Gera uma lista de compras mensal para ${qty} pessoas em Portugal usando estes 54 itens: Arroz, Massa, Azeite, Óleo, Farinha, Açúcar, Sal, Café, Chá, Feijão, Grão, Lentilhas, Tomate pelado, Atum, Sardinhas, Bolachas Maria, Cereais, Leite UHT, Ovos, Iogurtes, Queijo, Manteiga, Fiambre, Bacon, Frango, Carne picada, Porco, Peixe, Bacalhau, Batatas, Cebolas, Alhos, Cenouras, Brócolos, Couve-flor, Espinafres, Pão, Legumes mistos, Ervilhas, Detergentes, Amaciadores, Lixívia, Sacos lixo, Papel Higiénico, Higiene Pessoal.
-    REGRAS: 1. Nome do item e quantidade em parênteses (ex: Arroz (4kg)). 2. Um item por linha. 3. Sem explicações.`;
+    const prompt = `Gera uma lista de compras mensal para ${qty} pessoas em Portugal focada em 54 itens essenciais (Arroz, Massa, Azeite, Detergentes, etc).
+    REGRAS: 
+    1. Responde com "Nome do Item (Quantidade Mensal Recomendada)".
+    2. Usa apenas uma linha por item.
+    3. Sem introduções nem conclusões.`;
 
     const res = await callAI({ contents: [{ parts: [{ text: prompt }] }] });
     if(res) {
-        state.items = res.replace(/[*#•-]/g, "").split('\n').map(l => l.trim()).filter(l => l.length > 3);
+        state.items = res.replace(/[*#•-]/g, "").split('\n').map(l => l.trim()).filter(l => l.length > 5);
         out.innerHTML = `
             <div class="card" style="padding:0; overflow:hidden;">
+                <div style="padding:15px; background:#f8f9fa; font-weight:bold; border-bottom:1px solid #eee;">Lista Mensal (${qty} pessoas)</div>
                 <div style="max-height:300px; overflow-y:auto;">
                     ${state.items.map(i => {
-                        const p = i.split('(');
-                        return `<div class="item-line"><span>${p[0]}</span> <span class="q-tag">${p[1] ? '('+p[1] : ''}</span></div>`;
+                        const parts = i.split('(');
+                        return `<div class="item-line"><span>${parts[0].trim()}</span> <span class="q-tag">${parts[1] ? '('+parts[1] : ''}</span></div>`;
                     }).join('')}
                 </div>
-                <div style="padding:15px;"><button class="btn btn-s" onclick="copyToCart()">📥 Adicionar ao Carrinho</button></div>
+                <div style="padding:15px;"><button class="btn btn-s" onclick="copyToCart()">📥 Usar no Carrinho</button></div>
             </div>`;
     }
 }
 
 function copyToCart() {
     const area = document.getElementById('cart-txt');
-    area.value = (area.value + "\n" + state.items.join('\n')).trim();
+    area.value = state.items.join('\n');
     saveC();
     tab('cart', document.querySelectorAll('.nav-i')[2]);
 }
@@ -163,46 +182,46 @@ function copyToCart() {
 async function compareStores() {
     const txt = document.getElementById('cart-txt').value;
     const out = document.getElementById('out-cart');
-    if(!txt) return alert("Carrinho vazio!");
+    if(!txt) return alert("Lista vazia!");
     
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div><br>A comparar cabazes...</div>';
-    const prompt = `Com base na lista: "${txt}", estima o valor total para: Continente, Lidl, Aldi, Mercadona, Pingo Doce, Auchan. Responde APENAS JSON: [{"loja":"Nome","total":0.00}]`;
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin" style="margin:0 auto"></div><br>A estimar custos totais...</div>';
+    const prompt = `Analisa a lista de compras: "${txt}". Estima o custo total do cabaz em: Continente, Lidl, Aldi, Mercadona, Pingo Doce e Auchan. Responde APENAS JSON: [{"loja":"Nome","total":0.00}]`;
     
     const res = await callAI({ contents: [{ parts: [{ text: prompt }] }] });
-    if(res) {
-        try {
-            const data = JSON.parse(res.replace(/```json|```/g, ""));
-            data.sort((a,b) => a.total - b.total);
-            state.winner = data[0].loja;
-            out.innerHTML = `
-                <div class="card" style="border:2px solid var(--s); text-align:center">
-                    <span style="font-size:12px; color:var(--s); font-weight:bold;">🏆 MAIS BARATO</span><br>
-                    <b style="font-size:20px">${state.winner}</b><br>
-                    <span style="font-size:24px; color:var(--p)">${data[0].total.toFixed(2)}€</span>
-                </div>` + data.slice(1).map(i => `<div class="card" style="display:flex; justify-content:space-between"><b>${i.loja}</b> <span>${i.total.toFixed(2)}€</span></div>`).join('');
-            
-            document.getElementById('out-finalize').innerHTML = `
-                <div class="card" style="background:#fff3e0; border:1px solid #ffe0b2">
-                    <h4>🎯 Otimizar para ${state.winner}</h4>
-                    <p style="font-size:11px; margin-bottom:10px">Vou renomear a lista com marcas e preços reais desta loja.</p>
-                    <button class="btn btn-p" onclick="finalizeBrands()">✨ Renomear e Exportar</button>
-                </div>`;
-        } catch(e) { out.innerHTML = "Erro ao processar dados."; }
+    const data = cleanJSON(res);
+    if(data) {
+        data.sort((a,b) => a.total - b.total);
+        state.winner = data[0].loja;
+        out.innerHTML = `
+            <div class="card" style="border:2px solid var(--s); text-align:center; background:#f1f8e9">
+                <span style="font-size:11px; color:var(--s); font-weight:bold;">🏆 OPÇÃO MAIS ECONÓMICA</span><br>
+                <b style="font-size:22px">${state.winner}</b><br>
+                <span style="font-size:26px; color:var(--p); font-weight:900">${data[0].total.toFixed(2)}€</span>
+            </div>` + data.slice(1).map(i => `<div class="card" style="display:flex; justify-content:space-between; align-items:center"><b>${i.loja}</b> <span style="font-weight:bold">${i.total.toFixed(2)}€</span></div>`).join('');
+        
+        document.getElementById('out-finalize').innerHTML = `
+            <div class="card" style="background:#fff3e0; border:1px solid #ffe0b2">
+                <h4 style="color:#e65100">🎯 Otimizar para ${state.winner}</h4>
+                <p style="font-size:12px; color:#555; margin-bottom:12px">Irei converter os itens para marcas próprias e embalagens reais da ${state.winner} para exportar.</p>
+                <button class="btn btn-p" onclick="finalizeBrands()">✨ Renomear com Marcas ${state.winner}</button>
+            </div>`;
     }
 }
 
 async function finalizeBrands() {
     const txt = document.getElementById('cart-txt').value;
     const out = document.getElementById('out-finalize');
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div><br>A converter marcas...</div>';
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin" style="margin:0 auto"></div><br>A converter para marcas reais...</div>';
     
-    const prompt = `Reescreve esta lista: "${txt}" para o supermercado ${state.winner}. Usa marcas próprias (ex: Pingo Doce, Continente, Milbona se Lidl, Bon-Ri se Aldi). Mantém as quantidades. Um item por linha.`;
+    const prompt = `Converte esta lista: "${txt}" para produtos reais do supermercado ${state.winner}. 
+    Exemplo: Se for Pingo Doce, usa "Marca Pingo Doce" ou "Bem-Estar". Se for Lidl, usa "Milbona" ou "Argus". 
+    Mantém a quantidade recomendada no fim. Responde apenas a lista final.`;
     
     const res = await callAI({ contents: [{ parts: [{ text: prompt }] }] });
     if(res) {
         document.getElementById('cart-txt').value = res.replace(/[*#•-]/g, "").trim();
         saveC();
-        out.innerHTML = `<div class="card" style="background:#e8f5e9; color:#2e7d32; text-align:center">✅ Lista convertida para ${state.winner}!</div>`;
+        out.innerHTML = `<div class="card" style="background:#e8f5e9; color:#2e7d32; text-align:center; font-weight:bold;">✅ Lista otimizada para ${state.winner}! Pronta para copiar.</div>`;
     }
 }
 
@@ -210,6 +229,9 @@ function openCam(mode) { state.camMode = mode; document.getElementById('f-in').c
 
 async function handleImage(input) {
     if(!input.files[0]) return;
+    const out = state.camMode === 'prod' ? document.getElementById('out-home') : document.getElementById('out-cart');
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin" style="margin:0 auto"></div><br>A processar imagem...</div>';
+    
     const reader = new FileReader();
     reader.onload = (e) => {
         const img = new Image();
@@ -220,14 +242,14 @@ async function handleImage(input) {
             canvas.width = img.width * scale;
             canvas.height = img.height * scale;
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            const base64 = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
+            const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
             
-            const prompt = state.camMode === 'prod' ? "Identifica este produto (Nome e Marca)." : "Lista os produtos e quantidades desta fatura.";
-            const res = await callAI({ contents: [{ parts: [{ inline_data: { mime_type: "image/jpeg", data: base64 } }, { text: prompt }] }] });
+            const p = state.camMode === 'prod' ? "O que é este produto? Responde apenas: Nome + Marca." : "Extrai a lista de produtos e quantidades desta fatura.";
+            const res = await callAI({ contents: [{ parts: [{ inline_data: { mime_type: "image/jpeg", data: base64 } }, { text: p }] }] });
             
             if(res) {
-                if(state.camMode === 'prod') { document.getElementById('q-in').value = res; searchPrice(); }
-                else { document.getElementById('cart-txt').value += "\n" + res; tab('cart', document.querySelectorAll('.nav-i')[2]); saveC(); }
+                if(state.camMode === 'prod') { document.getElementById('q-in').value = res.trim(); searchPrice(); }
+                else { document.getElementById('cart-txt').value += "\n" + res.trim(); tab('cart', document.querySelectorAll('.nav-i')[2]); saveC(); }
             }
         };
         img.src = e.target.result;
@@ -239,12 +261,12 @@ async function searchPrice() {
     const q = document.getElementById('q-in').value;
     const out = document.getElementById('out-home');
     if(!q) return;
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div></div>';
-    const res = await callAI({ contents: [{ parts: [{ text: `Preço médio de "${q}" em Portugal (Continente, Lidl, Pingo Doce, Mercadona). Responde JSON: [{"loja":"Nome","preco":0.00}]` }] }] });
-    try {
-        const data = JSON.parse(res.replace(/```json|```/g, ""));
-        out.innerHTML = data.map(i => `<div class="card" style="display:flex; justify-content:space-between"><b>${i.loja}</b> <span style="color:var(--p)">${Number(i.preco).toFixed(2)}€</span></div>`).join('');
-    } catch(e) { out.innerHTML = "Erro na busca."; }
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin" style="margin:0 auto"></div></div>';
+    const res = await callAI({ contents: [{ parts: [{ text: `Preço médio de "${q}" em Portugal. Responde APENAS JSON: [{"loja":"Nome","preco":0.00}]` }] }] });
+    const data = cleanJSON(res);
+    if(data) {
+        out.innerHTML = data.map(i => `<div class="card" style="display:flex; justify-content:space-between; align-items:center"><b>${i.loja}</b> <span style="color:var(--p); font-weight:bold; font-size:18px;">${Number(i.preco).toFixed(2)}€</span></div>`).join('');
+    } else { out.innerHTML = '<div class="card">Sem dados para este produto.</div>'; }
 }
 
 async function loadModels(saved) {
@@ -257,20 +279,30 @@ async function loadModels(saved) {
         sel.innerHTML = "";
         d.models.filter(m => m.supportedGenerationMethods.includes("generateContent")).forEach(m => {
             let o = document.createElement('option');
-            o.value = m.name;
+            o.value = m.name.split('/').pop();
             o.text = m.displayName || m.name;
-            if(m.name === saved || m.name.includes('flash')) o.selected = true;
+            if(o.value === saved || o.value.includes('flash')) o.selected = true;
             sel.appendChild(o);
         });
-        updateStatus("Motores OK", "green");
-    } catch(e) { updateStatus("Erro Config", "red"); }
+        localStorage.setItem('s_m', sel.value);
+        updateStatus("Config OK", "green");
+    } catch(e) { updateStatus("Erro Key", "red"); }
 }
 
-function saveConfig() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); alert("Configuração guardada!"); }
+function saveConfig() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); alert("Configuração guardada com sucesso!"); }
 function saveC() { localStorage.setItem('s_c', document.getElementById('cart-txt').value); }
 function updateStatus(m, c) { const e = document.getElementById('st'); e.innerHTML = m; e.style.color = {green:'#1e8e3e', orange:'#fb8c00', red:'#d93025'}[c]; }
 function tab(id, el) { document.querySelectorAll('.v').forEach(v => v.classList.remove('active')); document.querySelectorAll('.nav-i').forEach(n => n.classList.remove('active')); document.getElementById('v-'+id).classList.add('active'); el.classList.add('active'); }
-function copyToSuper() { navigator.clipboard.writeText(document.getElementById('cart-txt').value).then(() => alert("Copiado para o clipboard!")); }
+function copyToSuper() { 
+    const txt = document.getElementById('cart-txt').value;
+    navigator.clipboard.writeText(txt).then(() => {
+        const btn = document.querySelector('.btn-p[onclick="copyToSuper()"]');
+        const oldText = btn.innerHTML;
+        btn.innerHTML = "✅ Copiado!";
+        btn.style.background = "#4caf50";
+        setTimeout(() => { btn.innerHTML = oldText; btn.style.background = "#fb8c00"; }, 2000);
+    });
+}
 </script>
 </body>
 </html>
