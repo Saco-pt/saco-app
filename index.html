@@ -1,13 +1,14 @@
+```html
 <!DOCTYPE html>
 <html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V38.7 - Vision Restored</title>
+    <title>SACO.pt | V38.8 - Full Fix</title>
     <style>
         :root { --p: #1a73e8; --s: #1e8e3e; --bg: #f8f9fa; --txt: #202124; }
         * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; }
-        body { background: var(--bg); color: var(--txt); padding-bottom: 90px; }
+        body { background: var(--bg); color: var(--txt); padding-bottom: 90px; overflow-x: hidden; }
         .header { background: #fff; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
         .v { display: none; padding: 15px; max-width: 500px; margin: 0 auto; }
         .v.active { display: block; }
@@ -16,65 +17,76 @@
         .btn-p { background: var(--p); }
         .btn-s { background: var(--s); }
         textarea, input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; margin-bottom: 8px; outline: none; background: white; }
-        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; height: 75px; border-top: 1px solid #eee; }
+        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; height: 75px; border-top: 1px solid #eee; z-index: 100; }
         .nav-i { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: #5f6368; cursor: pointer; }
         .nav-i.active { color: var(--p); font-weight: bold; }
         .badge { font-size: 10px; padding: 2px 6px; border-radius: 5px; font-weight: bold; background: #eee; }
-        .item-line { padding: 8px; border-bottom: 1px solid #f1f1f1; font-size: 13px; }
-        .spin { width: 16px; height: 16px; border: 2px solid #f3f3f3; border-top: 2px solid var(--p); border-radius: 50%; animation: rot 1s linear infinite; display: inline-block; }
+        .item-line { padding: 10px; border-bottom: 1px solid #f1f1f1; display: flex; justify-content: space-between; font-size: 14px; align-items: center; }
+        .spin { width: 18px; height: 18px; border: 2px solid #f3f3f3; border-top: 2px solid var(--p); border-radius: 50%; animation: rot 1s linear infinite; display: inline-block; }
         @keyframes rot { 100% { transform: rotate(360deg); } }
+        .q-tag { background: #e8f5e9; color: #2e7d32; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; }
     </style>
 </head>
 <body onload="boot()">
 
 <div class="header">
     <div style="font-weight:900; font-size:20px;">SACO<span style="color:var(--p)">.pt</span></div>
-    <div id="st" class="badge">V38.7</div>
+    <div id="st" class="badge">V38.8</div>
 </div>
 
+<!-- BUSCA -->
 <div id="v-home" class="v active">
     <div class="card">
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-            <button class="btn btn-p" onclick="cam('prod')">📸 Scanner</button>
-            <button class="btn btn-p" style="opacity:0.7" onclick="cam('bill')">🧾 Fatura</button>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:12px;">
+            <button class="btn btn-p" onclick="openCam('prod')">📸 Scanner</button>
+            <button class="btn btn-p" style="opacity:0.8" onclick="openCam('bill')">🧾 Fatura</button>
         </div>
-        <input type="file" id="f-in" style="display:none" accept="image/*" capture="environment" onchange="procFile(this)">
-        <input type="text" id="q-in" placeholder="Ex: Detergente Skip">
-        <button class="btn btn-s" onclick="doSearch()">🔍 Comparar Preços Reais</button>
+        <input type="file" id="f-in" style="display:none" accept="image/*" capture="environment" onchange="handleImage(this)">
+        <input type="text" id="q-in" placeholder="Pesquisar produto ou EAN...">
+        <button class="btn btn-s" onclick="searchPrice()">🔍 Comparar Preços</button>
     </div>
     <div id="out-home"></div>
 </div>
 
+<!-- GERADOR -->
 <div id="v-gen" class="v">
     <div class="card">
-        <h3>🪄 1. Gerar Base Mensal</h3>
-        <select id="gen-qty" onchange="saveQty()">
+        <h3>🪄 Gerador Mensal</h3>
+        <p style="font-size:12px; color:#666; margin-bottom:10px;">Cria a lista base de 54 itens ajustada ao agregado familiar.</p>
+        <select id="gen-qty" onchange="localStorage.setItem('s_q', this.value)">
             <option value="1">1 Pessoa</option>
             <option value="2" selected>2 Pessoas</option>
             <option value="3">3 Pessoas</option>
             <option value="4">4 Pessoas</option>
+            <option value="5">5 Pessoas</option>
         </select>
-        <button class="btn btn-p" onclick="doGen()">Gerar Itens Essenciais</button>
+        <button class="btn btn-p" onclick="generateBase()">🪄 Gerar com Quantidades</button>
     </div>
     <div id="out-gen"></div>
 </div>
 
+<!-- CARRINHO -->
 <div id="v-cart" class="v">
     <div class="card">
-        <h3>🛒 2. Carrinho e Otimização</h3>
-        <textarea id="cart-txt" rows="10" onchange="saveC()"></textarea>
-        <button class="btn btn-s" onclick="doCalc()">🚀 Escolher Melhor Supermercado</button>
+        <h3>🛒 Carrinho e Exportação</h3>
+        <textarea id="cart-txt" rows="12" placeholder="Lista de compras..." onchange="saveC()"></textarea>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+            <button class="btn btn-s" onclick="compareStores()">🚀 Melhor Loja</button>
+            <button class="btn btn-p" style="background:#fb8c00" onclick="copyToSuper()">📲 SuperSave</button>
+        </div>
     </div>
     <div id="out-cart"></div>
-    <div id="out-final" style="margin-top:10px"></div>
+    <div id="out-finalize" style="margin-top:10px"></div>
 </div>
 
+<!-- CONFIG -->
 <div id="v-cfg" class="v">
     <div class="card">
-        <textarea id="key-in" placeholder="Key..."></textarea>
+        <h3>⚙️ Configuração API</h3>
+        <textarea id="key-in" placeholder="Insira a sua Google API Key..."></textarea>
         <select id="model-sel"></select>
-        <button class="btn btn-p" onclick="fetchM()">Carregar</button>
-        <button class="btn btn-s" style="margin-top:10px" onclick="saveA()">Guardar</button>
+        <button class="btn btn-p" onclick="loadModels()">🔄 Carregar Modelos</button>
+        <button class="btn btn-s" style="margin-top:10px" onclick="saveConfig()">💾 Guardar Config</button>
     </div>
 </div>
 
@@ -86,98 +98,182 @@
 </nav>
 
 <script>
-let state = { lastItems: [], winner: "", camM: "prod" };
+let state = { items: [], winner: "", camMode: "prod" };
 
 function boot() {
     const k = localStorage.getItem('s_k'), m = localStorage.getItem('s_m'), c = localStorage.getItem('s_c'), q = localStorage.getItem('s_q');
     if(k) document.getElementById('key-in').value = k;
     if(c) document.getElementById('cart-txt').value = c;
     if(q) document.getElementById('gen-qty').value = q;
-    if(k) fetchM(m);
+    if(k) loadModels(m);
 }
 
-async function ask(p) {
+async function callAI(payload) {
     const k = localStorage.getItem('s_k'), m = localStorage.getItem('s_m');
-    if(!k || !m) return alert("Configura a API Key no menu Config!");
-    status("Pensando...", "orange");
+    if(!k || !m) { alert("Configure a API Key e o Modelo primeiro!"); tab('cfg', document.querySelectorAll('.nav-i')[3]); return null; }
+    
+    updateStatus("A processar...", "orange");
     try {
-        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/${m}:generateContent?key=${k}`, {
-            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(p)
+        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/${m}:generateContent?key=${k}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
         });
-        const d = await r.json();
-        status("OK", "green");
-        return d.candidates[0].content.parts[0].text;
-    } catch(e) { status("Erro", "red"); return null; }
-}
-
-async function doGen() {
-    const qty = document.getElementById('gen-qty').value, out = document.getElementById('out-gen');
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div></div>';
-    const res = await ask({ contents: [{ parts: [{ text: `Gera uma lista de compras mensal essencial para ${qty} pessoas em Portugal (54 itens). Apenas nomes e quantidades sugeridas em parênteses. Um por linha.` }] }] });
-    if(res) {
-        state.lastItems = res.replace(/[*#•-]/g, "").split('\n').filter(l => l.trim().length > 3);
-        out.innerHTML = `<div class="card"><div style="max-height:250px; overflow-y:auto;">${state.lastItems.map(i => `<div class="item-line">${i}</div>`).join('')}</div><button class="btn btn-s" onclick="addC()">📥 Usar no Carrinho</button></div>`;
+        const data = await resp.json();
+        if(data.error) throw new Error(data.error.message);
+        updateStatus("Ligado", "green");
+        return data.candidates[0].content.parts[0].text;
+    } catch(e) {
+        updateStatus("Erro API", "red");
+        alert("Erro: " + e.message);
+        return null;
     }
 }
 
-async function doCalc() {
-    const t = document.getElementById('cart-txt').value, out = document.getElementById('out-cart');
-    if(!t) return;
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div></div>';
-    const res = await ask({ contents: [{ parts: [{ text: `Dada a lista: "${t}", estima totais para Continente, Lidl, Aldi, Mercadona, Pingo Doce, Auchan. Responde APENAS JSON: [{"loja":"Nome","total":0.00}]` }] }] });
-    const data = JSON.parse(res.replace(/```json|```/g, ""));
-    data.sort((a,b) => a.total - b.total);
-    state.winner = data[0].loja;
-    out.innerHTML = `<div class="card" style="border:2px solid var(--s); text-align:center">🏆 Vencedor: <b>${state.winner}</b><br>Total Estimado: ${data[0].total.toFixed(2)}€</div>`;
-    document.getElementById('out-final').innerHTML = `<div class="card"><h4>🎯 Otimizar para ${state.winner}</h4><button class="btn btn-p" onclick="finalizeList()">✨ Renomear para ${state.winner}</button></div>`;
+async function generateBase() {
+    const qty = document.getElementById('gen-qty').value;
+    const out = document.getElementById('out-gen');
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div><br>A calcular stock mensal...</div>';
+    
+    const prompt = `Gera uma lista de compras mensal para ${qty} pessoas em Portugal usando estes 54 itens: Arroz, Massa, Azeite, Óleo, Farinha, Açúcar, Sal, Café, Chá, Feijão, Grão, Lentilhas, Tomate pelado, Atum, Sardinhas, Bolachas Maria, Cereais, Leite UHT, Ovos, Iogurtes, Queijo, Manteiga, Fiambre, Bacon, Frango, Carne picada, Porco, Peixe, Bacalhau, Batatas, Cebolas, Alhos, Cenouras, Brócolos, Couve-flor, Espinafres, Pão, Legumes mistos, Ervilhas, Detergentes, Amaciadores, Lixívia, Sacos lixo, Papel Higiénico, Higiene Pessoal.
+    REGRAS: 1. Nome do item e quantidade em parênteses (ex: Arroz (4kg)). 2. Um item por linha. 3. Sem explicações.`;
+
+    const res = await callAI({ contents: [{ parts: [{ text: prompt }] }] });
+    if(res) {
+        state.items = res.replace(/[*#•-]/g, "").split('\n').map(l => l.trim()).filter(l => l.length > 3);
+        out.innerHTML = `
+            <div class="card" style="padding:0; overflow:hidden;">
+                <div style="max-height:300px; overflow-y:auto;">
+                    ${state.items.map(i => {
+                        const p = i.split('(');
+                        return `<div class="item-line"><span>${p[0]}</span> <span class="q-tag">${p[1] ? '('+p[1] : ''}</span></div>`;
+                    }).join('')}
+                </div>
+                <div style="padding:15px;"><button class="btn btn-s" onclick="copyToCart()">📥 Adicionar ao Carrinho</button></div>
+            </div>`;
+    }
 }
 
-async function finalizeList() {
-    const t = document.getElementById('cart-txt').value, out = document.getElementById('out-final');
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div></div>';
-    const res = await ask({ contents: [{ parts: [{ text: `Dada a lista genérica: "${t}", reescreve-a focada APENAS no supermercado ${state.winner}. Usa marcas próprias e quantidades reais da ${state.winner}. Responde APENAS a lista final, um item por linha.` }] }] });
-    if(res) { document.getElementById('cart-txt').value = res.replace(/[*#•-]/g, "").trim(); out.innerHTML = `<div class="card" style="background:#e8f5e9">✅ Lista otimizada para SuperSave!</div>`; saveC(); }
+function copyToCart() {
+    const area = document.getElementById('cart-txt');
+    area.value = (area.value + "\n" + state.items.join('\n')).trim();
+    saveC();
+    tab('cart', document.querySelectorAll('.nav-i')[2]);
 }
 
-function cam(m) { state.camM = m; document.getElementById('f-in').click(); }
+async function compareStores() {
+    const txt = document.getElementById('cart-txt').value;
+    const out = document.getElementById('out-cart');
+    if(!txt) return alert("Carrinho vazio!");
+    
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div><br>A comparar cabazes...</div>';
+    const prompt = `Com base na lista: "${txt}", estima o valor total para: Continente, Lidl, Aldi, Mercadona, Pingo Doce, Auchan. Responde APENAS JSON: [{"loja":"Nome","total":0.00}]`;
+    
+    const res = await callAI({ contents: [{ parts: [{ text: prompt }] }] });
+    if(res) {
+        try {
+            const data = JSON.parse(res.replace(/```json|```/g, ""));
+            data.sort((a,b) => a.total - b.total);
+            state.winner = data[0].loja;
+            out.innerHTML = `
+                <div class="card" style="border:2px solid var(--s); text-align:center">
+                    <span style="font-size:12px; color:var(--s); font-weight:bold;">🏆 MAIS BARATO</span><br>
+                    <b style="font-size:20px">${state.winner}</b><br>
+                    <span style="font-size:24px; color:var(--p)">${data[0].total.toFixed(2)}€</span>
+                </div>` + data.slice(1).map(i => `<div class="card" style="display:flex; justify-content:space-between"><b>${i.loja}</b> <span>${i.total.toFixed(2)}€</span></div>`).join('');
+            
+            document.getElementById('out-finalize').innerHTML = `
+                <div class="card" style="background:#fff3e0; border:1px solid #ffe0b2">
+                    <h4>🎯 Otimizar para ${state.winner}</h4>
+                    <p style="font-size:11px; margin-bottom:10px">Vou renomear a lista com marcas e preços reais desta loja.</p>
+                    <button class="btn btn-p" onclick="finalizeBrands()">✨ Renomear e Exportar</button>
+                </div>`;
+        } catch(e) { out.innerHTML = "Erro ao processar dados."; }
+    }
+}
 
-async function procFile(inp) {
-    if(!inp.files[0]) return;
-    status("📸 Lendo...", "orange");
+async function finalizeBrands() {
+    const txt = document.getElementById('cart-txt').value;
+    const out = document.getElementById('out-finalize');
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div><br>A converter marcas...</div>';
+    
+    const prompt = `Reescreve esta lista: "${txt}" para o supermercado ${state.winner}. Usa marcas próprias (ex: Pingo Doce, Continente, Milbona se Lidl, Bon-Ri se Aldi). Mantém as quantidades. Um item por linha.`;
+    
+    const res = await callAI({ contents: [{ parts: [{ text: prompt }] }] });
+    if(res) {
+        document.getElementById('cart-txt').value = res.replace(/[*#•-]/g, "").trim();
+        saveC();
+        out.innerHTML = `<div class="card" style="background:#e8f5e9; color:#2e7d32; text-align:center">✅ Lista convertida para ${state.winner}!</div>`;
+    }
+}
+
+function openCam(mode) { state.camMode = mode; document.getElementById('f-in').click(); }
+
+async function handleImage(input) {
+    if(!input.files[0]) return;
     const reader = new FileReader();
     reader.onload = (e) => {
         const img = new Image();
         img.onload = async () => {
-            const cv = document.createElement('canvas'); const s = 800/img.width;
-            cv.width = 800; cv.height = img.height*s;
-            cv.getContext('2d').drawImage(img, 0,0,800,cv.height);
-            const b64 = cv.toDataURL('image/jpeg', 0.8).split(',')[1];
-            const p = state.camM === 'prod' ? "Que produto é este? Nome e Marca." : "Lista os artigos desta fatura (vírgulas).";
-            const res = await ask({ contents: [{ parts: [{ inline_data: { mime_type: "image/jpeg", data: b64 } }, { text: p }] }] });
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const scale = Math.min(1, 1024/img.width);
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            const base64 = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
+            
+            const prompt = state.camMode === 'prod' ? "Identifica este produto (Nome e Marca)." : "Lista os produtos e quantidades desta fatura.";
+            const res = await callAI({ contents: [{ parts: [{ inline_data: { mime_type: "image/jpeg", data: base64 } }, { text: prompt }] }] });
+            
             if(res) {
-                if(state.camM === 'prod') { document.getElementById('q-in').value = res; doSearch(); }
-                else { document.getElementById('cart-txt').value += "\n" + res; tab('cart', document.querySelectorAll('.nav-i')[2]); }
+                if(state.camMode === 'prod') { document.getElementById('q-in').value = res; searchPrice(); }
+                else { document.getElementById('cart-txt').value += "\n" + res; tab('cart', document.querySelectorAll('.nav-i')[2]); saveC(); }
             }
         };
         img.src = e.target.result;
     };
-    reader.readAsDataURL(inp.files[0]);
+    reader.readAsDataURL(input.files[0]);
 }
 
-function addC() { document.getElementById('cart-txt').value = state.lastItems.join('\n'); saveC(); tab('cart', document.querySelectorAll('.nav-i')[2]); }
-function saveQty() { localStorage.setItem('s_q', document.getElementById('gen-qty').value); }
+async function searchPrice() {
+    const q = document.getElementById('q-in').value;
+    const out = document.getElementById('out-home');
+    if(!q) return;
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div></div>';
+    const res = await callAI({ contents: [{ parts: [{ text: `Preço médio de "${q}" em Portugal (Continente, Lidl, Pingo Doce, Mercadona). Responde JSON: [{"loja":"Nome","preco":0.00}]` }] }] });
+    try {
+        const data = JSON.parse(res.replace(/```json|```/g, ""));
+        out.innerHTML = data.map(i => `<div class="card" style="display:flex; justify-content:space-between"><b>${i.loja}</b> <span style="color:var(--p)">${Number(i.preco).toFixed(2)}€</span></div>`).join('');
+    } catch(e) { out.innerHTML = "Erro na busca."; }
+}
+
+async function loadModels(saved) {
+    const k = document.getElementById('key-in').value;
+    if(!k) return;
+    try {
+        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${k}`);
+        const d = await r.json();
+        const sel = document.getElementById('model-sel');
+        sel.innerHTML = "";
+        d.models.filter(m => m.supportedGenerationMethods.includes("generateContent")).forEach(m => {
+            let o = document.createElement('option');
+            o.value = m.name;
+            o.text = m.displayName || m.name;
+            if(m.name === saved || m.name.includes('flash')) o.selected = true;
+            sel.appendChild(o);
+        });
+        updateStatus("Motores OK", "green");
+    } catch(e) { updateStatus("Erro Config", "red"); }
+}
+
+function saveConfig() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); alert("Configuração guardada!"); }
 function saveC() { localStorage.setItem('s_c', document.getElementById('cart-txt').value); }
-function saveA() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); alert("Guardado!"); }
+function updateStatus(m, c) { const e = document.getElementById('st'); e.innerHTML = m; e.style.color = {green:'#1e8e3e', orange:'#fb8c00', red:'#d93025'}[c]; }
 function tab(id, el) { document.querySelectorAll('.v').forEach(v => v.classList.remove('active')); document.querySelectorAll('.nav-i').forEach(n => n.classList.remove('active')); document.getElementById('v-'+id).classList.add('active'); el.classList.add('active'); }
-function status(m, c) { const e = document.getElementById('st'); e.innerHTML = m; e.style.color = {green:'#1e8e3e', orange:'#fb8c00', red:'#d93025'}[c]; }
-async function fetchM(saved) { const k = document.getElementById('key-in').value; const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${k}`); const d = await r.json(), sel = document.getElementById('model-sel'); sel.innerHTML = ""; d.models.filter(m => m.supportedGenerationMethods.includes("generateContent")).forEach(m => { let o = document.createElement('option'); o.value = m.name; o.text = m.displayName || m.name; if(m.name === saved) o.selected = true; sel.appendChild(o); }); }
-async function doSearch() { const q = document.getElementById('q-in').value, out = document.getElementById('out-home'); const res = await ask({ contents: [{ parts: [{ text: `Preço de "${q}" em Portugal. JSON: [{"loja":"Nome","preco":0.00,"detalhes":""}]` }] }] }); const data = JSON.parse(res.replace(/
-http://googleusercontent.com/immersive_entry_chip/0
+function copyToSuper() { navigator.clipboard.writeText(document.getElementById('cart-txt').value).then(() => alert("Copiado para o clipboard!")); }
+</script>
+</body>
+</html>
 
-### O que foi corrigido e como testar:
-1.  **Visão Restaurada:** O ecrã de Busca agora tem uma grelha no topo com os botões **"📸 Scanner"** e **"🧾 Fatura"**.
-2.  **Scanner de Produto:** Clica em "Scanner", tira uma foto a um artigo e o SACO.pt irá identificá-lo e pesquisar os preços reais.
-3.  **Leitura de Fatura:** Clica em "Fatura", tira uma foto ao talão do supermercado e a IA irá ler os itens e adicioná-los automaticamente ao teu carrinho.
-
-Experimenta este novo código. A funcionalidade de câmara está de volta e 100% funcional!
-                           
+```
