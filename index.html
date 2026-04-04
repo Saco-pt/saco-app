@@ -3,101 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V45.0</title>
+    <title>SACO.pt | V46.0 - Gestão Total</title>
     <style>
         :root { --p: #1a73e8; --s: #1e8e3e; --bg: #f8f9fa; --txt: #202124; --err: #d93025; --v: #673ab7; --warn: #fb8c00; }
         * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; }
         body { background: var(--bg); color: var(--txt); padding-bottom: 90px; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
         
-        /* Layout */
         .header { background: #fff; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
         .v { display: none; padding: 15px; max-width: 500px; margin: 0 auto; }
         .v.active { display: block; animation: fadeIn 0.2s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
-        /* UI Elements */
-        .card { background: #fff; border-radius: 16px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 12px; border: 1px solid #eee; }
+        .card { background: #fff; border-radius: 16px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 12px; border: 1px solid #eee; position: relative; }
         .btn { border: none; border-radius: 12px; padding: 14px; font-weight: bold; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; transition: 0.2s; color: white; }
         .btn-p { background: var(--p); }
         .btn-s { background: var(--s); }
         .btn-v { background: var(--v); }
-        .btn-wa { background: #25d366; }
+        .btn-err { background: var(--err); }
         .btn-outline { background: transparent; color: var(--p); border: 1px solid var(--p); }
         
         textarea, input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; margin-bottom: 8px; outline: none; background: white; }
         
-        /* Navigation */
         .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; height: 75px; border-top: 1px solid #eee; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
         .nav-i { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: #5f6368; cursor: pointer; }
         .nav-i.active { color: var(--p); font-weight: bold; }
         
-        /* Specialized UI */
         .badge { font-size: 10px; padding: 3px 10px; border-radius: 20px; font-weight: bold; background: #eee; }
         .price-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f8f8f8; }
-        .price-row:last-child { border: none; }
-        .stat-val { font-size: 22px; font-weight: 900; color: var(--v); }
-        .spin { width: 20px; height: 20px; border: 3px solid #eee; border-top: 3px solid var(--p); border-radius: 50%; animation: rot 1s linear infinite; }
-        @keyframes rot { 100% { transform: rotate(360deg); } }
         
-        /* Item Selection UI */
-        .item-select { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #eee; cursor: pointer; }
-        .item-select input { width: auto; margin: 0; }
-
-        /* Modal Simple */
-        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; padding: 20px; overflow-y: auto; }
-        .modal-content { background: white; border-radius: 20px; padding: 20px; max-width: 500px; margin: 0 auto; }
+        /* Modal */
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; padding: 15px; overflow-y: auto; }
+        .modal-content { background: white; border-radius: 20px; padding: 20px; max-width: 500px; margin: 20px auto; }
+        
+        .item-row { display: flex; align-items: center; gap: 10px; padding: 12px; border-bottom: 1px solid #eee; }
+        .item-row input[type="checkbox"] { width: 20px; height: 20px; }
+        
+        .del-btn { position: absolute; top: 10px; right: 10px; background: #fee; color: var(--err); border: none; padding: 5px 8px; border-radius: 8px; font-size: 12px; cursor: pointer; }
     </style>
 </head>
 <body onload="boot()">
 
 <div class="header">
     <div style="font-weight:900; font-size:20px; letter-spacing:-1px;">SACO<span style="color:var(--p)">.pt</span></div>
-    <div id="st" class="badge">V45.0</div>
+    <div id="st" class="badge">V46.0</div>
 </div>
 
+<!-- BUSCA -->
 <div id="v-home" class="v active">
     <div class="card">
         <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-bottom:12px;">
-            <button class="btn btn-p" onclick="openCam('prod')">📸 Produto</button>
+            <button class="btn btn-p" onclick="openCam('prod')">📸 Prod</button>
             <button class="btn btn-v" onclick="openCam('bill')">🧾 Fatura</button>
-            <button class="btn btn-s" style="background:var(--warn)" onclick="openCam('tag')">🏷️ Etiqueta</button>
+            <button class="btn btn-s" style="background:var(--warn)" onclick="openCam('tag')">🏷️ Tag</button>
         </div>
         <input type="file" id="f-in" style="display:none" accept="image/*" capture="environment" onchange="handleImage(this)">
-        <input type="text" id="q-in" placeholder="Detergente, Arroz, etc...">
+        <input type="text" id="q-in" placeholder="O que procuras?">
         <div style="display:flex; gap:5px;">
-            <input type="text" id="loc-in" placeholder="Sua Cidade (ex: Porto)" style="width:140px; font-size:12px;">
-            <button class="btn btn-s" onclick="searchRealPrices()">🔍 Comparar Agora</button>
+            <input type="text" id="loc-in" placeholder="Cidade" style="width:100px;">
+            <button class="btn btn-s" onclick="searchRealPrices()">🔍 Comparar</button>
         </div>
     </div>
     <div id="out-home"></div>
 </div>
 
+<!-- ARQUIVO -->
 <div id="v-history" class="v">
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
         <div class="card" style="margin-bottom:0; text-align:center">
-            <small>Total Mensal</small><br>
-            <span id="stat-month" class="stat-val">0.00€</span>
+            <small>Este Mês</small><br>
+            <span id="stat-month" style="font-size:22px; font-weight:900; color:var(--v)">0.00€</span>
         </div>
         <div class="card" style="margin-bottom:0; text-align:center">
             <small>Recibos</small><br>
-            <span id="stat-count" class="stat-val" style="color:var(--txt)">0</span>
+            <span id="stat-count" style="font-size:22px; font-weight:900">0</span>
         </div>
     </div>
     <div id="out-history"></div>
+    <button class="btn btn-err" style="margin-top:10px; opacity:0.6" onclick="clearAllData()">🗑️ Limpar Todo o Arquivo</button>
 </div>
 
+<!-- CARRINHO -->
 <div id="v-cart" class="v">
     <div class="card">
-        <textarea id="cart-txt" rows="12" placeholder="Sua lista de compras..." onchange="saveC()"></textarea>
+        <textarea id="cart-txt" rows="12" placeholder="Tua lista..." onchange="saveC()"></textarea>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
             <button class="btn btn-s" onclick="compareStoresWithGrounding()">🚀 Melhor Loja</button>
-            <button class="btn btn-wa" onclick="shareWA()">🟢 WhatsApp</button>
+            <button class="btn btn-outline" onclick="copyList()">📋 Copiar</button>
         </div>
-        <button class="btn btn-outline" style="margin-top:10px;" onclick="copyList()">📋 Copiar Texto</button>
     </div>
     <div id="out-cart"></div>
 </div>
 
+<!-- CONFIG -->
 <div id="v-cfg" class="v">
     <div class="card">
         <h3>Configuração</h3>
@@ -105,19 +102,17 @@
         <select id="model-sel"></select>
         <button class="btn btn-p" onclick="loadModels()">🔄 Validar</button>
         <button class="btn btn-s" style="margin-top:10px" onclick="saveConfig()">💾 Guardar</button>
-        <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
-        <button class="btn" style="background:var(--err)" onclick="clearAllData()">🗑️ Apagar Tudo</button>
     </div>
 </div>
 
-<!-- Modal de Seleção de Itens -->
+<!-- MODAL DE SELEÇÃO / EDIÇÃO -->
 <div id="modal">
     <div class="modal-content">
-        <h3 id="modal-title">Selecionar Itens</h3>
-        <div id="modal-body" style="margin: 15px 0;"></div>
-        <div style="display:flex; gap:10px;">
-            <button class="btn btn-s" onclick="exportToCart()">🛒 Add ao Carrinho</button>
-            <button class="btn btn-outline" onclick="closeModal()">Fechar</button>
+        <h3 id="modal-title">Detalhes do Recibo</h3>
+        <div id="modal-body" style="margin: 15px 0; max-height: 400px; overflow-y: auto;"></div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <button class="btn btn-s" onclick="exportToCart()">🛒 Exportar</button>
+            <button class="btn btn-outline" onclick="closeModal()">Sair</button>
         </div>
     </div>
 </div>
@@ -130,7 +125,7 @@
 </nav>
 
 <script>
-let state = { camMode: "prod", selectedBill: null };
+let state = { camMode: "prod", currentBill: null };
 
 function boot() {
     const k = localStorage.getItem('s_k'), m = localStorage.getItem('s_m'), 
@@ -142,16 +137,16 @@ function boot() {
     renderHistory();
 }
 
-function parseDeep(text) {
+function parseJSON(text) {
     try {
-        const match = text.match(/\[[\s\S]*\]|\{[\s\S]*\}/);
+        const match = text.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
         return match ? JSON.parse(match[0]) : null;
     } catch(e) { return null; }
 }
 
 async function callAI(payload, search = false) {
     const k = localStorage.getItem('s_k'), m = localStorage.getItem('s_m');
-    if(!k || !m) { alert("Configura a API Key."); tab('cfg', document.querySelectorAll('.nav-i')[3]); return null; }
+    if(!k || !m) { alert("Configura a Key!"); tab('cfg', document.querySelectorAll('.nav-i')[3]); return null; }
     if(search) payload.tools = [{ google_search: {} }];
     updateStatus("...", "orange");
     try {
@@ -166,26 +161,26 @@ async function callAI(payload, search = false) {
 
 async function handleImage(inp) {
     if(!inp.files[0]) return;
+    updateStatus("Lendo...", "orange");
     const reader = new FileReader();
     reader.onload = (e) => {
         const img = new Image();
         img.onload = async () => {
-            const cv = document.createElement('canvas'); 
-            const max = 1024;
+            const cv = document.createElement('canvas'); const max = 1024;
             let w = img.width, h = img.height;
-            if (w > h) { if (w > max) { h *= max/w; w = max; } } else { if (h > max) { w *= max/h; h = max; } }
+            if(w > h) { if(w > max) { h *= max/w; w = max; } } else { if(h > max) { w *= max/h; h = max; } }
             cv.width = w; cv.height = h;
             cv.getContext('2d').drawImage(img, 0,0,w,h);
             const b64 = cv.toDataURL('image/jpeg', 0.8).split(',')[1];
             
             let p = "";
             if(state.camMode === 'prod') p = "Identifica o produto. Marca + Nome.";
-            if(state.camMode === 'bill') p = "Extrai os itens e TOTAL da fatura. Responde JSON: {\"itens\":[\"Item 1\", \"Item 2\"], \"total\": 0.00}";
-            if(state.camMode === 'tag') p = "Extrai nome e preço desta etiqueta.";
+            if(state.camMode === 'bill') p = "Lista itens e total da fatura. Responde APENAS JSON: {\"itens\":[\"Item 1\", \"Item 2\"], \"total\": 0.00}";
+            if(state.camMode === 'tag') p = "Lê etiqueta. Produto e Preço.";
 
             const res = await callAI({ contents: [{ parts: [{ inline_data: { mime_type: "image/jpeg", data: b64 } }, { text: p }] }] });
             if(res && state.camMode === 'bill') {
-                const data = parseDeep(res);
+                const data = parseJSON(res);
                 if(data) { saveToHistory(data.itens, data.total); tab('history', document.querySelectorAll('.nav-i')[1]); }
             } else if(res) {
                 document.getElementById('q-in').value = res.trim();
@@ -207,70 +202,77 @@ function saveToHistory(itens, total) {
 function renderHistory() {
     const hist = JSON.parse(localStorage.getItem('s_hist') || '[]');
     const out = document.getElementById('out-history');
-    let totalM = 0;
-    hist.forEach(h => totalM += h.total);
-    document.getElementById('stat-month').innerText = totalM.toFixed(2) + "€";
+    let tM = 0;
+    hist.forEach(h => tM += h.total);
+    document.getElementById('stat-month').innerText = tM.toFixed(2) + "€";
     document.getElementById('stat-count').innerText = hist.length;
 
-    if(hist.length === 0) { out.innerHTML = '<div class="card" style="text-align:center; color:#888">Sem faturas.</div>'; return; }
+    if(hist.length === 0) { out.innerHTML = '<div class="card" style="text-align:center">Vazio</div>'; return; }
     out.innerHTML = hist.map(h => `
-        <div class="card" onclick="openBillItems(${h.id})">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <small>${h.date}</small>
-                <b>${h.total.toFixed(2)}€</b>
+        <div class="card">
+            <button class="del-btn" onclick="event.stopPropagation(); deleteItem(${h.id})">Apagar</button>
+            <div onclick="openBill(${h.id})">
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <small><b>${h.date}</b></small>
+                    <b style="color:var(--v)">${h.total.toFixed(2)}€</b>
+                </div>
+                <div style="font-size:12px; color:#666">${h.itens.length} itens. Toca para ver.</div>
             </div>
-            <div style="font-size:12px; color:#666; margin-top:5px;">${h.itens.length} produtos. Clica para ver/repetir.</div>
         </div>
     `).join('');
 }
 
-function openBillItems(id) {
+function openBill(id) {
     const hist = JSON.parse(localStorage.getItem('s_hist') || '[]');
-    const bill = hist.find(h => h.id === id);
-    if(!bill) return;
-    state.selectedBill = bill;
-    
-    document.getElementById('modal-title').innerText = `Produtos de ${bill.date}`;
-    document.getElementById('modal-body').innerHTML = bill.itens.map((it, idx) => `
-        <label class="item-select">
-            <input type="checkbox" value="${it}" checked>
-            <span>${it}</span>
-        </label>
+    state.currentBill = hist.find(h => h.id === id);
+    if(!state.currentBill) return;
+
+    document.getElementById('modal-title').innerText = `Recibo de ${state.currentBill.date}`;
+    document.getElementById('modal-body').innerHTML = state.currentBill.itens.map((it, idx) => `
+        <div class="item-row">
+            <input type="checkbox" id="it-${idx}" checked>
+            <label for="it-${idx}">${it}</label>
+        </div>
     `).join('');
     document.getElementById('modal').style.display = 'block';
 }
 
 function exportToCart() {
-    const selected = Array.from(document.querySelectorAll('#modal-body input:checked')).map(i => i.value);
-    if(selected.length > 0) {
-        let current = document.getElementById('cart-txt').value;
-        document.getElementById('cart-txt').value = (current ? current + "\n" : "") + selected.join('\n');
-        saveC();
-        closeModal();
-        tab('cart', document.querySelectorAll('.nav-i')[2]);
-        alert(`${selected.length} itens adicionados ao carrinho!`);
+    const selected = Array.from(document.querySelectorAll('.item-row input:checked')).map(i => i.nextElementSibling.innerText);
+    if(selected.length) {
+        let old = document.getElementById('cart-txt').value;
+        document.getElementById('cart-txt').value = (old ? old + "\n" : "") + selected.join('\n');
+        saveC(); closeModal(); tab('cart', document.querySelectorAll('.nav-i')[2]);
+    }
+}
+
+function deleteItem(id) {
+    let hist = JSON.parse(localStorage.getItem('s_hist') || '[]');
+    hist = hist.filter(h => h.id !== id);
+    localStorage.setItem('s_hist', JSON.stringify(hist));
+    renderHistory();
+}
+
+function clearAllData() {
+    if(confirm("Desejas apagar TODOS os recibos guardados?")) {
+        localStorage.removeItem('s_hist');
+        renderHistory();
     }
 }
 
 function closeModal() { document.getElementById('modal').style.display = 'none'; }
 function saveC() { localStorage.setItem('s_c', document.getElementById('cart-txt').value); }
-function tab(id, el) { 
-    document.querySelectorAll('.v').forEach(v => v.classList.remove('active')); 
-    document.querySelectorAll('.nav-i').forEach(n => n.classList.remove('active')); 
-    document.getElementById('v-'+id).classList.add('active'); el.classList.add('active'); 
-}
+function saveConfig() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); alert("Configuração Guardada!"); }
+function tab(id, el) { document.querySelectorAll('.v').forEach(v => v.classList.remove('active')); document.querySelectorAll('.nav-i').forEach(n => n.classList.remove('active')); document.getElementById('v-'+id).classList.add('active'); el.classList.add('active'); }
 function openCam(m) { state.camMode = m; document.getElementById('f-in').click(); }
-function saveConfig() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); alert("Guardado!"); }
 function updateStatus(m, c) { const e = document.getElementById('st'); e.innerHTML = m; e.style.color = {green:'#1e8e3e', orange:'#fb8c00', red:'#d93025'}[c]; }
 
 async function searchRealPrices() {
-    const q = document.getElementById('q-in').value;
-    const loc = document.getElementById('loc-in').value;
-    const out = document.getElementById('out-home');
+    const q = document.getElementById('q-in').value, loc = document.getElementById('loc-in').value, out = document.getElementById('out-home');
     if(!q) return;
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin" style="margin:0 auto;"></div></div>';
-    const res = await callAI({ contents: [{ parts: [{ text: `Preço hoje para "${q}" em ${loc||'Portugal'}. JSON: [{"loja":"Nome","preco":0.00}]` }] }] }, true);
-    const data = parseDeep(res);
+    out.innerHTML = '<div class="card" style="text-align:center">Buscando...</div>';
+    const res = await callAI({ contents: [{ parts: [{ text: `Preços hoje em ${loc||'Portugal'} para "${q}". JSON: [{"loja":"Nome","preco":0.00}]` }] }] }, true);
+    const data = parseJSON(res);
     if(data) {
         out.innerHTML = `<div class="card">${data.map(i => `<div class="price-row"><span>${i.loja}</span><b>${i.preco.toFixed(2)}€</b></div>`).join('')}</div>`;
     }
@@ -286,12 +288,11 @@ async function loadModels(saved) {
         sel.innerHTML = "";
         d.models.filter(m => m.supportedGenerationMethods.includes("generateContent")).forEach(m => {
             let name = m.name.split('/').pop();
-            let o = document.createElement('option');
-            o.value = name; o.text = m.displayName || name;
+            let o = document.createElement('option'); o.value = name; o.text = m.displayName || name;
             if(name === saved || name === 'gemini-2.0-flash') o.selected = true;
             sel.appendChild(o);
         });
-        updateStatus("Ligado", "green");
+        updateStatus("OK", "green");
     } catch(e) { updateStatus("Erro", "red"); }
 }
 </script>
