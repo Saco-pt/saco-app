@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V59.7 - Restauro de Workflow</title>
+    <title>SACO.pt | V59.8 - Fix CSV & Delete</title>
     <style>
         :root { --p: #1a73e8; --s: #1e8e3e; --bg: #f8f9fa; --txt: #202124; --err: #d93025; --v: #673ab7; --warn: #f29900; --card: #ffffff; }
         * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -30,16 +30,17 @@
         #modal-body { overflow-y: auto; flex-grow: 1; margin: 15px 0; }
         .loading-spin { border: 3px solid #f3f3f3; border-top: 3px solid var(--p); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 10px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .hist-item { display: flex; align-items: center; gap: 15px; padding: 15px; background: #fff; border-radius: 16px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .hist-item input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--p); }
     </style>
 </head>
 <body onload="boot()">
 
 <div class="header">
     <div style="font-weight:900; font-size:22px;">SACO<span style="color:var(--p)">.pt</span></div>
-    <div id="st" style="font-size:10px; font-weight:bold;">SISTEMA OK</div>
+    <div id="st" style="font-size:10px; font-weight:bold; color: var(--s);">SISTEMA OK</div>
 </div>
 
-<!-- ABA BUSCA (RECOLHA) -->
 <div id="v-home" class="v active">
     <div class="card">
         <h3>Recolha de Dados Visuais</h3>
@@ -53,10 +54,8 @@
         <input type="text" id="q-in" placeholder="Pesquisar preços...">
         <button class="btn btn-s" onclick="searchRealPrices()">🔍 Analisar Mercado</button>
     </div>
-    <div id="out-home"></div>
 </div>
 
-<!-- ABA PERFIL -->
 <div id="v-gen" class="v">
     <div class="card">
         <h3>🧠 Perfil de Consumidor</h3>
@@ -69,7 +68,6 @@
     </div>
 </div>
 
-<!-- ABA ARQUIVO -->
 <div id="v-history" class="v">
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:15px;">
         <div class="card" style="text-align:center; padding:12px; margin-bottom:0;">
@@ -87,17 +85,14 @@
     <div id="out-history"></div>
 </div>
 
-<!-- ABA LISTA -->
 <div id="v-cart" class="v">
     <div class="card">
         <h3>🛒 Lista Inteligente</h3>
         <textarea id="cart-txt" rows="10" placeholder="A tua lista..." oninput="saveC()"></textarea>
         <button class="btn btn-s" onclick="compareStoresDetailed()">🚀 Comparar Lojas</button>
     </div>
-    <div id="out-cart"></div>
 </div>
 
-<!-- ABA CONFIG -->
 <div id="v-cfg" class="v">
     <div class="card">
         <h3>⚙️ Configuração API</h3>
@@ -107,7 +102,6 @@
     </div>
 </div>
 
-<!-- MODAL -->
 <div id="modal" onclick="closeModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
         <h3 id="m-title">Processando...</h3>
@@ -131,9 +125,20 @@
 let currentMode = 'bill';
 
 function boot() {
+    console.log("Iniciando Diagnóstico...");
     const k = localStorage.getItem('s_k');
     if(k) { document.getElementById('key-in').value = k; fetchModels(); }
     document.getElementById('cart-txt').value = localStorage.getItem('s_c') || "";
+    
+    // Auto-Diagnóstico de Dados
+    try {
+        const h = localStorage.getItem('s_h');
+        if(h) JSON.parse(h);
+    } catch(e) {
+        console.error("Corrupção de dados detetada. Resetando histórico.");
+        localStorage.setItem('s_h', '[]');
+    }
+
     renderHistory();
     renderDataTags();
     document.getElementById('f-in').addEventListener('change', handleMedia);
@@ -179,19 +184,14 @@ async function processBill(b64) {
     document.getElementById('modal').style.display = 'block';
     document.getElementById('modal-body').innerHTML = '<div class="loading-spin"></div>';
     document.getElementById('m-footer-val').style.display = 'none';
-    
-    const prompt = "Extrai itens e TOTAL do recibo. JSON: {\"itens\":[\"Desc\"], \"total\":0.00}. Garante que a lista 'itens' contém apenas STRINGS de texto.";
+    const prompt = "Extrai itens e TOTAL do recibo. JSON: {\"itens\":[\"Desc\"], \"total\":0.00}. Garante que 'itens' são apenas STRINGS.";
     const res = await callAI(prompt, b64);
     let data;
     try { data = JSON.parse(res.replace(/```json|```/gi, "").trim()); } catch(e) { closeModal(); return; }
-
     if(data) {
         document.getElementById('m-title').innerText = "Validar Recibo";
         document.getElementById('modal-total-val').value = data.total || 0;
-        
-        // FIX [object Object]: Garante que convertemos qualquer objeto em string
         const cleanItens = (data.itens || []).map(it => (typeof it === 'object' ? (it.nome || it.desc || JSON.stringify(it)) : String(it)));
-        
         document.getElementById('modal-body').innerHTML = cleanItens.map(it => `<input type="text" class="bill-it" value="${it}" style="width:100%; padding:12px; margin-bottom:8px; border:1px solid #ddd; border-radius:10px;">`).join('');
         document.getElementById('m-footer-val').style.display = 'block';
     }
@@ -200,17 +200,16 @@ async function processBill(b64) {
 async function processFridgeData(b64) {
     document.getElementById('modal').style.display = 'block';
     document.getElementById('modal-body').innerHTML = '<div class="loading-spin"></div>';
-    const prompt = "Analisa a foto da despensa. Extrai marcas e categorias visíveis. JSON: {\"tags\":[\"Marca/Categoria\"], \"analise\":\"resumo\"}";
+    const prompt = "Analisa a foto da despensa. JSON: {\"tags\":[\"Marca/Categoria\"], \"analise\":\"resumo\"}";
     const res = await callAI(prompt, b64);
     let data;
     try { data = JSON.parse(res.replace(/```json|```/gi, "").trim()); } catch(e) { closeModal(); return; }
-    
     if(data) {
         let tags = JSON.parse(localStorage.getItem('s_tags') || '[]');
         tags = [...new Set([...tags, ...data.tags])].slice(-30);
         localStorage.setItem('s_tags', JSON.stringify(tags));
-        document.getElementById('m-title').innerText = "Dados Recolhidos";
-        document.getElementById('modal-body').innerHTML = `<p>${data.analise}</p><div style="margin-top:10px;">${data.tags.map(t => `<span class="data-tag">${t}</span>`).join('')}</div>`;
+        document.getElementById('m-title').innerText = "Despensa Analisada";
+        document.getElementById('modal-body').innerHTML = `<p>${data.analise}</p><div>${data.tags.map(t => `<span class="data-tag">${t}</span>`).join('')}</div>`;
     }
 }
 
@@ -220,13 +219,7 @@ function saveEditedBill() {
     let h = JSON.parse(localStorage.getItem('s_h') || '[]');
     h.unshift({ id: Date.now(), total, itens, date: new Date().toLocaleDateString('pt-PT') });
     localStorage.setItem('s_h', JSON.stringify(h));
-    
-    // Atualiza tags de perfil com a primeira palavra de cada item
-    let tags = JSON.parse(localStorage.getItem('s_tags') || '[]');
-    itens.forEach(it => tags.push(it.split(' ')[0]));
-    localStorage.setItem('s_tags', JSON.stringify([...new Set(tags)].slice(-40)));
-    
-    renderHistory(); closeModal(); tab('history', document.querySelectorAll('.nav-i')[2]);
+    renderHistory(); closeModal();
 }
 
 function renderHistory() {
@@ -234,18 +227,70 @@ function renderHistory() {
     let total = 0;
     document.getElementById('out-history').innerHTML = h.map(i => {
         total += i.total;
-        return `<div class="card" style="display:flex; align-items:center; gap:10px;">
+        return `<div class="hist-item">
             <input type="checkbox" class="hist-check" data-id="${i.id}" data-val="${i.total}" onchange="updateSelTotal()">
-            <div style="flex-grow:1"><b>${i.date}</b><br><small>${i.total.toFixed(2)}€</small></div>
+            <div style="flex-grow:1">
+                <div style="display:flex; justify-content:space-between">
+                    <b>${i.date}</b>
+                    <b style="color:var(--v)">${i.total.toFixed(2)}€</b>
+                </div>
+                <small style="color:#666; font-size:10px;">${i.itens.slice(0,3).join(', ')}...</small>
+            </div>
         </div>`;
     }).join('');
     document.getElementById('stat-month').innerText = total.toFixed(2) + "€";
+    updateSelTotal();
 }
 
 function updateSelTotal() {
     let t = 0;
     document.querySelectorAll('.hist-check:checked').forEach(c => t += parseFloat(c.dataset.val));
     document.getElementById('stat-sel-val').innerText = t.toFixed(2) + "€";
+}
+
+function deleteSelected() {
+    const checks = document.querySelectorAll('.hist-check:checked');
+    if(checks.length === 0) return;
+    if(!confirm("Deseja eliminar os registos selecionados?")) return;
+    
+    let h = JSON.parse(localStorage.getItem('s_h') || '[]');
+    const idsToDelete = Array.from(checks).map(c => c.dataset.id);
+    
+    h = h.filter(item => !idsToDelete.includes(item.id.toString()));
+    localStorage.setItem('s_h', JSON.stringify(h));
+    renderHistory();
+}
+
+function exportCSV() {
+    const h = JSON.parse(localStorage.getItem('s_h') || '[]');
+    if(h.length === 0) return alert("Não há dados para exportar.");
+    
+    let csv = "Data;Total;Itens\n";
+    h.forEach(i => {
+        csv += `${i.date};${i.total.toFixed(2)};${i.itens.join(' | ')}\n`;
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute("download", `SACO_Export_${new Date().toLocaleDateString()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function exportToCart() {
+    const h = JSON.parse(localStorage.getItem('s_h') || '[]');
+    const selectedIds = Array.from(document.querySelectorAll('.hist-check:checked')).map(c => c.dataset.id);
+    if(selectedIds.length === 0) return alert("Selecione recibos primeiro.");
+    
+    let products = [];
+    h.filter(i => selectedIds.includes(i.id.toString())).forEach(bill => products = products.concat(bill.itens));
+    
+    const currentList = document.getElementById('cart-txt').value.split('\n');
+    document.getElementById('cart-txt').value = [...new Set([...currentList, ...products])].filter(x => x.trim()).join('\n');
+    saveC();
+    tab('cart', document.querySelectorAll('.nav-i')[3]);
 }
 
 function renderDataTags() {
@@ -255,27 +300,18 @@ function renderDataTags() {
 
 async function fetchModels() {
     const k = document.getElementById('key-in').value;
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${k}`);
-    const d = await r.json();
-    const sel = document.getElementById('model-sel');
-    sel.innerHTML = "";
-    d.models.filter(m => m.name.includes('gemini')).forEach(m => sel.add(new Option(m.name.split('/').pop().toUpperCase(), m.name.split('/').pop())));
+    try {
+        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${k}`);
+        const d = await r.json();
+        const sel = document.getElementById('model-sel');
+        sel.innerHTML = "";
+        d.models.filter(m => m.name.includes('gemini')).forEach(m => sel.add(new Option(m.name.split('/').pop().toUpperCase(), m.name.split('/').pop())));
+    } catch(e) {}
 }
 
 function saveC() { localStorage.setItem('s_c', document.getElementById('cart-txt').value); }
 function closeModal() { document.getElementById('modal').style.display = 'none'; }
 function saveConfig() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); alert("Guardado!"); }
-function exportCSV() { /* CSV Logic */ }
-function deleteSelected() { /* Delete Logic */ }
-function exportToCart() {
-    const h = JSON.parse(localStorage.getItem('s_h') || '[]');
-    const selectedIds = Array.from(document.querySelectorAll('.hist-check:checked')).map(c => c.dataset.id);
-    let products = [];
-    h.filter(i => selectedIds.includes(i.id.toString())).forEach(bill => products = products.concat(bill.itens));
-    document.getElementById('cart-txt').value = [...new Set([...document.getElementById('cart-txt').value.split('\n'), ...products])].filter(x => x.trim()).join('\n');
-    saveC();
-    tab('cart', document.querySelectorAll('.nav-i')[3]);
-}
 </script>
 </body>
 </html>
