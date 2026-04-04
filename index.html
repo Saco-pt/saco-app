@@ -3,45 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V57.2 - Filtro de Motores</title>
+    <title>SACO.pt | V58.2 - Busca Inteligente</title>
     <style>
         :root { --p: #1a73e8; --s: #1e8e3e; --bg: #f8f9fa; --txt: #202124; --err: #d93025; --v: #673ab7; --warn: #f29900; --card: #ffffff; }
-        * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
-        
+        * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--txt); padding-bottom: 90px; min-height: 100vh; }
-        
         .header { background: #fff; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 100; }
         .v { display: none; padding: 15px; max-width: 500px; margin: 0 auto; }
         .v.active { display: block; animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        
         .card { background: var(--card); border-radius: 16px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 15px; border: 1px solid rgba(0,0,0,0.03); }
-        
-        .btn { border: none; border-radius: 12px; padding: 16px; font-weight: 700; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; color: white; transition: all 0.2s; position: relative; }
-        .btn:active { transform: scale(0.98); filter: brightness(0.9); }
-        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn { border: none; border-radius: 12px; padding: 16px; font-weight: 700; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; color: white; transition: all 0.2s; }
+        .btn:active { transform: scale(0.98); }
         .btn-p { background: var(--p); }
         .btn-s { background: var(--s); }
         .btn-v { background: var(--v); }
         .btn-err { background: var(--err); }
         .btn-warn { background: var(--warn); }
-        
-        input, textarea, select { width: 100%; padding: 14px; border: 1px solid #e0e0e0; border-radius: 12px; font-size: 16px; margin-bottom: 12px; background: #fff; display: block; outline: none; }
-        input:focus { border-color: var(--p); box-shadow: 0 0 0 3px rgba(26,115,232,0.1); }
-
+        input, textarea, select { width: 100%; padding: 14px; border: 1px solid #e0e0e0; border-radius: 12px; font-size: 16px; margin-bottom: 12px; background: #fff; outline: none; }
         .nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; display: flex; height: 75px; border-top: 1px solid #eee; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
-        .nav-i { flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #70757a; font-size: 11px; cursor: pointer; transition: 0.2s; }
-        .nav-i.active { color: var(--p); font-weight: bold; }
-        .nav-i span { font-size: 22px; margin-bottom: 4px; display: block; }
-
-        .badge { font-size: 10px; padding: 4px 12px; border-radius: 20px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
-        
+        .nav-i { flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #70757a; font-size: 11px; cursor: pointer; }
+        .nav-i.active { color: var(--p); font-weight: 700; }
+        .nav-i span { font-size: 22px; margin-bottom: 4px; }
+        .badge { font-size: 10px; padding: 4px 12px; border-radius: 20px; font-weight: bold; text-transform: uppercase; }
         #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; backdrop-filter: blur(4px); }
-        .modal-content { background: #fff; border-radius: 24px; padding: 25px; max-width: 450px; margin: 15% auto; max-height: 85vh; overflow-y: auto; width: 92%; }
-        
+        .modal-content { background: #fff; border-radius: 24px; padding: 25px; max-width: 450px; margin: 40px auto; width: 92%; }
         .res-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #f0f0f0; }
-        .res-row:last-child { border-bottom: none; }
-        
         .loading-spin { border: 3px solid #f3f3f3; border-top: 3px solid var(--p); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 10px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
@@ -49,23 +36,23 @@
 <body onload="boot()">
 
 <div class="header">
-    <div style="font-weight:900; font-size:22px; letter-spacing:-0.5px;">SACO<span style="color:var(--p)">.pt</span></div>
-    <div id="st" class="badge" style="background:#e6f4ea; color:var(--s)">Pronto</div>
+    <div style="font-weight:900; font-size:22px;">SACO<span style="color:var(--p)">.pt</span></div>
+    <div id="st" class="badge" style="background:#fce8e6; color:var(--err)">Offline</div>
 </div>
 
 <div id="v-home" class="v active">
     <div class="card">
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
             <button class="btn btn-p" onclick="triggerInput('prod')"><span>📸</span> Produto</button>
-            <button class="btn btn-v" onclick="triggerInput('bill')"><span>🧾</span> Digitalizar Fatura</button>
+            <button class="btn btn-v" onclick="triggerInput('bill')"><span>🧾</span> Fatura</button>
         </div>
         <input type="file" id="f-in" style="display:none" accept="image/*">
         
         <div style="margin-top:20px;">
-            <label style="font-size:11px; font-weight:700; color:#666; margin-left:5px; display:block; margin-bottom:5px;">PESQUISAR ARTIGO</label>
-            <input type="text" id="q-in" placeholder="Ex: Cerveja Super Bock">
-            <input type="text" id="loc-in" placeholder="Localidade (Opcional)">
-            <button class="btn btn-s" id="btn-search" onclick="searchRealPrices()">🔍 Comparar Preços Hoje</button>
+            <label style="font-size:11px; font-weight:700; color:#666;">PESQUISA INTELIGENTE (Marca ou Genérico)</label>
+            <input type="text" id="q-in" placeholder="Ex: Arroz ou Arroz Cigala">
+            <input type="text" id="loc-in" placeholder="Cidade (ex: Braga)">
+            <button class="btn btn-s" id="btn-search" onclick="searchRealPrices()">🔍 Comparar Agora</button>
         </div>
     </div>
     <div id="out-home"></div>
@@ -73,8 +60,8 @@
 
 <div id="v-gen" class="v">
     <div class="card">
-        <h3 style="margin-bottom:15px">🔥 Folhetos e Promos</h3>
-        <button class="btn btn-warn" id="btn-promos" onclick="fetchPromos()"><span>✨</span> Ver Melhores Oportunidades</button>
+        <h3>🔥 Oportunidades</h3>
+        <button class="btn btn-warn" onclick="fetchPromos()">✨ Ver Destaques</button>
     </div>
     <div id="out-promos"></div>
 </div>
@@ -82,11 +69,11 @@
 <div id="v-history" class="v">
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:15px;">
         <div class="card" style="text-align:center; padding:15px; margin-bottom:0;">
-            <small style="color:#666; font-weight:600;">Gasto Mensal</small><br>
+            <small style="color:#666;">Gasto Mês</small><br>
             <span id="stat-month" style="font-size:22px; font-weight:900; color:var(--v)">0.00€</span>
         </div>
         <div class="card" style="text-align:center; padding:15px; margin-bottom:0;">
-            <small style="color:#666; font-weight:600;">Recibos</small><br>
+            <small style="color:#666;">Faturas</small><br>
             <span id="stat-count" style="font-size:22px; font-weight:900;">0</span>
         </div>
     </div>
@@ -95,39 +82,35 @@
 
 <div id="v-cart" class="v">
     <div class="card">
-        <h3 style="margin-bottom:10px">Lista de Compras</h3>
-        <textarea id="cart-txt" rows="10" placeholder="Escreve aqui o que precisas..." oninput="saveC()"></textarea>
-        <button class="btn btn-s" id="btn-cart" onclick="compareStoresDetailed()"><span>🚀</span> Onde poupo mais?</button>
+        <h3>🛒 Minha Lista</h3>
+        <textarea id="cart-txt" rows="8" placeholder="O que vais comprar?" oninput="saveC()"></textarea>
+        <button class="btn btn-s" onclick="compareStoresDetailed()">🚀 Onde poupo mais?</button>
     </div>
     <div id="out-cart"></div>
 </div>
 
 <div id="v-cfg" class="v">
     <div class="card">
-        <h3 style="margin-bottom:20px">Configuração</h3>
-        <label style="font-size:12px; font-weight:bold; color:#5f6368;">Chave API Google</label>
-        <input type="password" id="key-in" placeholder="Inserir Key" onchange="fetchModels()">
-        
-        <label style="font-size:12px; font-weight:bold; color:#5f6368;">Motor Ativo (Filtro Inteligente)</label>
+        <h3>Configuração</h3>
+        <label style="font-size:12px; font-weight:bold;">Google API Key</label>
+        <input type="password" id="key-in" placeholder="Inserir Chave" onchange="fetchModels()">
+        <label style="font-size:12px; font-weight:bold;">Motor</label>
         <select id="model-sel"></select>
-        <small style="color:#666; display:block; margin-top:-8px; margin-bottom:15px; font-size:11px;">Apenas motores com Visão e Pesquisa Google são mostrados.</small>
-        
-        <button class="btn btn-p" onclick="saveConfig()">💾 Guardar Config</button>
-        <button class="btn btn-err" onclick="clearAllData()" style="margin-top:25px; padding:10px; font-size:12px;">Reset de Dados</button>
+        <button class="btn btn-p" onclick="saveConfig()">💾 Guardar</button>
     </div>
 </div>
 
-<div id="modal" onclick="if(event.target==this) closeModal()">
+<div id="modal" onclick="closeModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
         <h3 id="m-title">Processando...</h3>
         <div id="modal-body" style="margin:20px 0"></div>
-        <div id="m-footer-val" class="card" style="background:#f1f3f4; border:none; display:none">
-            <label style="font-size:11px; font-weight:900;">TOTAL ESTIMADO (€)</label>
-            <input type="number" id="modal-total-val" step="0.01" style="font-size:24px; font-weight:bold;">
+        <div id="m-footer-val" class="card" style="background:#f8f9fa; display:none">
+            <label style="font-size:11px; font-weight:900;">TOTAL (€)</label>
+            <input type="number" id="modal-total-val" step="0.01" style="font-size:24px; font-weight:900;">
         </div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:20px">
-            <button class="btn btn-s" id="btn-save-m" onclick="saveEditedBill()">Confirmar</button>
-            <button class="btn" style="background:#dadce0; color:#3c4043" onclick="closeModal()">Sair</button>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <button class="btn btn-s" onclick="saveEditedBill()">Confirmar</button>
+            <button class="btn" style="background:#eee; color:#333" onclick="closeModal()">Sair</button>
         </div>
     </div>
 </div>
@@ -145,35 +128,34 @@ let currentMode = 'bill';
 
 function boot() {
     const k = localStorage.getItem('s_k'), c = localStorage.getItem('s_c');
-    if(k) { 
-        document.getElementById('key-in').value = k; 
-        fetchModels(); 
-    } else { 
-        updateStatus("Sem Chave", "red"); 
-        document.getElementById('model-sel').innerHTML = '<option value="gemini-1.5-flash">1.5 Flash (Default)</option>'; 
-    }
+    if(k) { document.getElementById('key-in').value = k; fetchModels(); }
     if(c) document.getElementById('cart-txt').value = c;
     renderHistory();
     document.getElementById('f-in').addEventListener('change', handleMedia);
 }
 
-function triggerInput(mode) {
-    currentMode = mode;
-    document.getElementById('f-in').click();
+function tab(id, btn) {
+    document.querySelectorAll('.v').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-i').forEach(n => n.classList.remove('active'));
+    document.getElementById('v-' + id).classList.add('active');
+    btn.classList.add('active');
 }
 
-async function handleMedia(e) {
-    if(!e.target.files[0]) return;
+function triggerInput(mode) { currentMode = mode; document.getElementById('f-in').click(); }
+
+function handleMedia(e) {
+    const file = e.target.files[0];
+    if(!file) return;
     const reader = new FileReader();
-    reader.onload = async (ev) => {
+    reader.onload = (ev) => {
         const b64 = ev.target.result.split(',')[1];
         if(currentMode === 'bill') processBill(b64);
         else processProduct(b64);
+        e.target.value = '';
     };
-    reader.readAsDataURL(e.target.files[0]);
+    reader.readAsDataURL(file);
 }
 
-// Filtro inteligente para mostrar apenas modelos capazes de correr esta APP
 async function fetchModels() {
     const k = document.getElementById('key-in').value;
     const sel = document.getElementById('model-sel');
@@ -184,100 +166,39 @@ async function fetchModels() {
         if(d.models) {
             sel.innerHTML = "";
             const saved = localStorage.getItem('s_m');
-            
-            // FILTRO: Apenas modelos Pro ou Flash que não sejam embedding/técnicos
-            // E que sejam versões 1.5 ou superiores para garantir suporte a imagem/pesquisa
-            const validModels = d.models.filter(m => {
-                const name = m.name.toLowerCase();
-                const isFlashOrPro = name.includes('flash') || name.includes('pro');
-                const isModern = name.includes('1.5') || name.includes('2.0') || name.includes('2.5');
-                const isNotTool = !name.includes('embedding') && !name.includes('aqa') && !name.includes('vision-preview');
-                
-                return isFlashOrPro && isModern && isNotTool;
-            });
-
-            validModels.forEach(m => {
+            d.models.filter(m => m.name.includes('1.5') || m.name.includes('2.0')).forEach(m => {
                 const name = m.name.split('/').pop();
                 let opt = document.createElement('option');
-                opt.value = name;
-                // Formatação bonita para o utilizador
-                let label = name.replace('gemini-', '').toUpperCase();
-                if(label.includes('FLASH')) label += " (Rápido)";
-                if(label.includes('PRO')) label += " (Inteligente)";
-                
-                opt.text = label;
+                opt.value = name; opt.text = name.replace('gemini-', '').toUpperCase();
                 if(name === saved || (!saved && name === 'gemini-1.5-flash')) opt.selected = true;
                 sel.appendChild(opt);
             });
-            
-            if(sel.options.length === 0) {
-                sel.innerHTML = '<option value="gemini-1.5-flash">Gemini 1.5 Flash (Recomendado)</option>';
-            }
-            
             updateStatus("Ligado", "green");
         }
     } catch(e) { updateStatus("Erro Key", "red"); }
 }
 
-function tab(id, btn) {
-    document.querySelectorAll('.v').forEach(v => v.classList.remove('active'));
-    document.querySelectorAll('.nav-i').forEach(n => n.classList.remove('active'));
-    document.getElementById('v-' + id).classList.add('active');
-    btn.classList.add('active');
-    window.scrollTo(0,0);
-}
-
 async function callAI(prompt, search = false, image = null) {
     const k = localStorage.getItem('s_k'), m = localStorage.getItem('s_m') || 'gemini-1.5-flash';
-    if(!k) { 
-        updateStatus("Sem Chave", "red");
-        alert("Configura a API Key em 'Config'"); 
-        return null; 
-    }
-    
+    if(!k) return null;
     updateStatus("IA...", "orange");
-    const payload = { contents: [{ parts: [{ text: prompt }] }] };
-    
-    if(image) {
-        payload.contents[0].parts.unshift({ 
-            inline_data: { mime_type: "image/jpeg", data: image } 
-        });
-    }
-    
-    if(search) {
-        payload.tools = [{ google_search: {} }];
-    }
-
-    let delay = 1000;
-    for (let i = 0; i < 5; i++) {
-        try {
-            const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${k}`, {
-                method: 'POST', body: JSON.stringify(payload)
-            });
-            const d = await r.json();
-            if(d.error) throw new Error(d.error.message);
-            
-            updateStatus("Ligado", "green");
-            return d.candidates[0].content.parts[0].text;
-        } catch(e) {
-            if(i === 4) { updateStatus("Erro IA", "red"); return null; }
-            await new Promise(r => setTimeout(r, delay));
-            delay *= 2;
-        }
-    }
+    const payload = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.1 } };
+    if(image) payload.contents[0].parts.unshift({ inline_data: { mime_type: "image/jpeg", data: image } });
+    if(search) payload.tools = [{ google_search: {} }];
+    try {
+        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${k}`, { method: 'POST', body: JSON.stringify(payload) });
+        const d = await r.json();
+        updateStatus("Ligado", "green");
+        return d.candidates[0].content.parts[0].text;
+    } catch(e) { updateStatus("Erro IA", "red"); return null; }
 }
 
-function cleanJSON(txt) {
-    if(!txt) return null;
+function parseJSON(txt) {
     try {
-        let s = txt.replace(/```json|```/g, "").trim();
-        const start = Math.min(
-            s.indexOf('[') === -1 ? Infinity : s.indexOf('['),
-            s.indexOf('{') === -1 ? Infinity : s.indexOf('{')
-        );
-        const end = Math.max(s.lastIndexOf(']'), s.lastIndexOf('}'));
-        if(start === Infinity || end === -1) return null;
-        return JSON.parse(s.substring(start, end + 1));
+        let clean = txt.replace(/```json|```/gi, "").trim();
+        const start = Math.min(clean.indexOf('{') === -1 ? Infinity : clean.indexOf('{'), clean.indexOf('[') === -1 ? Infinity : clean.indexOf('['));
+        const end = Math.max(clean.lastIndexOf('}'), clean.lastIndexOf(']'));
+        return JSON.parse(clean.substring(start, end + 1));
     } catch(e) { return null; }
 }
 
@@ -285,106 +206,79 @@ async function searchRealPrices() {
     const q = document.getElementById('q-in').value;
     const loc = document.getElementById('loc-in').value || "Portugal";
     const out = document.getElementById('out-home');
-    const btn = document.getElementById('btn-search');
-    
     if(!q) return;
-    btn.disabled = true;
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="loading-spin"></div>Procurando preços reais...</div>';
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="loading-spin"></div>A pesquisar mercado...</div>';
     
-    const res = await callAI(`Preço atual de "${q}" em Portugal (${loc}) no Continente, Pingo Doce, Lidl, Auchan. JSON: [{"loja":"Nome","preco":0.00,"produto":"Nome"}]`, true);
-    const data = cleanJSON(res);
+    // Prompt Inteligente: Se for genérico, a IA escolhe os melhores SKUs.
+    const prompt = `Utiliza o Google Search para encontrar o preço atual de "${q}" em lojas online em Portugal (ex: Continente, Pingo Doce, Auchan). 
+    Se o termo for genérico, procura os produtos de marca própria e as marcas líderes para comparar. 
+    Responde apenas JSON: [{"loja":"Nome","preco":0.00,"produto":"Nome e Quantidade"}]`;
     
-    btn.disabled = false;
-    if(data && Array.isArray(data)) {
-        out.innerHTML = `<div class="card">${data.map(i => `
-            <div class="res-row">
-                <span><b>${i.loja}</b><br><small style="color:#666">${i.produto}</small></span>
-                <b style="color:var(--p); font-size:18px;">${Number(i.preco).toFixed(2)}€</b>
-            </div>`).join('')}</div>`;
-    } else { out.innerHTML = '<div class="card">Sem resultados. Tenta ser mais específico.</div>'; }
+    const res = await callAI(prompt, true);
+    const data = parseJSON(res);
+    if(data) {
+        out.innerHTML = `<div class="card">${data.map(i => `<div class="res-row"><div><b>${i.loja}</b><br><small>${i.produto}</small></div><b>${Number(i.preco).toFixed(2)}€</b></div>`).join('')}</div>`;
+    } else out.innerHTML = '<div class="card">Tenta ser mais específico no nome do produto.</div>';
 }
 
 async function processBill(b64) {
-    document.getElementById('m-title').innerText = "Digitalizando Fatura...";
+    document.getElementById('m-title').innerText = "A ler fatura...";
     document.getElementById('modal-body').innerHTML = '<div class="loading-spin"></div>';
-    document.getElementById('m-footer-val').style.display = 'none';
     document.getElementById('modal').style.display = 'block';
-
-    const res = await callAI("Extrai itens e valor total desta fatura. JSON: {\"itens\":[\"Desc\"], \"total\": 0.00}", false, b64);
-    const data = cleanJSON(res);
-    
+    const res = await callAI("Extrai itens e TOTAL desta fatura. JSON: {\"itens\":[\"Desc\"], \"total\": 0.00}", false, b64);
+    const data = parseJSON(res);
     if(data) {
-        document.getElementById('m-title').innerText = "Validar Dados";
+        document.getElementById('m-title').innerText = "Validar";
         document.getElementById('modal-total-val').value = data.total;
-        document.getElementById('modal-body').innerHTML = (data.itens || []).map(it => `<input type="text" class="bill-it" value="${it}" style="margin-bottom:5px; padding:10px;">`).join('');
+        document.getElementById('modal-body').innerHTML = (data.itens || []).map(it => `<input type="text" class="bill-it" value="${it}" style="margin-bottom:8px;">`).join('');
         document.getElementById('m-footer-val').style.display = 'block';
-    } else { document.getElementById('modal-body').innerHTML = "Erro ao ler a fatura. Tenta uma foto com mais luz."; }
+    } else closeModal();
 }
 
 async function processProduct(b64) {
-    const res = await callAI("Que produto é este? Diz só marca e nome curto.", false, b64);
+    const res = await callAI("Que produto é este? Nome e marca.", false, b64);
     if(res) { document.getElementById('q-in').value = res.trim(); searchRealPrices(); }
 }
 
 function saveEditedBill() {
     const itens = Array.from(document.querySelectorAll('.bill-it')).map(i => i.value);
     const total = parseFloat(document.getElementById('modal-total-val').value || 0);
-    let hist = JSON.parse(localStorage.getItem('s_h') || '[]');
-    hist.unshift({ id: Date.now(), total, itens, date: new Date().toLocaleDateString('pt-PT') });
-    localStorage.setItem('s_h', JSON.stringify(hist));
+    let h = JSON.parse(localStorage.getItem('s_h') || '[]');
+    h.unshift({ id: Date.now(), total, itens, date: new Date().toLocaleDateString('pt-PT') });
+    localStorage.setItem('s_h', JSON.stringify(h));
     renderHistory(); closeModal(); tab('history', document.querySelectorAll('.nav-i')[2]);
+}
+
+function renderHistory() {
+    const h = JSON.parse(localStorage.getItem('s_h') || '[]');
+    let t = 0; h.forEach(i => t += (parseFloat(i.total) || 0));
+    document.getElementById('stat-month').innerText = t.toFixed(2) + "€";
+    document.getElementById('stat-count').innerText = h.length;
+    document.getElementById('out-history').innerHTML = h.map(i => `<div class="card"><div style="display:flex; justify-content:space-between"><b>${i.date}</b> <b>${parseFloat(i.total).toFixed(2)}€</b></div></div>`).join('');
 }
 
 async function fetchPromos() {
     const out = document.getElementById('out-promos');
-    const btn = document.getElementById('btn-promos');
-    btn.disabled = true;
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="loading-spin"></div>Lendo folhetos online...</div>';
-    const res = await callAI(`Top 5 promoções hoje em Portugal (Continente, Lidl). JSON: [{"super":"Nome","titulo":"Oferta"}]`, true);
-    const data = cleanJSON(res);
-    btn.disabled = false;
+    out.innerHTML = '<div class="loading-spin"></div>';
+    const res = await callAI(`Top 5 promoções hoje em supermercados de Portugal. JSON: [{"super":"Nome","titulo":"Oferta"}]`, true);
+    const data = parseJSON(res);
     if(data) out.innerHTML = data.map(i => `<div class="card"><b>${i.super}</b><p>${i.titulo}</p></div>`).join('');
 }
 
 async function compareStoresDetailed() {
     const txt = document.getElementById('cart-txt').value;
     const out = document.getElementById('out-cart');
-    const btn = document.getElementById('btn-cart');
     if(!txt) return;
-    btn.disabled = true;
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="loading-spin"></div>Calculando poupança...</div>';
+    out.innerHTML = '<div class="loading-spin"></div>';
     const res = await callAI(`Simula custo total de "${txt}" no Continente vs Pingo Doce. JSON: [{"loja":"Nome","total":0.00}]`, true);
-    const data = cleanJSON(res);
-    btn.disabled = false;
-    if(data) out.innerHTML = data.map(i => `<div class="card" style="display:flex; justify-content:space-between"><b>${i.loja}</b><span style="color:var(--s); font-weight:900;">${Number(i.total).toFixed(2)}€</span></div>`).join('');
+    const data = parseJSON(res);
+    if(data) out.innerHTML = data.map(i => `<div class="card" style="display:flex; justify-content:space-between"><b>${i.loja}</b><b>${Number(i.total).toFixed(2)}€</b></div>`).join('');
 }
 
-function renderHistory() {
-    const hist = JSON.parse(localStorage.getItem('s_h') || '[]');
-    let t = 0; hist.forEach(h => t += (parseFloat(h.total) || 0));
-    document.getElementById('stat-month').innerText = t.toFixed(2) + "€";
-    document.getElementById('stat-count').innerText = hist.length;
-    document.getElementById('out-history').innerHTML = hist.map(h => `
-        <div class="card" style="border-left: 5px solid var(--v);">
-            <div style="display:flex; justify-content:space-between"><b>${h.date}</b> <b style="color:var(--v)">${parseFloat(h.total).toFixed(2)}€</b></div>
-            <div style="font-size:12px; color:#666; margin-top:10px;">${(h.itens || []).slice(0,3).join(', ')}...</div>
-        </div>`).join('');
-}
-
-function closeModal() { document.getElementById('modal').style.display = 'none'; }
+function updateStatus(m, c) { const e = document.getElementById('st'); e.innerText = m; e.style.color = c; e.style.background = c === 'red' ? '#fce8e6' : '#e6f4ea'; }
 function saveC() { localStorage.setItem('s_c', document.getElementById('cart-txt').value); }
-function saveConfig() { 
-    localStorage.setItem('s_k', document.getElementById('key-in').value); 
-    localStorage.setItem('s_m', document.getElementById('model-sel').value); 
-    fetchModels(); 
-    alert("Configuração Gravada!"); 
-}
-function updateStatus(m, c) { 
-    const e = document.getElementById('st'); 
-    e.innerText = m; e.style.color = c; 
-    e.style.background = c === 'red' ? '#fce8e6' : (c === 'orange' ? '#fff4e5' : '#e6f4ea'); 
-}
-function clearAllData() { if(confirm("Apagar tudo?")) { localStorage.clear(); location.reload(); } }
+function closeModal() { document.getElementById('modal').style.display = 'none'; }
+function saveConfig() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); fetchModels(); alert("OK!"); }
 </script>
 </body>
 </html>
