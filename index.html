@@ -262,31 +262,70 @@ async function analyzeCartList() {
     const out = document.getElementById('out-cart');
     const btn = document.getElementById('btn-comp-list');
     btn.innerHTML = '<div class="loading-spin"></div> Calculando...'; btn.disabled = true;
+    out.innerHTML = '';
 
-    const prompt = `Analisa esta lista de supermercado em Portugal: "${list}". 
-    Pesquisa e soma o total estimado nos 3 maiores supermercados (Continente, Pingo Doce, Auchan).
-    Retorna APENAS JSON sem mais nada: {"comparativo":[{"loja":"Nome","total":0.00,"itens_em_falta":0}],"vencedor":"Nome","obs":"resumo rápido"}`;
+    const items = list.split('\n').map(l => l.trim()).filter(Boolean);
+    const itemList = items.map((it, i) => (i+1) + '. ' + it).join('\n');
+
+    const prompt = 'Tens uma lista de compras portuguesa:\n' + itemList + '\n\n'
+        + 'Pesquisa os precos atuais de cada item nos supermercados: Continente, Pingo Doce, Lidl, Auchan.\n'
+        + 'Soma o total de cada loja. Indica quantos itens nao encontraste em cada loja.\n'
+        + 'Responde APENAS com JSON valido, sem texto antes ou depois, sem markdown:\n'
+        + '{"comparativo":[{"loja":"Continente","total":0.00,"itens_em_falta":0},{"loja":"Pingo Doce","total":0.00,"itens_em_falta":0},{"loja":"Lidl","total":0.00,"itens_em_falta":0},{"loja":"Auchan","total":0.00,"itens_em_falta":0}],"vencedor":"Nome da loja mais barata","poupanca":0.00,"obs":"resumo em 1 frase"}';
 
     const res = await callAI(prompt, null, true);
     btn.innerHTML = '🚀 Onde é mais barato?'; btn.disabled = false;
 
-    if (res) {
-        try {
-            const data = JSON.parse(res.replace(/```json|```/gi, "").trim());
-            const sorted = data.comparativo.sort((a, b) => a.total - b.total);
-            out.innerHTML = `<div class="card">
-                <h4 style="margin-bottom:8px;">🏆 Melhor: ${data.vencedor}</h4>
-                <p style="font-size:12px; color:#666; margin-bottom:10px;">${data.obs}</p>` +
-                sorted.map(c => `
-                    <div class="comp-card ${c.loja === data.vencedor ? 'winner' : ''}">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <b>${c.loja}</b>
-                            <b style="color:var(--s)">${Number(c.total).toFixed(2)}€</b>
-                        </div>
-                        ${c.itens_em_falta > 0 ? `<small style="color:var(--warn);">⚠️ ${c.itens_em_falta} item(ns) não encontrado(s)</small>` : ''}
-                    </div>`).join('') +
-                `</div>`;
-        } catch (e) { out.innerHTML = `<div class="card" style="color:var(--err);">Erro ao processar cabaz. Tenta itens mais genéricos.</div>`; }
+    if (!res) {
+        out.innerHTML = '<div class="card" style="color:var(--err);">❌ Sem resposta da API. Verifica a chave em Config.</div>';
+        return;
+    }
+
+    try {
+        // Extract JSON even if surrounded by extra text
+        const jsonMatch = res.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('No JSON found in response');
+        const data = JSON.parse(jsonMatch[0]);
+
+        if (!data.comparativo || !Array.isArray(data.comparativo)) throw new Error('Missing comparativo array');
+
+        // Filter only lojas with valid totals > 0
+        const valid = data.comparativo.filter(c => c.total && Number(c.total) > 0);
+        if (!valid.length) throw new Error('All totals are zero or missing');
+
+        const sorted = valid.sort((a, b) => a.total - b.total);
+        const best = sorted[0];
+        const worst = sorted[sorted.length - 1];
+        const savings = (worst.total - best.total).toFixed(2);
+
+        let html = '<div class="card">';
+        html += '<h4 style="margin-bottom:4px;">🏆 Mais barato: ' + best.loja + '</h4>';
+        html += '<p style="font-size:12px; color:#666; margin-bottom:12px;">' + (data.obs || '') + '</p>';
+        if (parseFloat(savings) > 0) {
+            html += '<div style="background:#f1f8f3; border-radius:10px; padding:10px; margin-bottom:12px; font-size:13px; color:var(--s); font-weight:700;">💰 Poupas até ' + savings + '€ vs loja mais cara</div>';
+        }
+        sorted.forEach(function(c, idx) {
+            const isWinner = idx === 0;
+            html += '<div class="comp-card ' + (isWinner ? 'winner' : '') + '">';
+            html += '<div style="display:flex; justify-content:space-between; align-items:center;">';
+            html += '<b>' + (isWinner ? '🏆 ' : '') + c.loja + '</b>';
+            html += '<b style="color:' + (isWinner ? 'var(--s)' : 'var(--txt)') + '; font-size:16px;">' + Number(c.total).toFixed(2) + '€</b>';
+            html += '</div>';
+            if (c.itens_em_falta > 0) {
+                html += '<small style="color:var(--warn);">⚠️ ' + c.itens_em_falta + ' item(ns) não encontrado(s)</small>';
+            } else {
+                html += '<small style="color:#aaa;">✅ Lista completa</small>';
+            }
+            html += '</div>';
+        });
+        html += '<div style="font-size:11px; color:#aaa; margin-top:12px; text-align:center;">' + items.length + ' artigo(s) · ' + sorted.length + ' loja(s) comparadas</div>';
+        html += '</div>';
+        out.innerHTML = html;
+
+    } catch (e) {
+        console.error('Cart parse error:', e, 'Raw:', res);
+        out.innerHTML = '<div class="card"><p style="color:var(--err); margin-bottom:10px;">❌ Erro ao processar. Resposta recebida:</p>'
+            + '<pre style="font-size:10px; background:#f5f5f5; padding:10px; border-radius:8px; overflow:auto; white-space:pre-wrap;">' + res.substring(0, 600) + '</pre></div>';
     }
 }
 
