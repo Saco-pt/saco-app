@@ -3,119 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V40.0 - Full Grounding</title>
+    <title>SACO.pt | V44.0 FINAL</title>
     <style>
-        :root { --p: #1a73e8; --s: #1e8e3e; --bg: #f8f9fa; --txt: #202124; }
+        :root { --p: #1a73e8; --s: #1e8e3e; --bg: #f8f9fa; --txt: #202124; --err: #d93025; --v: #673ab7; --warn: #fb8c00; }
         * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; }
         body { background: var(--bg); color: var(--txt); padding-bottom: 90px; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+        
+        /* Layout */
         .header { background: #fff; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
         .v { display: none; padding: 15px; max-width: 500px; margin: 0 auto; }
-        .v.active { display: block; animation: fadeIn 0.3s; }
+        .v.active { display: block; animation: fadeIn 0.2s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        /* UI Elements */
         .card { background: #fff; border-radius: 16px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 12px; border: 1px solid #eee; }
         .btn { border: none; border-radius: 12px; padding: 14px; font-weight: bold; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; transition: 0.2s; color: white; }
         .btn-p { background: var(--p); }
         .btn-s { background: var(--s); }
-        .btn:active { transform: scale(0.98); }
+        .btn-v { background: var(--v); }
+        .btn-wa { background: #25d366; }
+        .btn-outline { background: transparent; color: var(--p); border: 1px solid var(--p); }
+        
         textarea, input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; margin-bottom: 8px; outline: none; background: white; }
-        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; height: 75px; border-top: 1px solid #eee; z-index: 1000; }
+        
+        /* Navigation */
+        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; height: 75px; border-top: 1px solid #eee; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
         .nav-i { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: #5f6368; cursor: pointer; }
         .nav-i.active { color: var(--p); font-weight: bold; }
+        
+        /* Specialized UI */
         .badge { font-size: 10px; padding: 3px 10px; border-radius: 20px; font-weight: bold; background: #eee; }
-        .price-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f1f1; }
-        .price-item:last-child { border: none; }
-        .spin { width: 22px; height: 22px; border: 3px solid #eee; border-top: 3px solid var(--p); border-radius: 50%; animation: rot 1s linear infinite; margin: 10px auto; }
+        .price-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f8f8f8; }
+        .price-row:last-child { border: none; }
+        .stat-val { font-size: 22px; font-weight: 900; color: var(--v); }
+        .spin { width: 20px; height: 20px; border: 3px solid #eee; border-top: 3px solid var(--p); border-radius: 50%; animation: rot 1s linear infinite; }
         @keyframes rot { 100% { transform: rotate(360deg); } }
+        
+        /* Alerts */
+        .alert-box { background: #fff3e0; color: #e65100; padding: 10px; border-radius: 10px; font-size: 12px; margin-bottom: 10px; display: none; border-left: 4px solid var(--warn); }
     </style>
 </head>
 <body onload="boot()">
 
 <div class="header">
-    <div style="font-weight:900; font-size:20px;">SACO<span style="color:var(--p)">.pt</span></div>
-    <div id="st" class="badge">V40.0</div>
+    <div style="font-weight:900; font-size:20px; letter-spacing:-1px;">SACO<span style="color:var(--p)">.pt</span></div>
+    <div id="st" class="badge">V44.0 FINAL</div>
 </div>
 
-<!-- BUSCA -->
+<!-- BUSCA & SCANNER -->
 <div id="v-home" class="v active">
+    <div id="quota-msg" class="alert-box">⚠️ Limite de pedidos atingido. Aguarde um momento.</div>
+    
     <div class="card">
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:12px;">
-            <button class="btn btn-p" onclick="openCam('prod')">📸 Scanner</button>
-            <button class="btn btn-p" style="background:#673ab7" onclick="openCam('bill')">🧾 Fatura</button>
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-bottom:12px;">
+            <button class="btn btn-p" onclick="openCam('prod')">📸 Produto</button>
+            <button class="btn btn-v" onclick="openCam('bill')">🧾 Fatura</button>
+            <button class="btn btn-s" style="background:var(--warn)" onclick="openCam('tag')">🏷️ Etiqueta</button>
         </div>
         <input type="file" id="f-in" style="display:none" accept="image/*" capture="environment" onchange="handleImage(this)">
-        <input type="text" id="q-in" placeholder="Ex: Arroz Agulha 1kg">
-        <button class="btn btn-s" onclick="searchRealPrices()">🔍 Comparar Hoje</button>
+        
+        <input type="text" id="q-in" placeholder="Detergente, Arroz, etc...">
+        <div style="display:flex; gap:5px;">
+            <input type="text" id="loc-in" placeholder="Sua Cidade (ex: Porto)" style="width:140px; font-size:12px;">
+            <button class="btn btn-s" onclick="searchRealPrices()">🔍 Comparar Agora</button>
+        </div>
     </div>
     <div id="out-home"></div>
 </div>
 
-<!-- GERADOR -->
-<div id="v-gen" class="v">
-    <div class="card">
-        <h3>🪄 Gerador Inteligente</h3>
-        <select id="gen-qty" onchange="localStorage.setItem('s_q', this.value)">
-            <option value="1">1 Pessoa</option>
-            <option value="2" selected>2 Pessoas</option>
-            <option value="3">3 Pessoas</option>
-            <option value="4">4 Pessoas</option>
-        </select>
-        <button class="btn btn-p" onclick="generateBase()">Gerar Lista 54 Itens</button>
+<!-- ARQUIVO DE GASTOS -->
+<div id="v-history" class="v">
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+        <div class="card" style="margin-bottom:0; text-align:center">
+            <small>Total Mensal</small><br>
+            <span id="stat-month" class="stat-val">0.00€</span>
+        </div>
+        <div class="card" style="margin-bottom:0; text-align:center">
+            <small>Recibos</small><br>
+            <span id="stat-count" class="stat-val" style="color:var(--txt)">0</span>
+        </div>
     </div>
-    <div id="out-gen"></div>
+    <div id="out-history"></div>
 </div>
 
-<!-- CARRINHO -->
+<!-- CARRINHO INTELIGENTE -->
 <div id="v-cart" class="v">
     <div class="card">
-        <textarea id="cart-txt" rows="10" placeholder="Lista de compras..." onchange="saveC()"></textarea>
+        <textarea id="cart-txt" rows="12" placeholder="Sua lista de compras..." onchange="saveC()"></textarea>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-            <button class="btn btn-s" onclick="compareStoresWithGrounding()">🚀 Melhor Loja LIVE</button>
-            <button class="btn btn-p" style="background:#fb8c00" onclick="copyList()">📲 Copiar</button>
+            <button class="btn btn-s" onclick="compareStoresWithGrounding()">🚀 Melhor Loja HOJE</button>
+            <button class="btn btn-wa" onclick="shareWA()">🟢 WhatsApp</button>
         </div>
+        <button class="btn btn-outline" style="margin-top:10px;" onclick="copyList()">📋 Copiar Texto</button>
     </div>
     <div id="out-cart"></div>
 </div>
 
-<!-- CONFIG -->
+<!-- DEFINIÇÕES -->
 <div id="v-cfg" class="v">
     <div class="card">
-        <h3>⚙️ Setup</h3>
-        <input type="password" id="key-in" placeholder="Google API Key">
+        <h3>Configuração</h3>
+        <p style="font-size:12px; color:#666; margin-bottom:10px;">A sua API Key e os seus dados nunca saem deste telemóvel.</p>
+        <input type="password" id="key-in" placeholder="Google Gemini API Key">
         <select id="model-sel"></select>
-        <button class="btn btn-p" onclick="loadModels()">🔄 Carregar Modelos</button>
+        <button class="btn btn-p" onclick="loadModels()">🔄 Validar Conexão</button>
         <button class="btn btn-s" style="margin-top:10px" onclick="saveConfig()">💾 Guardar</button>
+        <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+        <button class="btn" style="background:var(--err)" onclick="clearAllData()">🗑️ Apagar Tudo</button>
     </div>
 </div>
 
 <nav class="nav">
     <div class="nav-i active" onclick="tab('home',this)"><span>🔎</span>Busca</div>
-    <div class="nav-i" onclick="tab('gen',this)"><span>🪄</span>Gerar</div>
-    <div class="nav-i" onclick="tab('cart',this)"><span>🛒</span>Lista</div>
+    <div class="nav-i" onclick="tab('history',this)"><span>🧾</span>Arquivo</div>
+    <div class="nav-i" onclick="tab('cart',this)"><span>🛒</span>Carrinho</div>
     <div class="nav-i" onclick="tab('cfg',this)"><span>⚙️</span>Config</div>
 </nav>
 
 <script>
-let state = { items: [], camMode: "prod" };
+let state = { camMode: "prod" };
 
 function boot() {
-    const k = localStorage.getItem('s_k'), m = localStorage.getItem('s_m'), c = localStorage.getItem('s_c'), q = localStorage.getItem('s_q');
+    const k = localStorage.getItem('s_k'), m = localStorage.getItem('s_m'), 
+          c = localStorage.getItem('s_c'), l = localStorage.getItem('s_l');
     if(k) document.getElementById('key-in').value = k;
     if(c) document.getElementById('cart-txt').value = c;
-    if(q) document.getElementById('gen-qty').value = q;
+    if(l) document.getElementById('loc-in').value = l;
     if(k) loadModels(m);
+    renderHistory();
 }
 
-// CORREÇÃO: Extrator de JSON ultra-robusto
+// CORREÇÃO: Extrator de JSON melhorado para faturas e buscas
 function parseDeep(text) {
     try {
-        const match = text.match(/\[[\s\S]*\]/);
+        const match = text.match(/\[[\s\S]*\]|\{[\s\S]*\}/);
         return match ? JSON.parse(match[0]) : null;
     } catch(e) { return null; }
 }
 
 async function callAI(payload, search = false) {
     const k = localStorage.getItem('s_k'), m = localStorage.getItem('s_m');
-    if(!k || !m) { alert("Configura a Key!"); tab('cfg', document.querySelectorAll('.nav-i')[3]); return null; }
+    if(!k || !m) { alert("Configure a sua API Key nas Definições."); tab('cfg', document.querySelectorAll('.nav-i')[3]); return null; }
     
     if(search) payload.tools = [{ google_search: {} }];
 
@@ -124,83 +152,150 @@ async function callAI(payload, search = false) {
         const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${k}`, {
             method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
         });
+        
+        if(r.status === 429) {
+            document.getElementById('quota-msg').style.display = 'block';
+            setTimeout(() => document.getElementById('quota-msg').style.display = 'none', 10000);
+            throw new Error("Quota");
+        }
+
         const d = await r.json();
         updateStatus("OK", "green");
         return d.candidates[0].content.parts[0].text;
-    } catch(e) { updateStatus("Erro", "red"); return null; }
+    } catch(e) { 
+        updateStatus("Erro", "red"); 
+        return null; 
+    }
 }
 
 async function searchRealPrices() {
     const q = document.getElementById('q-in').value;
+    const loc = document.getElementById('loc-in').value;
     const out = document.getElementById('out-home');
     if(!q) return;
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div><br>Verificando prateleiras reais...</div>';
-    
-    const prompt = `Procura o preço REAL HOJE para "${q}" em: continente.pt, pingo-doce.pt, mercadona.pt, auchan.pt e lidl.pt. 
-    Responde APENAS JSON: [{"loja":"Nome","preco":0.00,"obs":"produto encontrado"}]`;
-    
-    const res = await callAI({ contents: [{ parts: [{ text: prompt }] }] }, true);
-    const data = parseDeep(res);
-    if(data) {
-        out.innerHTML = `<div class="card">${data.map(i => `<div class="price-item"><span><b>${i.loja}</b><br><small>${i.obs||''}</small></span><span style="color:var(--p); font-weight:bold">${Number(i.preco).toFixed(2)}€</span></div>`).join('')}</div>`;
-    } else { out.innerHTML = '<div class="card">Não consegui dados precisos agora.</div>'; }
-}
+    localStorage.setItem('s_l', loc);
 
-async function compareStoresWithGrounding() {
-    const txt = document.getElementById('cart-txt').value;
-    const out = document.getElementById('out-cart');
-    if(!txt) return;
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div><br>A pesquisar folhetos e sites oficiais...</div>';
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin" style="margin:0 auto 10px;"></div>Comparando preços reais...</div>';
     
-    const prompt = `Analisa esta lista: "${txt}". Pesquisa os preços reais em Portugal para estas lojas: Continente, Pingo Doce, Mercadona, Lidl, Aldi. 
-    Responde APENAS JSON: [{"loja":"Nome","total":0.00,"justificacao":"Diz se há promoções hoje"}]`;
+    const prompt = `Preço REAL HOJE para "${q}" em Portugal, zona de ${loc || 'Portugal Continental'}. 
+    Verifica Continente, Pingo Doce, Mercadona, Lidl, Aldi e Auchan. 
+    Responde APENAS JSON: [{"loja":"Nome","preco":0.00,"obs":"produto e promoção"}]`;
     
     const res = await callAI({ contents: [{ parts: [{ text: prompt }] }] }, true);
     const data = parseDeep(res);
+    
     if(data) {
-        data.sort((a,b) => a.total - b.total);
-        out.innerHTML = `<div class="card" style="border:2px solid var(--s); background:#f1f8e9">🏆 Melhor Loja: <b>${data[0].loja}</b><br><span style="font-size:24px; font-weight:900">${data[0].total.toFixed(2)}€</span><br><small>${data[0].justificacao}</small></div>` + 
-        data.slice(1).map(i => `<div class="card" style="display:flex; justify-content:space-between"><b>${i.loja}</b><span>${i.total.toFixed(2)}€</span></div>`).join('');
+        out.innerHTML = `<div class="card">${data.map(i => `
+            <div class="price-row">
+                <span><b>${i.loja}</b><br><small style="color:#666">${i.obs||''}</small></span>
+                <span style="color:var(--p); font-weight:bold">${Number(i.preco).toFixed(2)}€</span>
+            </div>`).join('')}</div>`;
+    } else {
+        out.innerHTML = '<div class="card">Não foi possível obter dados. Tente especificar a marca.</div>';
     }
 }
-
-async function generateBase() {
-    const qty = document.getElementById('gen-qty').value;
-    const out = document.getElementById('out-gen');
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin"></div></div>';
-    const res = await callAI({ contents: [{ parts: [{ text: `Gera lista mensal de compras para ${qty} pessoas com os 54 itens essenciais em Portugal. Responde uma linha por item: Item (Quantidade).` }] }] });
-    if(res) {
-        const items = res.replace(/[*#-]/g, "").split('\n').filter(l => l.trim().length > 3);
-        out.innerHTML = `<div class="card"><div style="max-height:250px; overflow-y:auto;">${items.map(i => `<div style="padding:8px; border-bottom:1px solid #eee">${i}</div>`).join('')}</div><button class="btn btn-s" style="margin-top:10px" onclick="useList('${res.replace(/\n/g, "\\n")}')">📥 Adicionar ao Carrinho</button></div>`;
-    }
-}
-
-function useList(val) { document.getElementById('cart-txt').value = val.replace(/\\n/g, '\n'); saveC(); tab('cart', document.querySelectorAll('.nav-i')[2]); }
-
-function openCam(m) { state.camMode = m; document.getElementById('f-in').click(); }
 
 async function handleImage(inp) {
     if(!inp.files[0]) return;
-    updateStatus("A ler imagem...", "orange");
+    updateStatus("A ler...", "orange");
     const reader = new FileReader();
     reader.onload = (e) => {
         const img = new Image();
         img.onload = async () => {
-            const cv = document.createElement('canvas'); const s = 1024/img.width;
-            cv.width = 1024; cv.height = img.height*s;
-            cv.getContext('2d').drawImage(img, 0,0,1024,cv.height);
+            const cv = document.createElement('canvas'); 
+            const max = 1024;
+            let w = img.width, h = img.height;
+            if (w > h) { if (w > max) { h *= max/w; w = max; } } else { if (h > max) { w *= max/h; h = max; } }
+            cv.width = w; cv.height = h;
+            cv.getContext('2d').drawImage(img, 0,0,w,h);
             const b64 = cv.toDataURL('image/jpeg', 0.8).split(',')[1];
-            const p = state.camMode === 'prod' ? "Identifica este produto. Responde só: Marca + Nome." : "Extrai a lista de produtos desta fatura.";
+            
+            let p = "";
+            if(state.camMode === 'prod') p = "Identifica este produto. Responde apenas: Marca + Nome + Peso.";
+            if(state.camMode === 'bill') p = "Lê esta fatura. Extrai os produtos limpos e o TOTAL FINAL pago. Responde APENAS JSON: {\"itens\":[\"Item 1\", \"Item 2\"], \"total\": 0.00}";
+            if(state.camMode === 'tag') p = "Lê esta etiqueta de preço de prateleira. Diz o Nome do produto e o Preço/Kg ou Preço/Unidade.";
+
             const res = await callAI({ contents: [{ parts: [{ inline_data: { mime_type: "image/jpeg", data: b64 } }, { text: p }] }] });
+            
             if(res) {
-                if(state.camMode === 'prod') { document.getElementById('q-in').value = res.trim(); searchRealPrices(); }
-                else { document.getElementById('cart-txt').value += "\n" + res.trim(); saveC(); tab('cart', document.querySelectorAll('.nav-i')[2]); }
+                if(state.camMode === 'prod' || state.camMode === 'tag') {
+                    document.getElementById('q-in').value = res.trim();
+                    searchRealPrices();
+                } else if(state.camMode === 'bill') {
+                    const data = parseDeep(res);
+                    if(data && data.itens) {
+                        saveToHistory(data.itens.join(', '), data.total);
+                        document.getElementById('cart-txt').value += (document.getElementById('cart-txt').value ? "\n" : "") + data.itens.join('\n');
+                        saveC();
+                        tab('history', document.querySelectorAll('.nav-i')[1]);
+                    }
+                }
             }
         };
         img.src = e.target.result;
     };
     reader.readAsDataURL(inp.files[0]);
 }
+
+function saveToHistory(text, total) {
+    let hist = JSON.parse(localStorage.getItem('s_hist') || '[]');
+    hist.unshift({ id: Date.now(), date: new Date().toLocaleDateString('pt-PT'), content: text, total: parseFloat(total) || 0 });
+    localStorage.setItem('s_hist', JSON.stringify(hist));
+    renderHistory();
+}
+
+function renderHistory() {
+    const hist = JSON.parse(localStorage.getItem('s_hist') || '[]');
+    const out = document.getElementById('out-history');
+    let totalM = 0;
+    hist.forEach(h => totalM += h.total);
+    
+    document.getElementById('stat-month').innerText = totalM.toFixed(2) + "€";
+    document.getElementById('stat-count').innerText = hist.length;
+
+    if(hist.length === 0) { out.innerHTML = '<div class="card" style="text-align:center; color:#888">Sem faturas guardadas.</div>'; return; }
+    out.innerHTML = hist.map(h => `
+        <div class="card" style="border-left:4px solid var(--v)">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                <small style="font-weight:bold; color:var(--v)">${h.date}</small>
+                <b style="font-size:16px;">${h.total.toFixed(2)}€</b>
+            </div>
+            <div style="font-size:12px; color:#666; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${h.content}</div>
+        </div>
+    `).join('');
+}
+
+async function compareStoresWithGrounding() {
+    const txt = document.getElementById('cart-txt').value;
+    const out = document.getElementById('out-cart');
+    if(!txt) return;
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin" style="margin:0 auto 10px;"></div>Consultando stocks e folhetos...</div>';
+    
+    const prompt = `Analisa esta lista de compras: "${txt}". Estima o custo total para Portugal hoje nas lojas: Continente, Pingo Doce, Lidl e Mercadona. 
+    Leva em conta marcas brancas para o menor preço possível. Responde APENAS JSON: [{"loja":"Nome","total":0.00,"justificacao":"Dica de poupança"}]`;
+    
+    const res = await callAI({ contents: [{ parts: [{ text: prompt }] }] }, true);
+    const data = parseDeep(res);
+    if(data) {
+        data.sort((a,b) => a.total - b.total);
+        out.innerHTML = `<div class="card" style="border:2px solid var(--s); background:#f1f8e9">🏆 Melhor Opção: <b>${data[0].loja}</b><br><span style="font-size:26px; font-weight:900">${data[0].total.toFixed(2)}€</span><br><small>${data[0].justificacao}</small></div>` + 
+        data.slice(1).map(i => `<div class="card" style="display:flex; justify-content:space-between"><b>${i.loja}</b><span>${i.total.toFixed(2)}€</span></div>`).join('');
+    }
+}
+
+function shareWA() {
+    const txt = document.getElementById('cart-txt').value;
+    if(!txt) return;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent("🛒 *Minha Lista SACO.pt*:\n\n" + txt)}`, '_blank');
+}
+
+function openCam(m) { state.camMode = m; document.getElementById('f-in').click(); }
+function saveConfig() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); alert("Configurações guardadas!"); }
+function saveC() { localStorage.setItem('s_c', document.getElementById('cart-txt').value); }
+function clearAllData() { if(confirm("Apagar todos os dados e histórico?")) { localStorage.clear(); location.reload(); } }
+function updateStatus(m, c) { const e = document.getElementById('st'); e.innerHTML = m; e.style.color = {green:'#1e8e3e', orange:'#fb8c00', red:'#d93025'}[c]; }
+function tab(id, el) { document.querySelectorAll('.v').forEach(v => v.classList.remove('active')); document.querySelectorAll('.nav-i').forEach(n => n.classList.remove('active')); document.getElementById('v-'+id).classList.add('active'); el.classList.add('active'); }
+function copyList() { navigator.clipboard.writeText(document.getElementById('cart-txt').value).then(() => alert("Lista copiada!")); }
 
 async function loadModels(saved) {
     const k = document.getElementById('key-in').value;
@@ -217,15 +312,9 @@ async function loadModels(saved) {
             if(name === saved || name === 'gemini-2.0-flash') o.selected = true;
             sel.appendChild(o);
         });
-        updateStatus("API OK", "green");
-    } catch(e) { updateStatus("Key Inválida", "red"); }
+        updateStatus("Ligado", "green");
+    } catch(e) { updateStatus("Erro Key", "red"); }
 }
-
-function saveConfig() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); alert("Configuração guardada!"); }
-function saveC() { localStorage.setItem('s_c', document.getElementById('cart-txt').value); }
-function updateStatus(m, c) { const e = document.getElementById('st'); e.innerHTML = m; e.style.color = {green:'#1e8e3e', orange:'#fb8c00', red:'#d93025'}[c]; }
-function tab(id, el) { document.querySelectorAll('.v').forEach(v => v.classList.remove('active')); document.querySelectorAll('.nav-i').forEach(n => n.classList.remove('active')); document.getElementById('v-'+id).classList.add('active'); el.classList.add('active'); }
-function copyList() { navigator.clipboard.writeText(document.getElementById('cart-txt').value).then(() => alert("Lista copiada!")); }
 </script>
 </body>
 </html>
