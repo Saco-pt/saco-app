@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V60.0 - Comparador Ativo</title>
+    <title>SACO.pt | V61.0 - Correção de Fluxo</title>
     <style>
         :root { --p: #1a73e8; --s: #1e8e3e; --bg: #f8f9fa; --txt: #202124; --err: #d93025; --v: #673ab7; --warn: #f29900; --card: #ffffff; }
         * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -25,21 +25,21 @@
         .nav-i { flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #70757a; font-size: 11px; cursor: pointer; }
         .nav-i.active { color: var(--p); font-weight: 700; }
         .nav-i span { font-size: 22px; margin-bottom: 4px; }
-        .data-tag { display: inline-block; padding: 4px 8px; border-radius: 6px; background: #e8f0fe; font-size: 10px; margin: 2px; color: var(--p); font-weight: bold; }
         #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; backdrop-filter: blur(4px); }
         .modal-content { background: #fff; border-radius: 24px; padding: 20px; max-width: 450px; margin: 20px auto; width: 94%; max-height: 90vh; display: flex; flex-direction: column; }
         #modal-body { overflow-y: auto; flex-grow: 1; margin: 15px 0; }
-        .loading-spin { border: 3px solid #f3f3f3; border-top: 3px solid var(--p); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .comp-card { border-left: 4px solid var(--p); padding-left: 12px; margin-bottom: 15px; }
-        .winner { border-left: 4px solid var(--s); background: #f1f8f3; }
+        .loading-spin { border: 3px solid transparent; border-top: 3px solid #fff; border-radius: 50%; width: 16px; height: 16px; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .res-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .comp-card { border-left: 4px solid var(--p); padding-left: 12px; margin-top: 10px; background: #fcfcfc; padding: 10px; border-radius: 4px; }
+        .winner { border-left-color: var(--s); background: #f1f8f3; }
     </style>
 </head>
 <body onload="boot()">
 
 <div class="header">
     <div style="font-weight:900; font-size:22px;">SACO<span style="color:var(--p)">.pt</span></div>
-    <div id="st" style="font-size:10px; font-weight:bold; color: var(--s);">SISTEMA OK</div>
+    <div id="st" style="font-size:10px; font-weight:bold; color: var(--s);">SISTEMA LIGADO</div>
 </div>
 
 <!-- BUSCA -->
@@ -53,7 +53,7 @@
         <input type="file" id="f-in" style="display:none" accept="image/*">
     </div>
     <div class="card">
-        <input type="text" id="q-in" placeholder="Ex: Café, Atum...">
+        <input type="text" id="q-in" placeholder="Ex: Sal grosso 1kg...">
         <button class="btn btn-s" id="btn-search" onclick="searchRealPrices()">🔍 Analisar Mercado</button>
     </div>
     <div id="out-home"></div>
@@ -90,12 +90,12 @@
     <div id="out-history"></div>
 </div>
 
-<!-- LISTA (Onde corrigimos a análise) -->
+<!-- LISTA (Onde corrigimos o botão de análise) -->
 <div id="v-cart" class="v">
     <div class="card">
         <h3>🛒 Lista Inteligente</h3>
         <textarea id="cart-txt" rows="10" placeholder="Insere ou cola os teus itens aqui..." oninput="saveC()"></textarea>
-        <button class="btn btn-s" id="btn-comp-list" onclick="analyzeCartList()">🚀 Comparar Lojas e Somar</button>
+        <button class="btn btn-s" id="btn-comp-list" onclick="analyzeCartList()">🚀 Comparar e Calcular Total</button>
     </div>
     <div id="out-cart"></div>
 </div>
@@ -115,7 +115,7 @@
         <h3 id="m-title">Processando...</h3>
         <div id="modal-body"></div>
         <div id="m-footer-val" style="display:none">
-            <input type="number" id="modal-total-val" step="0.01" style="font-size:24px; font-weight:900; border:1px solid #eee; padding:10px; border-radius:10px; margin-top:10px;">
+            <input type="number" id="modal-total-val" step="0.01" style="font-size:24px; font-weight:900; border:1px solid #eee; padding:10px; border-radius:10px; margin-top:10px; width: 100%;">
             <button class="btn btn-s" onclick="saveEditedBill()" style="margin-top:15px;">Confirmar e Arquivar</button>
         </div>
     </div>
@@ -137,8 +137,6 @@ function boot() {
     if(k) { document.getElementById('key-in').value = k; fetchModels(); }
     document.getElementById('cart-txt').value = localStorage.getItem('s_c') || "";
     renderHistory();
-    renderDataTags();
-    document.getElementById('f-in').addEventListener('change', handleMedia);
 }
 
 function tab(id, btn) {
@@ -157,7 +155,6 @@ function handleMedia(e) {
     reader.onload = (ev) => {
         const b64 = ev.target.result.split(',')[1];
         if(currentMode === 'bill') processBill(b64);
-        else processFridgeData(b64);
         e.target.value = '';
     };
     reader.readAsDataURL(file);
@@ -179,21 +176,43 @@ async function callAI(prompt, b64 = null, grounding = false) {
     } catch(e) { return null; }
 }
 
+async function searchRealPrices() {
+    const q = document.getElementById('q-in').value;
+    if(!q) return;
+    const out = document.getElementById('out-home');
+    const btn = document.getElementById('btn-search');
+    btn.innerHTML = '<div class="loading-spin"></div> Procurando...';
+    btn.disabled = true;
+
+    const res = await callAI(`Preços atuais para "${q}" em Portugal (Continente, Pingo Doce, Auchan, Lidl). Formato JSON: [{"loja":"Nome", "preco":0.00}].`, null, true);
+    btn.innerHTML = '🔍 Analisar Mercado'; btn.disabled = false;
+    
+    if(res) {
+        try {
+            const clean = res.replace(/```json|```/gi, "").trim();
+            const data = JSON.parse(clean);
+            out.innerHTML = `<div class="card"><h4>Resultados para: ${q}</h4>` + 
+                data.map(i => `<div class="res-row"><span>${i.loja}</span><b style="color:var(--s)">${Number(i.preco).toFixed(2)}€</b></div>`).join('') + 
+                `</div>`;
+        } catch(e) { out.innerHTML = `<div class="card">Erro ao ler preços. Tenta novamente.</div>`; }
+    }
+}
+
 async function analyzeCartList() {
     const list = document.getElementById('cart-txt').value;
-    if(!list.trim()) return;
+    if(!list.trim()) { alert("A lista está vazia!"); return; }
     
     const out = document.getElementById('out-cart');
     const btn = document.getElementById('btn-comp-list');
-    btn.innerHTML = '<div class="loading-spin"></div> Analisando...';
+    btn.innerHTML = '<div class="loading-spin"></div> Calculando...';
     btn.disabled = true;
 
-    const prompt = `Analisa esta lista de compras em Portugal: "${list}". 
-    Pesquisa o preço total estimado nos supermercados Continente, Pingo Doce e Auchan.
-    Retorna APENAS um JSON: {"comparativo":[{"loja":"Nome", "total":0.00, "itens_faltantes":0}], "melhor_loja":"Nome", "analise":"resumo"}.`;
+    const prompt = `Analisa esta lista de compras: "${list}". 
+    Simula e pesquisa o valor TOTAL da cesta nos supermercados: Continente, Pingo Doce e Auchan em Portugal.
+    Retorna EXCLUSIVAMENTE este JSON: {"comparativo":[{"loja":"Nome", "total":0.00, "info":"status"}], "vencedor":"Nome", "obs":"resumo"}`;
 
     const res = await callAI(prompt, null, true);
-    btn.innerHTML = '🚀 Comparar Lojas e Somar';
+    btn.innerHTML = '🚀 Comparar e Calcular Total';
     btn.disabled = false;
 
     if(res) {
@@ -201,53 +220,38 @@ async function analyzeCartList() {
             const data = JSON.parse(res.replace(/```json|```/gi, "").trim());
             out.innerHTML = `
                 <div class="card">
-                    <h4>Resultado da Comparação</h4>
-                    <p style="font-size:12px; margin:10px 0;">${data.analise}</p>
+                    <h4>📊 Comparativo de Cabaz</h4>
+                    <p style="font-size:12px; margin:8px 0; color:#666;">${data.obs}</p>
                     ${data.comparativo.map(c => `
-                        <div class="comp-card ${c.loja === data.melhor_loja ? 'winner' : ''}">
+                        <div class="comp-card ${c.loja === data.vencedor ? 'winner' : ''}">
                             <div style="display:flex; justify-content:space-between">
-                                <b>${c.loja === data.melhor_loja ? '🏆 ' : ''}${c.loja}</b>
-                                <b style="color:var(--s)">${c.total.toFixed(2)}€</b>
+                                <b>${c.loja === data.vencedor ? '🏆 ' : ''}${c.loja}</b>
+                                <b style="color:var(--s)">${Number(c.total).toFixed(2)}€</b>
                             </div>
-                            <small>${c.itens_faltantes > 0 ? '⚠️ '+c.itens_faltantes+' itens não encontrados' : '✅ Lista completa'}</small>
+                            <small style="color:#888">${c.info}</small>
                         </div>
                     `).join('')}
-                    <div style="text-align:center; padding-top:10px; font-weight:bold; color:var(--p)">
-                        Poupança Estimada: ${Math.abs(data.comparativo[0].total - data.comparativo[1].total).toFixed(2)}€
-                    </div>
                 </div>
             `;
-        } catch(e) { out.innerHTML = `<div class="card">Erro ao processar dados. Tenta ser mais específico na lista.</div>`; }
-    }
-}
-
-async function searchRealPrices() {
-    const q = document.getElementById('q-in').value;
-    if(!q) return;
-    const out = document.getElementById('out-home');
-    const btn = document.getElementById('btn-search');
-    btn.innerHTML = '<div class="loading-spin"></div>';
-    btn.disabled = true;
-    const res = await callAI(`Preço atual de "${q}" em supermercados PT. JSON: [{"loja":"Nome", "preco":0.00}].`, null, true);
-    btn.innerHTML = '🔍 Analisar Mercado'; btn.disabled = false;
-    if(res) {
-        const data = JSON.parse(res.replace(/```json|```/gi, "").trim());
-        out.innerHTML = `<div class="card"><h4>Preços: ${q}</h4>` + data.map(i => `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee"><span>${i.loja}</span><b>${i.preco.toFixed(2)}€</b></div>`).join('') + `</div>`;
+        } catch(e) { out.innerHTML = `<div class="card">Erro no cálculo. Certifica-te que os itens estão claros.</div>`; }
     }
 }
 
 async function processBill(b64) {
     document.getElementById('modal').style.display = 'block';
-    document.getElementById('modal-body').innerHTML = '<div class="loading-spin" style="margin:20px auto"></div>';
-    const prompt = "Extrai itens e TOTAL. JSON: {\"itens\":[\"Desc\"], \"total\":0.00}. Itens = strings.";
-    const res = await callAI(prompt, b64);
+    const body = document.getElementById('modal-body');
+    body.innerHTML = '<div style="text-align:center; padding:20px;"><div class="loading-spin" style="border-top-color:var(--p); width:30px; height:30px; margin:0 auto;"></div><br>Lendo recibo...</div>';
+    
+    const res = await callAI("Extrai itens e TOTAL. JSON: {\"itens\":[\"Desc\"], \"total\":0.00}.", b64);
     if(!res) return closeModal();
-    let data = JSON.parse(res.replace(/```json|```/gi, "").trim());
-    document.getElementById('m-title').innerText = "Validar Recibo";
-    document.getElementById('modal-total-val').value = data.total || 0;
-    const clean = (data.itens || []).map(it => String(typeof it === 'object' ? it.desc || "Item" : it));
-    document.getElementById('modal-body').innerHTML = clean.map(it => `<input type="text" class="bill-it" value="${it}" style="margin-bottom:8px;">`).join('');
-    document.getElementById('m-footer-val').style.display = 'block';
+    
+    try {
+        let data = JSON.parse(res.replace(/```json|```/gi, "").trim());
+        document.getElementById('m-title').innerText = "Validar Recibo";
+        document.getElementById('modal-total-val').value = data.total || 0;
+        body.innerHTML = (data.itens || []).map(it => `<input type="text" class="bill-it" value="${typeof it === 'string' ? it : it.desc}" style="margin-bottom:8px;">`).join('');
+        document.getElementById('m-footer-val').style.display = 'block';
+    } catch(e) { closeModal(); alert("Erro ao processar imagem."); }
 }
 
 function saveEditedBill() {
@@ -281,24 +285,18 @@ function deleteSelected() {
     renderHistory(); updateSelTotal();
 }
 
-function exportCSV() {
-    const h = JSON.parse(localStorage.getItem('s_h') || '[]');
-    let c = "Data;Total;Itens\n" + h.map(i => `${i.date};${i.total};${i.itens.join('|')}`).join('\n');
-    const b = new Blob([c], {type:'text/csv'}); const a = document.createElement('a'); a.href=URL.createObjectURL(b); a.download='saco.csv'; a.click();
-}
-
 function exportToCart() {
     const h = JSON.parse(localStorage.getItem('s_h') || '[]');
     const ids = Array.from(document.querySelectorAll('.hist-check:checked')).map(c => c.dataset.id);
-    let its = []; h.filter(i => ids.includes(i.id.toString())).forEach(i => its = its.concat(i.itens));
+    let its = []; 
+    h.filter(i => ids.includes(i.id.toString())).forEach(i => its = its.concat(i.itens));
     document.getElementById('cart-txt').value += its.join('\n') + '\n';
     saveC(); tab('cart', document.querySelectorAll('.nav-i')[3]);
 }
 
-function renderDataTags() {
-    const t = JSON.parse(localStorage.getItem('s_tags') || '[]');
-    document.getElementById('data-mining-tags').innerHTML = t.map(x => `<span class="data-tag">${x}</span>`).join('');
-}
+function saveC() { localStorage.setItem('s_c', document.getElementById('cart-txt').value); }
+function closeModal() { document.getElementById('modal').style.display = 'none'; document.getElementById('m-footer-val').style.display = 'none'; }
+function saveConfig() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); alert("Config Guardada!"); }
 
 async function fetchModels() {
     try {
@@ -306,13 +304,9 @@ async function fetchModels() {
         const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${k}`);
         const d = await r.json();
         const s = document.getElementById('model-sel'); s.innerHTML = "";
-        d.models.filter(m => m.name.includes('gemini')).forEach(m => s.add(new Option(m.name.split('/').pop().toUpperCase(), m.name.split('/').pop())));
+        d.models.filter(m => m.name.includes('gemini-1.5')).forEach(m => s.add(new Option(m.name.split('/').pop().toUpperCase(), m.name.split('/').pop())));
     } catch(e) {}
 }
-
-function saveC() { localStorage.setItem('s_c', document.getElementById('cart-txt').value); }
-function closeModal() { document.getElementById('modal').style.display = 'none'; }
-function saveConfig() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); alert("Config Guardada!"); }
 </script>
 </body>
 </html>
