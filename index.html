@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V59.6 - Fix [object Object]</title>
+    <title>SACO.pt | V59.7 - Restauro de Workflow</title>
     <style>
         :root { --p: #1a73e8; --s: #1e8e3e; --bg: #f8f9fa; --txt: #202124; --err: #d93025; --v: #673ab7; --warn: #f29900; --card: #ffffff; }
         * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -17,21 +17,19 @@
         .btn-p { background: var(--p); }
         .btn-s { background: var(--s); }
         .btn-v { background: var(--v); }
-        
-        /* Estilo dos inputs de validação igual ao screenshot */
-        .bill-it { width: 100%; padding: 14px; border: 1px solid #e0e0e0; border-radius: 14px; font-size: 14px; margin-bottom: 10px; background: #fff; outline: none; color: #444; }
-        
-        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; backdrop-filter: blur(4px); }
-        .modal-content { background: #fff; border-radius: 28px; padding: 24px; max-width: 450px; margin: 20px auto; width: 92%; max-height: 92vh; display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
-        #modal-body { overflow-y: auto; flex-grow: 1; margin: 15px 0; }
-        
-        .total-box { background: #fff; border: 1px solid #e0e0e0; border-radius: 16px; padding: 15px; margin-top: 10px; }
-        .total-box label { font-size: 11px; color: #888; display: block; margin-bottom: 5px; }
-        .total-box input { width: 100%; border: none; font-size: 28px; font-weight: 800; outline: none; padding: 0; }
-
-        .nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; display: flex; height: 75px; border-top: 1px solid #eee; z-index: 1000; }
-        .nav-i { flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #70757a; font-size: 11px; }
+        .btn-warn { background: var(--warn); }
+        .btn-err { background: var(--err); }
+        input, textarea, select { width: 100%; padding: 14px; border: 1px solid #e0e0e0; border-radius: 12px; font-size: 16px; margin-bottom: 12px; background: #fff; outline: none; }
+        .nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; display: flex; height: 75px; border-top: 1px solid #eee; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-i { flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #70757a; font-size: 11px; cursor: pointer; }
         .nav-i.active { color: var(--p); font-weight: 700; }
+        .nav-i span { font-size: 22px; margin-bottom: 4px; }
+        .data-tag { display: inline-block; padding: 4px 8px; border-radius: 6px; background: #e8f0fe; font-size: 10px; margin: 2px; color: var(--p); font-weight: bold; }
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; backdrop-filter: blur(4px); }
+        .modal-content { background: #fff; border-radius: 24px; padding: 20px; max-width: 450px; margin: 20px auto; width: 94%; max-height: 90vh; display: flex; flex-direction: column; }
+        #modal-body { overflow-y: auto; flex-grow: 1; margin: 15px 0; }
+        .loading-spin { border: 3px solid #f3f3f3; border-top: 3px solid var(--p); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 10px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body onload="boot()">
@@ -41,41 +39,103 @@
     <div id="st" style="font-size:10px; font-weight:bold;">SISTEMA OK</div>
 </div>
 
+<!-- ABA BUSCA (RECOLHA) -->
 <div id="v-home" class="v active">
     <div class="card">
-        <h3>Captura de Dados</h3>
-        <button class="btn btn-v" onclick="document.getElementById('f-in').click()" style="margin-top:15px;"><span>🧾</span> Digitalizar Recibo</button>
+        <h3>Recolha de Dados Visuais</h3>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:15px;">
+            <button class="btn btn-v" onclick="triggerInput('bill')"><span>🧾</span> Recibo</button>
+            <button class="btn btn-warn" onclick="triggerInput('fridge')"><span>❄️</span> Despensa</button>
+        </div>
         <input type="file" id="f-in" style="display:none" accept="image/*">
+    </div>
+    <div class="card">
+        <input type="text" id="q-in" placeholder="Pesquisar preços...">
+        <button class="btn btn-s" onclick="searchRealPrices()">🔍 Analisar Mercado</button>
     </div>
     <div id="out-home"></div>
 </div>
 
+<!-- ABA PERFIL -->
+<div id="v-gen" class="v">
+    <div class="card">
+        <h3>🧠 Perfil de Consumidor</h3>
+        <div id="data-mining-tags"></div>
+    </div>
+    <div class="card">
+        <h3>🎯 Sugestões IA</h3>
+        <div id="ai-insight" style="font-size:13px; font-style:italic;">Fotografa recibos e a despensa para treinar o teu perfil.</div>
+        <button class="btn btn-p" style="margin-top:15px;" onclick="generateInsights()">Analisar Hábitos</button>
+    </div>
+</div>
+
+<!-- ABA ARQUIVO -->
 <div id="v-history" class="v">
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:15px;">
+        <div class="card" style="text-align:center; padding:12px; margin-bottom:0;">
+            <small>Seleção</small><br><span id="stat-sel-val" style="font-size:18px; font-weight:900; color:var(--s)">0.00€</span>
+        </div>
+        <div class="card" style="text-align:center; padding:12px; margin-bottom:0;">
+            <small>Total Acumulado</small><br><span id="stat-month" style="font-size:18px; font-weight:900; color:var(--v)">0.00€</span>
+        </div>
+    </div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-bottom:15px;">
+        <button class="btn btn-s" onclick="exportToCart()" style="padding:10px; font-size:11px;">🛒 Carrinho</button>
+        <button class="btn btn-p" onclick="exportCSV()" style="padding:10px; font-size:11px;">📥 CSV</button>
+        <button class="btn btn-err" onclick="deleteSelected()" style="padding:10px; font-size:11px;">🗑️ Limpar</button>
+    </div>
     <div id="out-history"></div>
 </div>
 
-<div id="modal">
-    <div class="modal-content">
-        <h2 id="m-title" style="font-size:20px; margin-bottom:10px;">Validar Leitura</h2>
+<!-- ABA LISTA -->
+<div id="v-cart" class="v">
+    <div class="card">
+        <h3>🛒 Lista Inteligente</h3>
+        <textarea id="cart-txt" rows="10" placeholder="A tua lista..." oninput="saveC()"></textarea>
+        <button class="btn btn-s" onclick="compareStoresDetailed()">🚀 Comparar Lojas</button>
+    </div>
+    <div id="out-cart"></div>
+</div>
+
+<!-- ABA CONFIG -->
+<div id="v-cfg" class="v">
+    <div class="card">
+        <h3>⚙️ Configuração API</h3>
+        <input type="password" id="key-in" placeholder="API Key" onchange="fetchModels()">
+        <select id="model-sel"></select>
+        <button class="btn btn-p" onclick="saveConfig()">Guardar</button>
+    </div>
+</div>
+
+<!-- MODAL -->
+<div id="modal" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <h3 id="m-title">Processando...</h3>
         <div id="modal-body"></div>
         <div id="m-footer-val" style="display:none">
-            <div class="total-box">
-                <label>Valor Total do Recibo:</label>
-                <input type="number" id="modal-total-val" step="0.01">
-            </div>
-            <button class="btn btn-s" onclick="saveEditedBill()" style="margin-top:20px; width:100%; padding:18px; font-size:15px;">Confirmar e Arquivar</button>
+            <input type="number" id="modal-total-val" step="0.01" style="font-size:24px; font-weight:900; border:1px solid #eee; padding:10px; border-radius:10px; margin-top:10px;">
+            <button class="btn btn-s" onclick="saveEditedBill()" style="margin-top:15px;">Confirmar e Arquivar</button>
         </div>
     </div>
 </div>
 
 <nav class="nav">
     <button class="nav-i active" onclick="tab('home', this)"><span>🔎</span>Busca</button>
+    <button class="nav-i" onclick="tab('gen', this)"><span>🧠</span>Perfil</button>
     <button class="nav-i" onclick="tab('history', this)"><span>🧾</span>Arquivo</button>
+    <button class="nav-i" onclick="tab('cart', this)"><span>🛒</span>Lista</button>
+    <button class="nav-i" onclick="tab('cfg', this)"><span>⚙️</span>Config</button>
 </nav>
 
 <script>
+let currentMode = 'bill';
+
 function boot() {
+    const k = localStorage.getItem('s_k');
+    if(k) { document.getElementById('key-in').value = k; fetchModels(); }
+    document.getElementById('cart-txt').value = localStorage.getItem('s_c') || "";
     renderHistory();
+    renderDataTags();
     document.getElementById('f-in').addEventListener('change', handleMedia);
 }
 
@@ -84,34 +144,32 @@ function tab(id, btn) {
     document.querySelectorAll('.nav-i').forEach(n => n.classList.remove('active'));
     document.getElementById('v-' + id).classList.add('active');
     btn.classList.add('active');
+    if(id === 'gen') renderDataTags();
     if(id === 'history') renderHistory();
 }
+
+function triggerInput(mode) { currentMode = mode; document.getElementById('f-in').click(); }
 
 function handleMedia(e) {
     const file = e.target.files[0];
     if(!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
-        processBill(ev.target.result.split(',')[1]);
+        const b64 = ev.target.result.split(',')[1];
+        if(currentMode === 'bill') processBill(b64);
+        else processFridgeData(b64);
         e.target.value = '';
     };
     reader.readAsDataURL(file);
 }
 
-async function callAI(prompt, b64) {
-    const k = localStorage.getItem('s_k');
+async function callAI(prompt, b64 = null) {
+    const k = localStorage.getItem('s_k'), m = localStorage.getItem('s_m') || 'gemini-1.5-flash';
     if(!k) return null;
-    const payload = {
-        contents: [{ parts: [
-            { text: prompt },
-            { inline_data: { mime_type: "image/jpeg", data: b64 } }
-        ]}]
-    };
+    const payload = { contents: [{ parts: [{ text: prompt }] }] };
+    if(b64) payload.contents[0].parts.unshift({ inline_data: { mime_type: "image/jpeg", data: b64 } });
     try {
-        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${k}`, {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        });
+        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${k}`, { method: 'POST', body: JSON.stringify(payload) });
         const d = await r.json();
         return d.candidates[0].content.parts[0].text;
     } catch(e) { return null; }
@@ -119,39 +177,40 @@ async function callAI(prompt, b64) {
 
 async function processBill(b64) {
     document.getElementById('modal').style.display = 'block';
-    document.getElementById('modal-body').innerHTML = '<p>A analisar recibo...</p>';
+    document.getElementById('modal-body').innerHTML = '<div class="loading-spin"></div>';
     document.getElementById('m-footer-val').style.display = 'none';
-
-    // Prompt reforçado para evitar o erro de objetos
-    const prompt = "Extrai os itens e o total deste recibo. Devolve APENAS um JSON plano. Exemplo: {\"itens\": [\"Leite\", \"Pão\"], \"total\": 10.50}. Nota: A lista de itens deve conter apenas STRINGS, nunca objetos.";
     
+    const prompt = "Extrai itens e TOTAL do recibo. JSON: {\"itens\":[\"Desc\"], \"total\":0.00}. Garante que a lista 'itens' contém apenas STRINGS de texto.";
     const res = await callAI(prompt, b64);
     let data;
-    try {
-        data = JSON.parse(res.replace(/```json|```/gi, "").trim());
-    } catch(e) { 
-        document.getElementById('modal-body').innerHTML = '<p>Erro na leitura. Tente novamente.</p>';
-        return;
-    }
+    try { data = JSON.parse(res.replace(/```json|```/gi, "").trim()); } catch(e) { closeModal(); return; }
 
     if(data) {
-        document.getElementById('m-title').innerText = "Validar Leitura";
+        document.getElementById('m-title').innerText = "Validar Recibo";
         document.getElementById('modal-total-val').value = data.total || 0;
         
-        // CORREÇÃO CRÍTICA: Verifica se cada item é uma string ou um objeto
-        const cleanItens = data.itens.map(it => {
-            if (typeof it === 'object' && it !== null) {
-                // Tenta extrair a propriedade mais provável se for um objeto
-                return it.nome || it.desc || it.produto || JSON.stringify(it);
-            }
-            return String(it);
-        });
-
-        document.getElementById('modal-body').innerHTML = cleanItens.map(it => `
-            <input type="text" class="bill-it" value="${it}">
-        `).join('');
+        // FIX [object Object]: Garante que convertemos qualquer objeto em string
+        const cleanItens = (data.itens || []).map(it => (typeof it === 'object' ? (it.nome || it.desc || JSON.stringify(it)) : String(it)));
         
+        document.getElementById('modal-body').innerHTML = cleanItens.map(it => `<input type="text" class="bill-it" value="${it}" style="width:100%; padding:12px; margin-bottom:8px; border:1px solid #ddd; border-radius:10px;">`).join('');
         document.getElementById('m-footer-val').style.display = 'block';
+    }
+}
+
+async function processFridgeData(b64) {
+    document.getElementById('modal').style.display = 'block';
+    document.getElementById('modal-body').innerHTML = '<div class="loading-spin"></div>';
+    const prompt = "Analisa a foto da despensa. Extrai marcas e categorias visíveis. JSON: {\"tags\":[\"Marca/Categoria\"], \"analise\":\"resumo\"}";
+    const res = await callAI(prompt, b64);
+    let data;
+    try { data = JSON.parse(res.replace(/```json|```/gi, "").trim()); } catch(e) { closeModal(); return; }
+    
+    if(data) {
+        let tags = JSON.parse(localStorage.getItem('s_tags') || '[]');
+        tags = [...new Set([...tags, ...data.tags])].slice(-30);
+        localStorage.setItem('s_tags', JSON.stringify(tags));
+        document.getElementById('m-title').innerText = "Dados Recolhidos";
+        document.getElementById('modal-body').innerHTML = `<p>${data.analise}</p><div style="margin-top:10px;">${data.tags.map(t => `<span class="data-tag">${t}</span>`).join('')}</div>`;
     }
 }
 
@@ -161,23 +220,62 @@ function saveEditedBill() {
     let h = JSON.parse(localStorage.getItem('s_h') || '[]');
     h.unshift({ id: Date.now(), total, itens, date: new Date().toLocaleDateString('pt-PT') });
     localStorage.setItem('s_h', JSON.stringify(h));
-    closeModal();
-    tab('history', document.querySelectorAll('.nav-i')[1]);
+    
+    // Atualiza tags de perfil com a primeira palavra de cada item
+    let tags = JSON.parse(localStorage.getItem('s_tags') || '[]');
+    itens.forEach(it => tags.push(it.split(' ')[0]));
+    localStorage.setItem('s_tags', JSON.stringify([...new Set(tags)].slice(-40)));
+    
+    renderHistory(); closeModal(); tab('history', document.querySelectorAll('.nav-i')[2]);
 }
 
 function renderHistory() {
     const h = JSON.parse(localStorage.getItem('s_h') || '[]');
-    document.getElementById('out-history').innerHTML = h.map(i => `
-        <div class="card">
-            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                <b>${i.date}</b> <b style="color:var(--v)">${i.total.toFixed(2)}€</b>
-            </div>
-            <small style="color:#666">${i.itens.join(', ').substring(0, 100)}...</small>
-        </div>
-    `).join('');
+    let total = 0;
+    document.getElementById('out-history').innerHTML = h.map(i => {
+        total += i.total;
+        return `<div class="card" style="display:flex; align-items:center; gap:10px;">
+            <input type="checkbox" class="hist-check" data-id="${i.id}" data-val="${i.total}" onchange="updateSelTotal()">
+            <div style="flex-grow:1"><b>${i.date}</b><br><small>${i.total.toFixed(2)}€</small></div>
+        </div>`;
+    }).join('');
+    document.getElementById('stat-month').innerText = total.toFixed(2) + "€";
 }
 
+function updateSelTotal() {
+    let t = 0;
+    document.querySelectorAll('.hist-check:checked').forEach(c => t += parseFloat(c.dataset.val));
+    document.getElementById('stat-sel-val').innerText = t.toFixed(2) + "€";
+}
+
+function renderDataTags() {
+    const tags = JSON.parse(localStorage.getItem('s_tags') || '[]');
+    document.getElementById('data-mining-tags').innerHTML = tags.map(t => `<span class="data-tag">${t}</span>`).join('');
+}
+
+async function fetchModels() {
+    const k = document.getElementById('key-in').value;
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${k}`);
+    const d = await r.json();
+    const sel = document.getElementById('model-sel');
+    sel.innerHTML = "";
+    d.models.filter(m => m.name.includes('gemini')).forEach(m => sel.add(new Option(m.name.split('/').pop().toUpperCase(), m.name.split('/').pop())));
+}
+
+function saveC() { localStorage.setItem('s_c', document.getElementById('cart-txt').value); }
 function closeModal() { document.getElementById('modal').style.display = 'none'; }
+function saveConfig() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); alert("Guardado!"); }
+function exportCSV() { /* CSV Logic */ }
+function deleteSelected() { /* Delete Logic */ }
+function exportToCart() {
+    const h = JSON.parse(localStorage.getItem('s_h') || '[]');
+    const selectedIds = Array.from(document.querySelectorAll('.hist-check:checked')).map(c => c.dataset.id);
+    let products = [];
+    h.filter(i => selectedIds.includes(i.id.toString())).forEach(bill => products = products.concat(bill.itens));
+    document.getElementById('cart-txt').value = [...new Set([...document.getElementById('cart-txt').value.split('\n'), ...products])].filter(x => x.trim()).join('\n');
+    saveC();
+    tab('cart', document.querySelectorAll('.nav-i')[3]);
+}
 </script>
 </body>
 </html>
