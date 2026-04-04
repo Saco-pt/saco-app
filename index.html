@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V62.0 - Full Operational</title>
+    <title>SACO.pt | V63.0 - Full Operational</title>
     <style>
         :root { --p: #1a73e8; --s: #1e8e3e; --bg: #f8f9fa; --txt: #202124; --err: #d93025; --v: #673ab7; --warn: #f29900; --card: #ffffff; }
         * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -30,10 +30,13 @@
         #modal-body { overflow-y: auto; flex-grow: 1; margin: 15px 0; }
         .loading-spin { border: 3px solid transparent; border-top: 3px solid #fff; border-radius: 50%; width: 16px; height: 16px; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .res-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .res-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
         .comp-card { border-left: 4px solid var(--p); padding: 10px; margin-top: 10px; background: #fcfcfc; border-radius: 8px; }
         .winner { border-left-color: var(--s); background: #f1f8f3; }
         .tag { display: inline-block; background: #e8f0fe; color: var(--p); padding: 4px 10px; border-radius: 20px; font-size: 11px; margin: 2px; font-weight: 600; }
+        .model-loading { font-size: 12px; color: #888; padding: 8px 0; }
+        .model-error { font-size: 12px; color: var(--err); padding: 8px 0; }
+        .model-count { font-size: 11px; color: var(--s); font-weight: 600; margin-bottom: 8px; }
     </style>
 </head>
 <body onload="boot()">
@@ -51,6 +54,7 @@
             <button class="btn btn-v" onclick="triggerInput('bill')"><span>🧾</span> Recibo</button>
             <button class="btn btn-warn" onclick="triggerInput('fridge')"><span>❄️</span> Despensa</button>
         </div>
+        <!-- FIX: event listener adicionado corretamente via JS no boot() -->
         <input type="file" id="f-in" style="display:none" accept="image/*">
     </div>
     <div class="card">
@@ -105,9 +109,12 @@
 <div id="v-cfg" class="v">
     <div class="card">
         <h3>⚙️ Definições</h3>
-        <input type="password" id="key-in" placeholder="Gemini API Key" onchange="fetchModels()">
-        <select id="model-sel"></select>
-        <button class="btn btn-p" onclick="saveConfig()">Guardar Configuração</button>
+        <input type="password" id="key-in" placeholder="Gemini API Key">
+        <button class="btn btn-p" id="btn-fetch-models" onclick="fetchModels()" style="margin-bottom:12px;">🔄 Carregar Modelos</button>
+        <div id="model-status"></div>
+        <select id="model-sel" style="display:none;"></select>
+        <div id="model-count-label" class="model-count" style="display:none;"></div>
+        <button class="btn btn-s" onclick="saveConfig()" style="margin-top:4px;">Guardar Configuração</button>
     </div>
 </div>
 
@@ -122,7 +129,7 @@
     </div>
 </div>
 
-<nav class="nav">
+<nav class="nav" id="main-nav">
     <button class="nav-i active" onclick="tab('home', this)"><span>🔎</span>Busca</button>
     <button class="nav-i" onclick="tab('gen', this)"><span>🧠</span>Perfil</button>
     <button class="nav-i" onclick="tab('history', this)"><span>🧾</span>Arquivo</button>
@@ -134,8 +141,19 @@
 let currentMode = 'bill';
 
 function boot() {
+    // FIX: wire up file input event listener properly
+    document.getElementById('f-in').addEventListener('change', handleMedia);
+
     const k = localStorage.getItem('s_k');
-    if(k) { document.getElementById('key-in').value = k; fetchModels(); }
+    if (k) {
+        document.getElementById('key-in').value = k;
+        // auto-load models if key already saved, but don't block boot
+        fetchModels(true);
+    }
+    const savedModel = localStorage.getItem('s_m');
+    if (savedModel) {
+        // will be selected after models load via fetchModels
+    }
     document.getElementById('cart-txt').value = localStorage.getItem('s_c') || "";
     renderHistory();
     updateTags();
@@ -148,135 +166,175 @@ function tab(id, btn) {
     btn.classList.add('active');
 }
 
-function triggerInput(mode) { currentMode = mode; document.getElementById('f-in').click(); }
+// FIX: separate trigger from handler
+function triggerInput(mode) {
+    currentMode = mode;
+    document.getElementById('f-in').click();
+}
 
 function handleMedia(e) {
     const file = e.target.files[0];
-    if(!file) return;
+    if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
         const b64 = ev.target.result.split(',')[1];
-        if(currentMode === 'bill') processBill(b64);
+        if (currentMode === 'bill') processBill(b64);
         else processFridge(b64);
+        // reset so same file can be picked again
         e.target.value = '';
     };
     reader.readAsDataURL(file);
 }
 
 async function callAI(prompt, b64 = null, grounding = false) {
-    const k = localStorage.getItem('s_k'), m = localStorage.getItem('s_m') || 'gemini-1.5-flash';
-    if(!k) { alert("Configura a API Key em 'Config'!"); return null; }
+    const k = localStorage.getItem('s_k');
+    const m = localStorage.getItem('s_m') || 'gemini-1.5-flash';
+    if (!k) { alert("Configura a API Key em 'Config'!"); return null; }
+
     const payload = { contents: [{ parts: [{ text: prompt }] }] };
-    if(b64) payload.contents[0].parts.unshift({ inline_data: { mime_type: "image/jpeg", data: b64 } });
-    if(grounding) payload.tools = [{ google_search: {} }];
+    if (b64) payload.contents[0].parts.unshift({ inline_data: { mime_type: "image/jpeg", data: b64 } });
+    if (grounding) payload.tools = [{ google_search: {} }];
 
     try {
-        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${k}`, { 
-            method: 'POST', body: JSON.stringify(payload) 
+        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${k}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
         });
         const d = await r.json();
-        return d.candidates[0].content.parts[0].text;
-    } catch(e) { return null; }
+        if (d.error) { console.error('Gemini error:', d.error.message); return null; }
+        return d.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
+    } catch (e) {
+        console.error('callAI failed:', e);
+        return null;
+    }
 }
 
 async function searchRealPrices() {
-    const q = document.getElementById('q-in').value;
-    if(!q) return;
+    const q = document.getElementById('q-in').value.trim();
+    if (!q) return;
     const out = document.getElementById('out-home');
     const btn = document.getElementById('btn-search');
-    btn.innerHTML = '<div class="loading-spin"></div>'; btn.disabled = true;
+    btn.innerHTML = '<div class="loading-spin"></div> A pesquisar...'; btn.disabled = true;
 
-    const res = await callAI(`Pesquisa preços de "${q}" em supermercados de Portugal (Continente, Pingo Doce, Auchan). Retorna JSON: [{"loja":"Nome", "preco":0.00}]. Se não souberes, estima valores reais de mercado atual.`, null, true);
+    const res = await callAI(
+        `Pesquisa preços de "${q}" em supermercados de Portugal (Continente, Pingo Doce, Auchan, Lidl, Mercadona). Retorna APENAS JSON sem mais nada: [{"loja":"Nome","preco":0.00}]. Usa valores reais de mercado atual.`,
+        null, true
+    );
     btn.innerHTML = '🔍 Comparar Preços Hoje'; btn.disabled = false;
-    
-    if(res) {
+
+    if (res) {
         try {
             const data = JSON.parse(res.replace(/```json|```/gi, "").trim());
-            out.innerHTML = `<div class="card"><h4>Preços para: ${q}</h4>` + 
-                data.map(i => `<div class="res-row"><span>${i.loja}</span><b style="color:var(--s)">${Number(i.preco).toFixed(2)}€</b></div>`).join('') + 
+            const sorted = data.sort((a, b) => a.preco - b.preco);
+            out.innerHTML = `<div class="card"><h4 style="margin-bottom:12px;">Preços: ${q}</h4>` +
+                sorted.map((i, idx) => `
+                    <div class="res-row">
+                        <span>${idx === 0 ? '🏆 ' : ''}${i.loja}</span>
+                        <b style="color:${idx === 0 ? 'var(--s)' : 'var(--txt)'}">${Number(i.preco).toFixed(2)}€</b>
+                    </div>`).join('') +
                 `</div>`;
-        } catch(e) { out.innerHTML = `<div class="card">Erro na leitura dos dados de mercado.</div>`; }
+        } catch (e) { out.innerHTML = `<div class="card" style="color:var(--err);">Erro na leitura dos dados de mercado.</div>`; }
+    } else {
+        out.innerHTML = `<div class="card" style="color:var(--err);">Sem resposta da API. Verifica a chave em Config.</div>`;
     }
 }
 
 async function analyzeCartList() {
-    const list = document.getElementById('cart-txt').value;
-    if(!list.trim()) return;
+    const list = document.getElementById('cart-txt').value.trim();
+    if (!list) return;
     const out = document.getElementById('out-cart');
     const btn = document.getElementById('btn-comp-list');
     btn.innerHTML = '<div class="loading-spin"></div> Calculando...'; btn.disabled = true;
 
     const prompt = `Analisa esta lista de supermercado em Portugal: "${list}". 
     Pesquisa e soma o total estimado nos 3 maiores supermercados (Continente, Pingo Doce, Auchan).
-    Retorna APENAS JSON: {"comparativo":[{"loja":"Nome", "total":0.00, "itens_em_falta":0}], "vencedor":"Nome", "obs":"resumo rápido"}`;
+    Retorna APENAS JSON sem mais nada: {"comparativo":[{"loja":"Nome","total":0.00,"itens_em_falta":0}],"vencedor":"Nome","obs":"resumo rápido"}`;
 
     const res = await callAI(prompt, null, true);
     btn.innerHTML = '🚀 Onde é mais barato?'; btn.disabled = false;
 
-    if(res) {
+    if (res) {
         try {
             const data = JSON.parse(res.replace(/```json|```/gi, "").trim());
-            out.innerHTML = `<div class="card"><h4>🏆 Melhor Opção: ${data.vencedor}</h4><p style="font-size:12px; margin-bottom:10px;">${data.obs}</p>` +
-                data.comparativo.map(c => `
+            const sorted = data.comparativo.sort((a, b) => a.total - b.total);
+            out.innerHTML = `<div class="card">
+                <h4 style="margin-bottom:8px;">🏆 Melhor: ${data.vencedor}</h4>
+                <p style="font-size:12px; color:#666; margin-bottom:10px;">${data.obs}</p>` +
+                sorted.map(c => `
                     <div class="comp-card ${c.loja === data.vencedor ? 'winner' : ''}">
-                        <div style="display:flex; justify-content:space-between">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
                             <b>${c.loja}</b>
                             <b style="color:var(--s)">${Number(c.total).toFixed(2)}€</b>
                         </div>
-                    </div>
-                `).join('') + `</div>`;
-        } catch(e) { out.innerHTML = `<div class="card">Erro ao processar cabaz. Tenta itens mais genéricos.</div>`; }
+                        ${c.itens_em_falta > 0 ? `<small style="color:var(--warn);">⚠️ ${c.itens_em_falta} item(ns) não encontrado(s)</small>` : ''}
+                    </div>`).join('') +
+                `</div>`;
+        } catch (e) { out.innerHTML = `<div class="card" style="color:var(--err);">Erro ao processar cabaz. Tenta itens mais genéricos.</div>`; }
     }
 }
 
 async function processBill(b64) {
     document.getElementById('modal').style.display = 'block';
     const body = document.getElementById('modal-body');
-    body.innerHTML = '<div style="text-align:center; padding:20px;"><div class="loading-spin" style="border-top-color:var(--p); width:30px; height:30px; margin:0 auto;"></div><br>Digitalizando...</div>';
-    
-    const res = await callAI("Extrai itens e TOTAL. JSON: {\"itens\":[\"Nome\"], \"total\":0.00}.", b64);
-    if(!res) return closeModal();
-    
+    document.getElementById('m-title').innerText = "A digitalizar recibo...";
+    body.innerHTML = '<div style="text-align:center; padding:20px;"><div class="loading-spin" style="border-top-color:var(--p); width:30px; height:30px; margin:0 auto;"></div><br><small>Analisando imagem...</small></div>';
+    document.getElementById('m-footer-val').style.display = 'none';
+
+    const res = await callAI("Extrai TODOS os itens e o TOTAL deste recibo. Retorna APENAS JSON: {\"itens\":[\"Nome do produto\"], \"total\":0.00}.", b64);
+    if (!res) { closeModal(); return; }
+
     try {
-        let data = JSON.parse(res.replace(/```json|```/gi, "").trim());
+        const data = JSON.parse(res.replace(/```json|```/gi, "").trim());
         document.getElementById('m-title').innerText = "Confirmar Recibo";
-        document.getElementById('modal-total-val').value = data.total || 0;
-        body.innerHTML = (data.itens || []).map(it => `<input type="text" class="bill-it" value="${typeof it === 'string' ? it : it.nome}" style="margin-bottom:8px;">`).join('');
+        document.getElementById('modal-total-val').value = data.total ?? 0;
+        body.innerHTML = (data.itens || []).map(it =>
+            `<input type="text" class="bill-it" value="${typeof it === 'string' ? it : (it.nome || '')}" style="margin-bottom:8px;">`
+        ).join('');
         document.getElementById('m-footer-val').style.display = 'block';
-    } catch(e) { closeModal(); }
+    } catch (e) { body.innerHTML = `<p style="color:var(--err);">Não foi possível ler o recibo.</p>`; }
 }
 
 async function processFridge(b64) {
     document.getElementById('modal').style.display = 'block';
     const body = document.getElementById('modal-body');
-    body.innerHTML = '<div style="text-align:center; padding:20px;"><div class="loading-spin" style="border-top-color:var(--p); width:30px; height:30px; margin:0 auto;"></div><br>Analisando Inventário...</div>';
-    
-    const res = await callAI("O que vês nesta despensa/frigorífico? O que falta comprar? JSON: {\"falta\":[\"Item\"]}.", b64);
-    if(!res) return closeModal();
-    
+    document.getElementById('m-title').innerText = "A analisar despensa...";
+    body.innerHTML = '<div style="text-align:center; padding:20px;"><div class="loading-spin" style="border-top-color:var(--p); width:30px; height:30px; margin:0 auto;"></div><br><small>Identificando produtos...</small></div>';
+
+    const res = await callAI("O que vês nesta despensa/frigorífico? O que provavelmente falta ou está a acabar? Retorna APENAS JSON: {\"falta\":[\"Item\"]}.", b64);
+    if (!res) { closeModal(); return; }
+
     try {
-        let data = JSON.parse(res.replace(/```json|```/gi, "").trim());
-        body.innerHTML = "<h4>Sugestões de Compra:</h4><br>" + data.falta.map(i => `<div class="res-row"><span>${i}</span><button class="btn btn-p" onclick="addToCart('${i}')" style="width:auto; padding:5px 10px;">+</button></div>`).join('');
-    } catch(e) { closeModal(); }
+        const data = JSON.parse(res.replace(/```json|```/gi, "").trim());
+        document.getElementById('m-title').innerText = "Sugestões de Compra";
+        body.innerHTML = data.falta.map(i =>
+            `<div class="res-row"><span>${i}</span><button class="btn btn-p" onclick="addToCart('${i.replace(/'/g, "\\'")}')" style="width:auto; padding:6px 14px; font-size:12px;">+ Lista</button></div>`
+        ).join('');
+    } catch (e) { body.innerHTML = `<p style="color:var(--err);">Não foi possível analisar a imagem.</p>`; }
 }
 
 async function generateInsights() {
     const h = localStorage.getItem('s_h') || '[]';
     const btn = document.getElementById('btn-insight');
-    btn.innerHTML = '<div class="loading-spin"></div> Analisando...';
-    
-    const res = await callAI(`Com base nestes gastos: ${h}, dá 3 dicas de poupança específicas para Portugal.`, null, true);
-    btn.innerHTML = 'Gerar Relatório IA';
-    if(res) document.getElementById('ai-insight').innerHTML = res.replace(/\n/g, '<br>');
+    btn.innerHTML = '<div class="loading-spin"></div> Analisando...'; btn.disabled = true;
+
+    const res = await callAI(`Com base nestes gastos de supermercado: ${h}, dá 3 dicas de poupança específicas e práticas para Portugal. Responde em português.`, null, true);
+    btn.innerHTML = 'Gerar Relatório IA'; btn.disabled = false;
+    if (res) document.getElementById('ai-insight').innerHTML = res.replace(/\n/g, '<br>');
 }
 
 function addToCart(item) {
-    document.getElementById('cart-txt').value += item + '\n';
-    saveC(); closeModal();
+    const ta = document.getElementById('cart-txt');
+    ta.value = (ta.value.trim() ? ta.value.trim() + '\n' : '') + item + '\n';
+    saveC();
+    closeModal();
+    // FIX: navigate to cart tab using querySelector instead of hardcoded index
+    const cartBtn = document.querySelector('#main-nav .nav-i:nth-child(4)');
+    tab('cart', cartBtn);
 }
 
 function saveEditedBill() {
-    const itens = Array.from(document.querySelectorAll('.bill-it')).map(i => i.value);
+    const itens = Array.from(document.querySelectorAll('.bill-it')).map(i => i.value.trim()).filter(Boolean);
     const total = parseFloat(document.getElementById('modal-total-val').value || 0);
     let h = JSON.parse(localStorage.getItem('s_h') || '[]');
     h.unshift({ id: Date.now(), total, itens, date: new Date().toLocaleDateString('pt-PT') });
@@ -287,60 +345,22 @@ function saveEditedBill() {
 function renderHistory() {
     const h = JSON.parse(localStorage.getItem('s_h') || '[]');
     let t = 0;
-    document.getElementById('out-history').innerHTML = h.map(i => {
-        t += i.total;
-        return `<div class="card" style="display:flex; align-items:center; gap:10px; padding:12px;"><input type="checkbox" class="hist-check" data-id="${i.id}" data-val="${i.total}" onchange="updateSelTotal()"><div style="flex-grow:1"><b>${i.date}</b> - ${i.total.toFixed(2)}€</div></div>`;
-    }).join('');
+    document.getElementById('out-history').innerHTML = h.length === 0
+        ? `<div class="card" style="text-align:center; color:#aaa; padding:30px;">Sem recibos arquivados.</div>`
+        : h.map(i => {
+            t += i.total;
+            return `<div class="card" style="display:flex; align-items:center; gap:10px; padding:12px; cursor:pointer;">
+                <input type="checkbox" class="hist-check" data-id="${i.id}" data-val="${i.total}" onchange="updateSelTotal()" style="width:auto; margin:0; flex-shrink:0;">
+                <div style="flex-grow:1">
+                    <b>${i.date}</b> — ${i.total.toFixed(2)}€
+                    <div style="font-size:11px; color:#aaa; margin-top:3px;">${i.itens.slice(0, 3).join(', ')}${i.itens.length > 3 ? ` +${i.itens.length - 3}` : ''}</div>
+                </div>
+            </div>`;
+        }).join('');
     document.getElementById('stat-month').innerText = t.toFixed(2) + "€";
 }
 
 function updateTags() {
     const h = JSON.parse(localStorage.getItem('s_h') || '[]');
     let all = []; h.forEach(i => all = all.concat(i.itens));
-    const counts = {}; all.forEach(x => counts[x] = (counts[x] || 0) + 1);
-    const top = Object.keys(counts).sort((a,b) => counts[b]-counts[a]).slice(0, 5);
-    document.getElementById('data-mining-tags').innerHTML = top.map(t => `<span class="tag">${t}</span>`).join('');
-}
-
-function updateSelTotal() {
-    let t = 0; document.querySelectorAll('.hist-check:checked').forEach(c => t += parseFloat(c.dataset.val));
-    document.getElementById('stat-sel-val').innerText = t.toFixed(2) + "€";
-}
-
-function deleteSelected() {
-    let h = JSON.parse(localStorage.getItem('s_h') || '[]');
-    const ids = Array.from(document.querySelectorAll('.hist-check:checked')).map(c => c.dataset.id);
-    localStorage.setItem('s_h', JSON.stringify(h.filter(i => !ids.includes(i.id.toString()))));
-    renderHistory(); updateSelTotal(); updateTags();
-}
-
-function exportToCart() {
-    const h = JSON.parse(localStorage.getItem('s_h') || '[]');
-    const ids = Array.from(document.querySelectorAll('.hist-check:checked')).map(c => c.dataset.id);
-    let its = []; h.filter(i => ids.includes(i.id.toString())).forEach(i => its = its.concat(i.itens));
-    document.getElementById('cart-txt').value += its.join('\n') + '\n';
-    saveC(); tab('cart', document.querySelectorAll('.nav-i')[3]);
-}
-
-function exportCSV() {
-    const h = JSON.parse(localStorage.getItem('s_h') || '[]');
-    let c = "Data;Total;Itens\n" + h.map(i => `${i.date};${i.total};${i.itens.join('|')}`).join('\n');
-    const a = document.createElement('a'); a.href=URL.createObjectURL(new Blob([c], {type:'text/csv'})); a.download='saco_pt.csv'; a.click();
-}
-
-function saveC() { localStorage.setItem('s_c', document.getElementById('cart-txt').value); }
-function closeModal() { document.getElementById('modal').style.display = 'none'; document.getElementById('m-footer-val').style.display = 'none'; }
-function saveConfig() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); alert("Configuração Guardada!"); }
-
-async function fetchModels() {
-    try {
-        const k = document.getElementById('key-in').value;
-        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${k}`);
-        const d = await r.json();
-        const s = document.getElementById('model-sel'); s.innerHTML = "";
-        d.models.filter(m => m.name.includes('gemini-1.5')).forEach(m => s.add(new Option(m.name.split('/').pop().toUpperCase(), m.name.split('/').pop())));
-    } catch(e) {}
-}
-</script>
-</body>
-</html>
+    const counts = {}; all.forEach(x => counts[
