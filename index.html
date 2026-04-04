@@ -363,4 +363,158 @@ function renderHistory() {
 function updateTags() {
     const h = JSON.parse(localStorage.getItem('s_h') || '[]');
     let all = []; h.forEach(i => all = all.concat(i.itens));
-    const counts = {}; all.forEach(x => counts[
+    const counts = {}; all.forEach(x => counts[x] = (counts[x] || 0) + 1);
+    const top = Object.keys(counts).sort((a, b) => counts[b] - counts[a]).slice(0, 8);
+    document.getElementById('data-mining-tags').innerHTML = top.length
+        ? top.map(t => `<span class="tag">${t}</span>`).join('')
+        : `<span style="font-size:12px; color:#aaa;">Sem dados. Arquiva alguns recibos primeiro.</span>`;
+}
+
+function updateSelTotal() {
+    let t = 0;
+    document.querySelectorAll('.hist-check:checked').forEach(c => t += parseFloat(c.dataset.val));
+    document.getElementById('stat-sel-val').innerText = t.toFixed(2) + "€";
+}
+
+function deleteSelected() {
+    const ids = Array.from(document.querySelectorAll('.hist-check:checked')).map(c => c.dataset.id);
+    if (!ids.length) { alert("Seleciona pelo menos um recibo."); return; }
+    if (!confirm(`Apagar ${ids.length} recibo(s)?`)) return;
+    let h = JSON.parse(localStorage.getItem('s_h') || '[]');
+    localStorage.setItem('s_h', JSON.stringify(h.filter(i => !ids.includes(i.id.toString()))));
+    renderHistory(); updateSelTotal(); updateTags();
+}
+
+// FIX: exportToCart uses querySelector for nav instead of hardcoded index
+function exportToCart() {
+    const ids = Array.from(document.querySelectorAll('.hist-check:checked')).map(c => c.dataset.id);
+    if (!ids.length) { alert("Seleciona pelo menos um recibo."); return; }
+    const h = JSON.parse(localStorage.getItem('s_h') || '[]');
+    let its = [];
+    h.filter(i => ids.includes(i.id.toString())).forEach(i => its = its.concat(i.itens));
+    const ta = document.getElementById('cart-txt');
+    ta.value = (ta.value.trim() ? ta.value.trim() + '\n' : '') + its.join('\n') + '\n';
+    saveC();
+    const cartBtn = document.querySelector('#main-nav .nav-i:nth-child(4)');
+    tab('cart', cartBtn);
+}
+
+function exportCSV() {
+    const h = JSON.parse(localStorage.getItem('s_h') || '[]');
+    if (!h.length) { alert("Sem dados para exportar."); return; }
+    let c = "Data;Total;Itens\n" + h.map(i => `${i.date};${i.total.toFixed(2)};${i.itens.join('|')}`).join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([c], { type: 'text/csv;charset=utf-8;' }));
+    a.download = 'saco_pt.csv';
+    a.click();
+}
+
+function saveC() { localStorage.setItem('s_c', document.getElementById('cart-txt').value); }
+
+function closeModal() {
+    document.getElementById('modal').style.display = 'none';
+    document.getElementById('m-footer-val').style.display = 'none';
+    document.getElementById('m-title').innerText = 'Processando...';
+    document.getElementById('modal-body').innerHTML = '';
+}
+
+function saveConfig() {
+    const k = document.getElementById('key-in').value.trim();
+    const m = document.getElementById('model-sel').value;
+    if (!k) { alert("Introduz uma API Key válida."); return; }
+    localStorage.setItem('s_k', k);
+    if (m) localStorage.setItem('s_m', m);
+    alert("✅ Configuração guardada!");
+}
+
+// FIX: fetchModels now lists ALL models that support generateContent, not just gemini-1.5
+async function fetchModels(silent = false) {
+    const k = document.getElementById('key-in').value.trim() || localStorage.getItem('s_k');
+    const statusEl = document.getElementById('model-status');
+    const selEl = document.getElementById('model-sel');
+    const countEl = document.getElementById('model-count-label');
+    const fetchBtn = document.getElementById('btn-fetch-models');
+
+    if (!k) {
+        if (!silent) alert("Introduz a API Key primeiro.");
+        return;
+    }
+
+    // Update key field in case called from boot with stored key
+    document.getElementById('key-in').value = k;
+
+    statusEl.innerHTML = `<div class="model-loading">🔄 A carregar modelos...</div>`;
+    selEl.style.display = 'none';
+    countEl.style.display = 'none';
+    fetchBtn.disabled = true;
+
+    try {
+        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${k}&pageSize=100`);
+        const d = await r.json();
+
+        if (d.error) {
+            statusEl.innerHTML = `<div class="model-error">❌ Erro: ${d.error.message}</div>`;
+            fetchBtn.disabled = false;
+            return;
+        }
+
+        // FIX: include ALL models that support generateContent, not just gemini-1.5
+        const supported = (d.models || []).filter(m =>
+            m.supportedGenerationMethods?.includes('generateContent')
+        );
+
+        if (!supported.length) {
+            statusEl.innerHTML = `<div class="model-error">Nenhum modelo compatível encontrado para esta chave.</div>`;
+            fetchBtn.disabled = false;
+            return;
+        }
+
+        const savedModel = localStorage.getItem('s_m');
+        selEl.innerHTML = "";
+
+        // Group models for better readability
+        const groups = {
+            'Gemini 2': supported.filter(m => m.name.includes('gemini-2')),
+            'Gemini 1.5': supported.filter(m => m.name.includes('gemini-1.5')),
+            'Gemini 1.0': supported.filter(m => m.name.includes('gemini-1.0') || m.name.includes('gemini-pro')),
+            'Outros': supported.filter(m => !m.name.includes('gemini-2') && !m.name.includes('gemini-1.5') && !m.name.includes('gemini-1.0') && !m.name.includes('gemini-pro'))
+        };
+
+        let totalAdded = 0;
+        for (const [groupName, models] of Object.entries(groups)) {
+            if (!models.length) continue;
+            const og = document.createElement('optgroup');
+            og.label = groupName;
+            models.forEach(m => {
+                const shortName = m.name.split('/').pop();
+                const opt = new Option(shortName.toUpperCase(), shortName);
+                if (shortName === savedModel) opt.selected = true;
+                og.appendChild(opt);
+                totalAdded++;
+            });
+            selEl.appendChild(og);
+        }
+
+        // Default selection: prefer flash models if nothing saved
+        if (!savedModel || !selEl.value) {
+            const preferred = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+            for (const p of preferred) {
+                const opt = selEl.querySelector(`option[value="${p}"]`);
+                if (opt) { opt.selected = true; break; }
+            }
+        }
+
+        statusEl.innerHTML = '';
+        selEl.style.display = 'block';
+        countEl.style.display = 'block';
+        countEl.innerText = `✅ ${totalAdded} modelo(s) disponíveis`;
+
+    } catch (e) {
+        statusEl.innerHTML = `<div class="model-error">❌ Erro de ligação. Verifica a chave e a ligação à internet.</div>`;
+    }
+
+    fetchBtn.disabled = false;
+}
+</script>
+</body>
+</html>
