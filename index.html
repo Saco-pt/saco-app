@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V56.0 - Correção de Preços</title>
+    <title>SACO.pt | V57.0 - Digitalização</title>
     <style>
         :root { --p: #1a73e8; --s: #1e8e3e; --bg: #f8f9fa; --txt: #202124; --err: #d93025; --v: #673ab7; --warn: #f29900; --card: #ffffff; }
         * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
@@ -36,7 +36,7 @@
         .badge { font-size: 10px; padding: 4px 12px; border-radius: 20px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
         
         #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; backdrop-filter: blur(4px); }
-        .modal-content { background: #fff; border-radius: 24px; padding: 25px; max-width: 450px; margin: 15% auto; max-height: 75vh; overflow-y: auto; width: 92%; }
+        .modal-content { background: #fff; border-radius: 24px; padding: 25px; max-width: 450px; margin: 15% auto; max-height: 80vh; overflow-y: auto; width: 92%; }
         
         .res-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #f0f0f0; }
         .res-row:last-child { border-bottom: none; }
@@ -55,15 +55,16 @@
 <div id="v-home" class="v active">
     <div class="card">
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-            <button class="btn btn-p" onclick="openCam()"><span>📸</span> Scanner</button>
-            <button class="btn btn-v" onclick="pasteText()"><span>📝</span> Colar Fatura</button>
+            <button class="btn btn-p" onclick="triggerInput('prod')"><span>📸</span> Produto</button>
+            <button class="btn btn-v" onclick="triggerInput('bill')"><span>🧾</span> Digitalizar Fatura</button>
         </div>
-        <input type="file" id="f-in" style="display:none" accept="image/*" onchange="handleImage(this)">
+        <input type="file" id="f-in" style="display:none" accept="image/*">
         
         <div style="margin-top:20px;">
-            <label style="font-size:12px; font-weight:700; color:#666; margin-left:5px;">PESQUISAR ARTIGO</label>
-            <input type="text" id="q-in" placeholder="Ex: Iogurte Grego Lidl">
-            <button class="btn btn-s" onclick="searchRealPrices()">🔍 Comparar Preços</button>
+            <label style="font-size:11px; font-weight:700; color:#666; margin-left:5px; display:block; margin-bottom:5px;">PESQUISAR ARTIGO</label>
+            <input type="text" id="q-in" placeholder="Ex: Sal 1kg">
+            <input type="text" id="loc-in" placeholder="Localidade (Opcional)" style="font-size:14px; padding:10px;">
+            <button class="btn btn-s" onclick="searchRealPrices()">🔍 Comparar Preços Hoje</button>
         </div>
     </div>
     <div id="out-home"></div>
@@ -71,8 +72,8 @@
 
 <div id="v-gen" class="v">
     <div class="card">
-        <h3 style="margin-bottom:15px">🔥 Folhetos Ativos</h3>
-        <button class="btn btn-warn" onclick="fetchPromos()"><span>✨</span> Ver Melhores Promos</button>
+        <h3 style="margin-bottom:15px">🔥 Folhetos e Promos</h3>
+        <button class="btn btn-warn" onclick="fetchPromos()"><span>✨</span> Ver Melhores Oportunidades</button>
     </div>
     <div id="out-promos"></div>
 </div>
@@ -84,7 +85,7 @@
             <span id="stat-month" style="font-size:22px; font-weight:900; color:var(--v)">0.00€</span>
         </div>
         <div class="card" style="text-align:center; padding:15px; margin-bottom:0;">
-            <small style="color:#666; font-weight:600;">Faturas</small><br>
+            <small style="color:#666; font-weight:600;">Recibos</small><br>
             <span id="stat-count" style="font-size:22px; font-weight:900;">0</span>
         </div>
     </div>
@@ -93,9 +94,9 @@
 
 <div id="v-cart" class="v">
     <div class="card">
-        <h3 style="margin-bottom:10px">Lista Inteligente</h3>
-        <textarea id="cart-txt" rows="10" placeholder="Ex: 2kg Arroz, Leite, Frango..." oninput="saveC()"></textarea>
-        <button class="btn btn-s" onclick="compareStoresDetailed()"><span>🚀</span> Calcular Melhor Supermercado</button>
+        <h3 style="margin-bottom:10px">Lista de Compras</h3>
+        <textarea id="cart-txt" rows="10" placeholder="Escreve aqui o que precisas..." oninput="saveC()"></textarea>
+        <button class="btn btn-s" onclick="compareStoresDetailed()"><span>🚀</span> Onde poupo mais?</button>
     </div>
     <div id="out-cart"></div>
 </div>
@@ -104,46 +105,67 @@
     <div class="card">
         <h3 style="margin-bottom:20px">Configuração</h3>
         <label style="font-size:12px; font-weight:bold; color:#5f6368;">Chave API Google</label>
-        <input type="password" id="key-in" placeholder="AI Key" onchange="fetchModels()">
+        <input type="password" id="key-in" placeholder="Inserir Key" onchange="fetchModels()">
         
-        <label style="font-size:12px; font-weight:bold; color:#5f6368;">Motor Selecionado</label>
+        <label style="font-size:12px; font-weight:bold; color:#5f6368;">Motor Ativo</label>
         <select id="model-sel"></select>
         
-        <button class="btn btn-p" onclick="saveConfig()">💾 Gravar Tudo</button>
-        <button class="btn btn-err" onclick="clearAllData()" style="margin-top:25px; padding:10px; font-size:12px;">Limpar Memória</button>
+        <button class="btn btn-p" onclick="saveConfig()">💾 Guardar Config</button>
+        <button class="btn btn-err" onclick="clearAllData()" style="margin-top:25px; padding:10px; font-size:12px;">Reset de Dados</button>
     </div>
 </div>
 
+<!-- Modal Digitalização / Edição -->
 <div id="modal" onclick="if(event.target==this) closeModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
-        <h3 id="m-title">Processar Dados</h3>
+        <h3 id="m-title">A Digitalizar...</h3>
         <div id="modal-body" style="margin:20px 0"></div>
         <div id="m-footer-val" class="card" style="background:#f1f3f4; border:none; display:none">
-            <label style="font-size:11px; font-weight:900;">TOTAL (€)</label>
+            <label style="font-size:11px; font-weight:900;">TOTAL ESTIMADO (€)</label>
             <input type="number" id="modal-total-val" step="0.01" style="font-size:24px; font-weight:bold;">
         </div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:20px">
-            <button class="btn btn-s" id="btn-save-m" onclick="saveEditedBill()">Guardar</button>
-            <button class="btn" style="background:#dadce0; color:#3c4043" onclick="closeModal()">Cancelar</button>
+            <button class="btn btn-s" id="btn-save-m" onclick="saveEditedBill()">Confirmar</button>
+            <button class="btn" style="background:#dadce0; color:#3c4043" onclick="closeModal()">Sair</button>
         </div>
     </div>
 </div>
 
 <nav class="nav">
     <button class="nav-i active" onclick="tab('home', this)"><span>🔎</span>Busca</button>
-    <button class="nav-i" onclick="tab('gen', this)"><span>🪄</span>Gerar</button>
-    <button class="nav-i" onclick="tab('history', this)"><span>📜</span>Arquivo</button>
-    <button class="nav-i" onclick="tab('cart', this)"><span>🛒</span>Carrinho</button>
+    <button class="nav-i" onclick="tab('gen', this)"><span>🔥</span>Promos</button>
+    <button class="nav-i" onclick="tab('history', this)"><span>🧾</span>Arquivo</button>
+    <button class="nav-i" onclick="tab('cart', this)"><span>🛒</span>Lista</button>
     <button class="nav-i" onclick="tab('cfg', this)"><span>⚙️</span>Config</button>
 </nav>
 
 <script>
+let currentMode = 'bill';
+
 function boot() {
     const k = localStorage.getItem('s_k'), c = localStorage.getItem('s_c');
     if(k) { document.getElementById('key-in').value = k; fetchModels(); }
     else { updateStatus("Sem Chave", "red"); document.getElementById('model-sel').innerHTML = '<option value="gemini-1.5-flash">1.5 Flash</option>'; }
     if(c) document.getElementById('cart-txt').value = c;
     renderHistory();
+    
+    document.getElementById('f-in').addEventListener('change', handleMedia);
+}
+
+function triggerInput(mode) {
+    currentMode = mode;
+    document.getElementById('f-in').click();
+}
+
+async function handleMedia(e) {
+    if(!e.target.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+        const b64 = ev.target.result.split(',')[1];
+        if(currentMode === 'bill') processBill(b64);
+        else processProduct(b64);
+    };
+    reader.readAsDataURL(e.target.files[0]);
 }
 
 async function fetchModels() {
@@ -160,7 +182,7 @@ async function fetchModels() {
                 const name = m.name.split('/').pop();
                 let opt = document.createElement('option');
                 opt.value = name;
-                opt.text = name.replace('gemini-', '').toUpperCase();
+                opt.text = name.replace('gemini-', '').toUpperCase() + (name.includes('flash') ? " (Rápido)" : " (Pro)");
                 if(name === saved || (!saved && name === 'gemini-1.5-flash')) opt.selected = true;
                 sel.appendChild(opt);
             });
@@ -178,7 +200,7 @@ function tab(id, btn) {
 
 async function callAI(prompt, search = false, image = null) {
     const k = localStorage.getItem('s_k'), m = localStorage.getItem('s_m') || 'gemini-1.5-flash';
-    if(!k) { alert("Configura a API Key em 'Config'"); return null; }
+    if(!k) { alert("Configura a API Key primeiro."); return null; }
     
     updateStatus("IA...", "orange");
     const payload = { contents: [{ parts: [{ text: prompt }] }] };
@@ -198,21 +220,24 @@ async function callAI(prompt, search = false, image = null) {
 function cleanJSON(txt) {
     try {
         let s = txt.replace(/```json|```/g, "").trim();
-        const start = s.indexOf('[');
-        const startObj = s.indexOf('{');
-        const first = (start !== -1 && (startObj === -1 || start < startObj)) ? start : startObj;
+        const start = Math.min(
+            s.indexOf('[') === -1 ? Infinity : s.indexOf('['),
+            s.indexOf('{') === -1 ? Infinity : s.indexOf('{')
+        );
         const end = Math.max(s.lastIndexOf(']'), s.lastIndexOf('}'));
-        return JSON.parse(s.substring(first, end + 1));
+        if(start === Infinity || end === -1) return null;
+        return JSON.parse(s.substring(start, end + 1));
     } catch(e) { return null; }
 }
 
 async function searchRealPrices() {
     const q = document.getElementById('q-in').value;
+    const loc = document.getElementById('loc-in').value || "Portugal";
     const out = document.getElementById('out-home');
     if(!q) return;
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="loading-spin"></div>A pesquisar em Portugal...</div>';
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="loading-spin"></div>A procurar preços em '+loc+'...</div>';
     
-    const res = await callAI(`Pesquisa o preço real ATUAL de "${q}" nos sites do Continente, Pingo Doce e Auchan Portugal. Devolve APENAS um array JSON: [{"loja":"Nome","preco":0.00,"produto":"Nome do item encontrado"}]`, true);
+    const res = await callAI(`Pesquisa o preço real ATUAL de "${q}" em supermercados físicos em ${loc} (Continente, Pingo Doce, Auchan, Lidl). Devolve APENAS um array JSON: [{"loja":"Nome","preco":0.00,"produto":"Nome preciso"}]`, true);
     const data = cleanJSON(res);
     
     if(data && Array.isArray(data)) {
@@ -221,44 +246,33 @@ async function searchRealPrices() {
                 <span><b>${i.loja}</b><br><small style="color:#666">${i.produto}</small></span>
                 <b style="color:var(--p); font-size:18px;">${Number(i.preco).toFixed(2)}€</b>
             </div>`).join('')}</div>`;
-    } else { out.innerHTML = '<div class="card">Não consegui dados precisos agora. Tenta pesquisar apenas o nome do artigo.</div>'; }
+    } else { out.innerHTML = '<div class="card">Sem resultados exatos. Tenta ser mais específico no nome (ex: "Leite Meio Gordo Mimosa").</div>'; }
 }
 
-async function handleImage(inp) {
-    if(!inp.files[0]) return;
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-        const b64 = e.target.result.split(',')[1];
-        processData("A ler imagem...", "image", b64);
-    };
-    reader.readAsDataURL(inp.files[0]);
-}
-
-async function pasteText() {
-    const txt = prompt("Cola o texto da fatura:");
-    if(txt) processData("A analisar texto...", "text", txt);
-}
-
-async function processData(msg, type, content) {
-    document.getElementById('m-title').innerText = msg;
-    document.getElementById('modal-body').innerHTML = '<div class="loading-spin"></div>';
+async function processBill(b64) {
+    document.getElementById('m-title').innerText = "Digitalização de Fatura";
+    document.getElementById('modal-body').innerHTML = '<div class="loading-spin"></div><p style="text-align:center">A extrair itens e valores...</p>';
     document.getElementById('m-footer-val').style.display = 'none';
     document.getElementById('modal').style.display = 'block';
 
-    const p = type === "image" 
-        ? "Extrai itens e total desta fatura. JSON: {\"itens\":[\"Desc\"], \"total\": 0.00}" 
-        : `Analisa este texto de fatura e extrai itens e total. JSON: {"itens":["Desc"], "total": 0.00} Texto: ${content}`;
-    
-    const res = await callAI(p, false, type === "image" ? content : null);
+    const prompt = "Extrai todos os produtos e o valor TOTAL desta fatura de supermercado. Devolve em JSON: {\"itens\":[\"Desc\"], \"total\": 0.00}";
+    const res = await callAI(prompt, false, b64);
     const data = cleanJSON(res);
     
     if(data) {
-        document.getElementById('m-title').innerText = "Validar Dados";
+        document.getElementById('m-title').innerText = "Validar Fatura";
         document.getElementById('modal-total-val').value = data.total;
-        document.getElementById('modal-body').innerHTML = data.itens.map(it => `<input type="text" class="bill-it" value="${it}" style="margin-bottom:5px; padding:10px;">`).join('');
+        document.getElementById('modal-body').innerHTML = data.itens.map(it => `<input type="text" class="bill-it" value="${it}" style="margin-bottom:5px; padding:10px; font-size:14px;">`).join('');
         document.getElementById('m-footer-val').style.display = 'block';
-    } else {
-        document.getElementById('modal-body').innerHTML = "Erro ao processar. Tenta novamente.";
+    } else { document.getElementById('modal-body').innerHTML = "Erro na digitalização. Tenta uma foto mais nítida."; }
+}
+
+async function processProduct(b64) {
+    updateStatus("A ler produto...", "orange");
+    const res = await callAI("Que produto de supermercado é este? Diz apenas o nome e marca.", false, b64);
+    if(res) {
+        document.getElementById('q-in').value = res.trim();
+        searchRealPrices();
     }
 }
 
@@ -273,20 +287,20 @@ function saveEditedBill() {
 
 async function fetchPromos() {
     const out = document.getElementById('out-promos');
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="loading-spin"></div>A ler folhetos...</div>';
-    const res = await callAI(`Quais as 5 melhores promoções em folheto hoje no Continente e Lidl Portugal? JSON: [{"super":"Nome","titulo":"Oferta"}]`, true);
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="loading-spin"></div>A analisar folhetos ativos...</div>';
+    const res = await callAI(`Lista 5 grandes promoções (descontos > 30%) em vigor hoje em Portugal (Continente, Lidl, Pingo Doce). JSON: [{"super":"Nome","titulo":"Produto e Preço"}]`, true);
     const data = cleanJSON(res);
-    if(data) out.innerHTML = data.map(i => `<div class="card"><b>${i.super}</b><p>${i.titulo}</p></div>`).join('');
+    if(data) out.innerHTML = data.map(i => `<div class="card"><b>${i.super}</b><p style="margin-top:5px;">${i.titulo}</p></div>`).join('');
 }
 
 async function compareStoresDetailed() {
     const txt = document.getElementById('cart-txt').value;
     const out = document.getElementById('out-cart');
     if(!txt) return;
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="loading-spin"></div>A comparar cabazes...</div>';
-    const res = await callAI(`Simula o custo total deste cabaz "${txt}" no Continente e Pingo Doce. JSON: [{"loja":"Nome","total":0.00}]`, true);
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="loading-spin"></div>A calcular melhor preço total...</div>';
+    const res = await callAI(`Estima o custo total deste cabaz "${txt}" em dois supermercados diferentes em Portugal. JSON: [{"loja":"Nome","total":0.00}]`, true);
     const data = cleanJSON(res);
-    if(data) out.innerHTML = data.map(i => `<div class="card" style="display:flex; justify-content:space-between"><b>${i.loja}</b><span style="color:var(--s); font-weight:900;">${Number(i.total).toFixed(2)}€</span></div>`).join('');
+    if(data) out.innerHTML = data.map(i => `<div class="card" style="display:flex; justify-content:space-between; align-items:center"><b>${i.loja}</b><span style="color:var(--s); font-size:20px; font-weight:900;">${Number(i.total).toFixed(2)}€</span></div>`).join('');
 }
 
 function renderHistory() {
@@ -295,18 +309,20 @@ function renderHistory() {
     document.getElementById('stat-month').innerText = t.toFixed(2) + "€";
     document.getElementById('stat-count').innerText = hist.length;
     document.getElementById('out-history').innerHTML = hist.map(h => `
-        <div class="card" style="border-left: 5px solid var(--v);">
-            <div style="display:flex; justify-content:space-between"><b>${h.date}</b> <b style="color:var(--v)">${h.total.toFixed(2)}€</b></div>
-            <div style="font-size:12px; color:#666; margin-top:8px;">${h.itens.slice(0,3).join(', ')}...</div>
+        <div class="card" style="border-left: 5px solid var(--v); padding: 15px;">
+            <div style="display:flex; justify-content:space-between; align-items:center">
+                <span style="font-size:13px; color:#666">${h.date}</span>
+                <b style="color:var(--v); font-size:18px;">${h.total.toFixed(2)}€</b>
+            </div>
+            <div style="font-size:12px; color:#444; margin-top:10px; line-height:1.4;">${h.itens.slice(0,4).join(', ')}${h.itens.length > 4 ? '...' : ''}</div>
         </div>`).join('');
 }
 
-function openCam() { document.getElementById('f-in').click(); }
 function closeModal() { document.getElementById('modal').style.display = 'none'; }
 function saveC() { localStorage.setItem('s_c', document.getElementById('cart-txt').value); }
-function saveConfig() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); fetchModels(); alert("Guardado!"); }
+function saveConfig() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); fetchModels(); alert("Configuração Gravada!"); }
 function updateStatus(m, c) { const e = document.getElementById('st'); e.innerText = m; e.style.color = c; e.style.background = c === 'red' ? '#fce8e6' : '#e6f4ea'; }
-function clearAllData() { if(confirm("Apagar tudo?")) { localStorage.clear(); location.reload(); } }
+function clearAllData() { if(confirm("Atenção: Todos os recibos e configurações serão apagados. Continuar?")) { localStorage.clear(); location.reload(); } }
 </script>
 </body>
 </html>
