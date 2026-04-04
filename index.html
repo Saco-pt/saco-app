@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V63.0 - Full Operational</title>
+    <title>SACO.pt | V64.0 - Full Operational</title>
     <style>
         :root { --p: #1a73e8; --s: #1e8e3e; --bg: #f8f9fa; --txt: #202124; --err: #d93025; --v: #673ab7; --warn: #f29900; --card: #ffffff; }
         * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -51,6 +51,29 @@
         .filter-btn { border: 1.5px solid #e0e0e0; background: #fff; border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; color: #555; transition: all 0.15s; flex-shrink: 0; }
         .filter-btn.active { background: var(--p); border-color: var(--p); color: #fff; }
         .promo-empty { text-align: center; padding: 40px 20px; color: #aaa; font-size: 13px; }
+        /* CHAT */
+        .chat-bubble { max-width: 85%; padding: 10px 14px; border-radius: 18px; font-size: 13px; line-height: 1.5; margin-bottom: 8px; }
+        .chat-user { background: var(--p); color: #fff; border-bottom-right-radius: 4px; margin-left: auto; }
+        .chat-ai { background: #fff; border: 1px solid #eee; color: var(--txt); border-bottom-left-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+        .chat-wrap { display: flex; flex-direction: column; padding: 10px 0; min-height: 200px; max-height: 55vh; overflow-y: auto; }
+        .chat-input-row { display: flex; gap: 8px; align-items: center; }
+        .chat-input-row input { margin-bottom: 0; flex-grow: 1; }
+        /* SCAN */
+        #barcode-video { width: 100%; border-radius: 12px; background: #000; display: none; }
+        .scan-result { padding: 12px; background: #f1f8f3; border-radius: 12px; border-left: 4px solid var(--s); font-size: 13px; }
+        /* INFLATION */
+        .inf-bar-wrap { margin: 6px 0; }
+        .inf-bar-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px; }
+        .inf-bar-bg { background: #eee; border-radius: 20px; height: 8px; }
+        .inf-bar-fill { background: var(--p); height: 8px; border-radius: 20px; transition: width 0.6s ease; }
+        .inf-bar-fill.up { background: var(--err); }
+        .inf-bar-fill.down { background: var(--s); }
+        /* MAP */
+        #map-frame { width: 100%; height: 340px; border-radius: 16px; border: none; }
+        .store-card { display: flex; gap: 12px; align-items: flex-start; padding: 12px; background: #fff; border-radius: 14px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #eee; }
+        .store-icon { font-size: 26px; flex-shrink: 0; }
+        .store-open { color: var(--s); font-weight: 700; font-size: 12px; }
+        .store-closed { color: var(--err); font-weight: 700; font-size: 12px; }
     </style>
 </head>
 <body onload="boot()">
@@ -142,6 +165,63 @@
     <div id="out-promo"></div>
 </div>
 
+<!-- SCAN -->
+<div id="v-scan" class="v">
+    <div class="card">
+        <h3>📸 Scan Código de Barras</h3>
+        <p style="font-size:12px; color:#888; margin:8px 0 14px;">Aponta a câmara para um produto e vê o preço nos supermercados.</p>
+        <video id="barcode-video" autoplay playsinline></video>
+        <canvas id="barcode-canvas" style="display:none;"></canvas>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;">
+            <button class="btn btn-v" id="btn-scan-start" onclick="startScan()">📷 Ativar Câmara</button>
+            <button class="btn btn-p" id="btn-scan-cap" onclick="captureAndSearch()" disabled>🔍 Identificar</button>
+        </div>
+        <input type="text" id="barcode-manual" placeholder="Ou insere código de barras manualmente..." style="margin-top:12px;">
+        <button class="btn btn-s" onclick="searchByBarcode()">Pesquisar por Código</button>
+    </div>
+    <div id="out-scan"></div>
+</div>
+
+<!-- CHAT IA -->
+<div id="v-chat" class="v">
+    <div class="card" style="padding:15px;">
+        <h3 style="margin-bottom:4px;">🤖 Assistente de Compras</h3>
+        <p style="font-size:11px; color:#aaa; margin-bottom:12px;">Pergunta sobre preços, receitas, promoções ou poupança.</p>
+        <div class="chat-wrap" id="chat-messages"></div>
+        <div style="display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 8px;">
+            <button class="filter-btn" onclick="quickChat('Tenho 20€, o que posso cozinhar esta semana?')">🍳 Refeições com 20€</button>
+            <button class="filter-btn" onclick="quickChat('Qual a proteína mais barata agora em Portugal?')">💪 Proteína barata</button>
+            <button class="filter-btn" onclick="quickChat('Dá-me 5 dicas para gastar menos no supermercado em Portugal')">💡 Poupar mais</button>
+        </div>
+        <div class="chat-input-row">
+            <input type="text" id="chat-in" placeholder="Faz uma pergunta..." onkeydown="if(event.key==='Enter') sendChat()">
+            <button class="btn btn-p" onclick="sendChat()" style="width:auto; padding:14px 18px; flex-shrink:0;">➤</button>
+        </div>
+    </div>
+</div>
+
+<!-- INFLAÇÃO PESSOAL -->
+<div id="v-inf" class="v">
+    <div class="card">
+        <h3>📊 Inflação Pessoal</h3>
+        <p style="font-size:12px; color:#888; margin-bottom:14px;">Compara o custo do teu cabaz habitual ao longo do tempo.</p>
+        <div id="inf-stats" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;"></div>
+        <button class="btn btn-p" id="btn-inf" onclick="calcInflation()">📈 Analisar Variação de Preços</button>
+    </div>
+    <div id="out-inf"></div>
+</div>
+
+<!-- MAPA -->
+<div id="v-map" class="v">
+    <div class="card" style="padding:15px;">
+        <h3 style="margin-bottom:4px;">🗺️ Supermercados Próximos</h3>
+        <p style="font-size:11px; color:#aaa; margin-bottom:12px;">Localiza e vê horários dos supermercados perto de ti.</p>
+        <button class="btn btn-p" id="btn-map" onclick="loadMap()">📍 Encontrar Supermercados</button>
+    </div>
+    <iframe id="map-frame" style="display:none;"></iframe>
+    <div id="out-map" style="margin-top:10px;"></div>
+</div>
+
 <!-- CONFIG -->
 <div id="v-cfg" class="v">
     <div class="card">
@@ -166,13 +246,17 @@
     </div>
 </div>
 
-<nav class="nav" id="main-nav" style="height:70px;">
-    <button class="nav-i active" onclick="tab('home', this)"><span>🔎</span>Busca</button>
-    <button class="nav-i" onclick="tab('gen', this)"><span>🧠</span>Perfil</button>
-    <button class="nav-i" onclick="tab('history', this)"><span>🧾</span>Arquivo</button>
-    <button class="nav-i" onclick="tab('cart', this)"><span>🛒</span>Lista</button>
-    <button class="nav-i" onclick="tab('promo', this)"><span>🏷️</span>Promos</button>
-    <button class="nav-i" onclick="tab('cfg', this)"><span>⚙️</span>Config</button>
+<nav class="nav" id="main-nav" style="height:70px; overflow-x:auto; justify-content:flex-start;">
+    <button class="nav-i active" onclick="tab('home', this)" style="min-width:56px;"><span>🔎</span>Busca</button>
+    <button class="nav-i" onclick="tab('scan', this)" style="min-width:56px;"><span>📸</span>Scan</button>
+    <button class="nav-i" onclick="tab('cart', this)" style="min-width:56px;"><span>🛒</span>Lista</button>
+    <button class="nav-i" onclick="tab('promo', this)" style="min-width:56px;"><span>🏷️</span>Promos</button>
+    <button class="nav-i" onclick="tab('chat', this)" style="min-width:56px;"><span>🤖</span>Chat</button>
+    <button class="nav-i" onclick="tab('map', this)" style="min-width:56px;"><span>🗺️</span>Mapa</button>
+    <button class="nav-i" onclick="tab('inf', this)" style="min-width:56px;"><span>📊</span>Inflação</button>
+    <button class="nav-i" onclick="tab('history', this)" style="min-width:56px;"><span>🧾</span>Arquivo</button>
+    <button class="nav-i" onclick="tab('gen', this)" style="min-width:56px;"><span>🧠</span>Perfil</button>
+    <button class="nav-i" onclick="tab('cfg', this)" style="min-width:56px;"><span>⚙️</span>Config</button>
 </nav>
 
 <script>
@@ -198,10 +282,23 @@ function boot() {
 }
 
 function tab(id, btn) {
+    // Stop camera if leaving scan tab
+    if (id !== 'scan' && scanStream) {
+        scanStream.getTracks().forEach(t => t.stop());
+        scanStream = null;
+        var v = document.getElementById('barcode-video');
+        if (v) v.style.display = 'none';
+        var sb = document.getElementById('btn-scan-start');
+        if (sb) sb.innerHTML = '📷 Ativar Câmara';
+        var cb = document.getElementById('btn-scan-cap');
+        if (cb) cb.disabled = true;
+    }
     document.querySelectorAll('.v').forEach(v => v.classList.remove('active'));
     document.querySelectorAll('.nav-i').forEach(n => n.classList.remove('active'));
     document.getElementById('v-' + id).classList.add('active');
     btn.classList.add('active');
+    // Init chat display on first open
+    if (id === 'chat') renderChat();
 }
 
 // FIX: separate trigger from handler
@@ -608,6 +705,257 @@ function setPromoFilter(filter, btn) {
 
 function filterPromos() {
     if (allPromos.length) renderPromos();
+}
+
+// ── SCAN ────────────────────────────────────────────────────
+let scanStream = null;
+
+async function startScan() {
+    const video = document.getElementById('barcode-video');
+    const btn = document.getElementById('btn-scan-start');
+    const capBtn = document.getElementById('btn-scan-cap');
+    if (scanStream) {
+        scanStream.getTracks().forEach(t => t.stop());
+        scanStream = null;
+        video.style.display = 'none';
+        btn.innerHTML = '📷 Ativar Câmara';
+        capBtn.disabled = true;
+        return;
+    }
+    try {
+        scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        video.srcObject = scanStream;
+        video.style.display = 'block';
+        btn.innerHTML = '⏹ Parar Câmara';
+        capBtn.disabled = false;
+    } catch(e) {
+        alert('Sem acesso à câmara. Usa o campo manual abaixo.');
+    }
+}
+
+async function captureAndSearch() {
+    const video = document.getElementById('barcode-video');
+    const canvas = document.getElementById('barcode-canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    const b64 = canvas.toDataURL('image/jpeg').split(',')[1];
+    const out = document.getElementById('out-scan');
+    out.innerHTML = '<div class="card" style="text-align:center; padding:20px;"><div class="loading-spin" style="border-top-color:var(--p); width:28px; height:28px; margin:0 auto;"></div><br><small>A identificar produto...</small></div>';
+    const res = await callAI('Identifica o produto nesta imagem pelo código de barras ou pela embalagem. Retorna APENAS JSON: {"ean":"codigo","produto":"Nome completo","marca":"marca","quantidade":"ex: 1kg"}', b64);
+    if (!res) { out.innerHTML = '<div class="card" style="color:var(--err);">Não foi possível identificar.</div>'; return; }
+    try {
+        const jsonMatch = res.match(/\{[\s\S]*\}/);
+        const d = JSON.parse(jsonMatch[0]);
+        out.innerHTML = '<div class="scan-result"><b>' + d.produto + '</b><br><small>' + (d.marca||'') + ' · ' + (d.quantidade||'') + (d.ean ? ' · EAN: '+d.ean : '') + '</small></div>';
+        document.getElementById('q-in').value = d.produto;
+        setTimeout(function() {
+            var homeBtn = document.querySelector('#main-nav .nav-i:first-child');
+            tab('home', homeBtn);
+            searchRealPrices();
+        }, 800);
+    } catch(e) { out.innerHTML = '<div class="card" style="color:var(--err);">Erro ao ler produto.</div>'; }
+}
+
+async function searchByBarcode() {
+    const code = document.getElementById('barcode-manual').value.trim();
+    if (!code) return;
+    const out = document.getElementById('out-scan');
+    out.innerHTML = '<div class="card" style="text-align:center; padding:16px;"><div class="loading-spin" style="border-top-color:var(--p); width:24px; height:24px; margin:0 auto;"></div></div>';
+    const res = await callAI('O produto com EAN/código de barras ' + code + ' em Portugal chama-se como? Retorna APENAS JSON: {"produto":"Nome completo","marca":"marca","quantidade":"gramagem"}', null, true);
+    if (!res) return;
+    try {
+        const d = JSON.parse(res.match(/\{[\s\S]*\}/)[0]);
+        out.innerHTML = '<div class="scan-result"><b>' + d.produto + '</b><br><small>' + (d.marca||'') + ' · ' + (d.quantidade||'') + '</small></div>';
+        document.getElementById('q-in').value = d.produto;
+        setTimeout(function() {
+            var homeBtn = document.querySelector('#main-nav .nav-i:first-child');
+            tab('home', homeBtn);
+            searchRealPrices();
+        }, 600);
+    } catch(e) { out.innerHTML = '<div class="card" style="color:var(--err);">Código não encontrado.</div>'; }
+}
+
+// ── CHAT IA ─────────────────────────────────────────────────
+let chatHistory = [];
+
+function quickChat(msg) {
+    document.getElementById('chat-in').value = msg;
+    sendChat();
+}
+
+async function sendChat() {
+    const inp = document.getElementById('chat-in');
+    const msg = inp.value.trim();
+    if (!msg) return;
+    inp.value = '';
+    const wrap = document.getElementById('chat-messages');
+
+    // Add user bubble
+    chatHistory.push({ role: 'user', text: msg });
+    renderChat();
+    wrap.scrollTop = wrap.scrollHeight;
+
+    // Thinking indicator
+    const thinkId = 'think-' + Date.now();
+    wrap.innerHTML += '<div id="' + thinkId + '" class="chat-bubble chat-ai" style="opacity:0.5;">💭 A pensar...</div>';
+    wrap.scrollTop = wrap.scrollHeight;
+
+    const histCtx = chatHistory.slice(-6).map(function(m) { return (m.role === 'user' ? 'Utilizador: ' : 'Assistente: ') + m.text; }).join('
+');
+    const prompt = 'És um assistente de compras especialista em supermercados portugueses (Continente, Pingo Doce, Lidl, Auchan, Mercadona). '
+        + 'Responde sempre em português de Portugal, de forma concisa e útil. '
+        + 'Histórico recente:
+' + histCtx + '
+
+Responde à última mensagem do utilizador.';
+
+    const res = await callAI(prompt, null, true);
+    const reply = res || 'Desculpa, não consegui responder. Tenta novamente.';
+    chatHistory.push({ role: 'ai', text: reply });
+
+    const el = document.getElementById(thinkId);
+    if (el) el.remove();
+    renderChat();
+    wrap.scrollTop = wrap.scrollHeight;
+}
+
+function renderChat() {
+    const wrap = document.getElementById('chat-messages');
+    if (!chatHistory.length) {
+        wrap.innerHTML = '<div style="text-align:center; color:#bbb; font-size:12px; padding:30px 0;">Pergunta qualquer coisa sobre preços,<br>receitas ou poupança 👆</div>';
+        return;
+    }
+    wrap.innerHTML = chatHistory.map(function(m) {
+        return '<div class="chat-bubble ' + (m.role === 'user' ? 'chat-user' : 'chat-ai') + '">' + m.text.replace(/
+/g, '<br>') + '</div>';
+    }).join('');
+}
+
+// ── INFLAÇÃO PESSOAL ────────────────────────────────────────
+async function calcInflation() {
+    const h = JSON.parse(localStorage.getItem('s_h') || '[]');
+    const btn = document.getElementById('btn-inf');
+    const out = document.getElementById('out-inf');
+    const stats = document.getElementById('inf-stats');
+
+    if (h.length < 2) {
+        out.innerHTML = '<div class="card" style="color:var(--warn); text-align:center; padding:20px;">Precisas de pelo menos 2 recibos arquivados para calcular a variação.</div>';
+        return;
+    }
+
+    btn.innerHTML = '<div class="loading-spin"></div> A analisar...'; btn.disabled = true;
+
+    // Calculate basic stats from history
+    const totals = h.map(function(r) { return r.total; });
+    const avg = totals.reduce(function(a,b){return a+b;},0) / totals.length;
+    const max = Math.max.apply(null, totals);
+    const min = Math.min.apply(null, totals);
+    const latest = h[0].total;
+    const oldest = h[h.length-1].total;
+    const variation = oldest > 0 ? (((latest - oldest) / oldest) * 100).toFixed(1) : 0;
+
+    stats.innerHTML = [
+        ['Média por compra', avg.toFixed(2) + '€', '#1a73e8'],
+        ['Última compra', latest.toFixed(2) + '€', '#1e8e3e'],
+        ['Variação total', (variation > 0 ? '+' : '') + variation + '%', variation > 0 ? '#d93025' : '#1e8e3e'],
+        ['Nº de compras', h.length, '#673ab7']
+    ].map(function(s) {
+        return '<div class="card" style="text-align:center; padding:12px; margin-bottom:0;">'
+            + '<small style="color:#888;">' + s[0] + '</small><br>'
+            + '<span style="font-size:18px; font-weight:900; color:' + s[2] + ';">' + s[1] + '</span></div>';
+    }).join('');
+
+    // Get AI analysis of most frequent items and their price evolution
+    const topItems = [];
+    const counts = {};
+    h.forEach(function(r) { r.itens.forEach(function(i){ counts[i]=(counts[i]||0)+1; }); });
+    Object.keys(counts).sort(function(a,b){return counts[b]-counts[a];}).slice(0,8).forEach(function(k){ topItems.push(k); });
+
+    const prompt = 'Analisa a evolução de preços em Portugal para estes produtos que compro habitualmente: '
+        + topItems.join(', ') + '. '
+        + 'Compara os preços de hoje com há 6 meses e há 1 ano. '
+        + 'Responde APENAS JSON: {"itens":[{"produto":"nome","preco_atual":0.00,"preco_6m":0.00,"preco_1a":0.00,"variacao_pct":0.0}],"resumo":"1 frase sobre inflação alimentar em PT"}';
+
+    const res = await callAI(prompt, null, true);
+    btn.innerHTML = '📈 Analisar Variação de Preços'; btn.disabled = false;
+
+    if (!res) { out.innerHTML = '<div class="card" style="color:var(--err);">Sem dados da API.</div>'; return; }
+
+    try {
+        const data = JSON.parse(res.match(/\{[\s\S]*\}/)[0]);
+        let html = '<div class="card"><h4 style="margin-bottom:6px;">Evolução dos teus produtos</h4>';
+        html += '<p style="font-size:12px; color:#666; margin-bottom:14px;">' + (data.resumo||'') + '</p>';
+        (data.itens||[]).forEach(function(it) {
+            const pct = Number(it.variacao_pct);
+            const isUp = pct > 0;
+            const barW = Math.min(Math.abs(pct) * 2, 100);
+            html += '<div class="inf-bar-wrap">'
+                + '<div class="inf-bar-label"><span>' + it.produto + '</span>'
+                + '<span style="color:' + (isUp?'var(--err)':'var(--s)') + '; font-weight:700;">'
+                + (isUp?'+':'') + pct.toFixed(1) + '% · ' + Number(it.preco_atual).toFixed(2) + '€</span></div>'
+                + '<div class="inf-bar-bg"><div class="inf-bar-fill ' + (isUp?'up':'down') + '" style="width:' + barW + '%;"></div></div>'
+                + '</div>';
+        });
+        html += '</div>';
+        out.innerHTML = html;
+    } catch(e) {
+        out.innerHTML = '<div class="card" style="color:var(--err);">Erro ao processar análise.</div>';
+    }
+}
+
+// ── MAPA ────────────────────────────────────────────────────
+async function loadMap() {
+    const btn = document.getElementById('btn-map');
+    const out = document.getElementById('out-map');
+    const mapFrame = document.getElementById('map-frame');
+    btn.innerHTML = '<div class="loading-spin"></div> A localizar...'; btn.disabled = true;
+
+    if (!navigator.geolocation) {
+        btn.innerHTML = '📍 Encontrar Supermercados'; btn.disabled = false;
+        out.innerHTML = '<div class="card" style="color:var(--err);">GPS não disponível neste dispositivo.</div>';
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(async function(pos) {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+
+        // Show Google Maps embed with nearby supermarkets
+        const query = encodeURIComponent('supermercado');
+        var osmUrl = 'https://www.openstreetmap.org/export/embed.html?bbox='
+            + (lng-0.02) + '%2C' + (lat-0.02) + '%2C' + (lng+0.02) + '%2C' + (lat+0.02)
+            + '&layer=mapnik&marker=' + lat + '%2C' + lng;
+        mapFrame.src = osmUrl;
+        mapFrame.style.display = 'block';
+
+        // Get AI info about nearby stores + hours
+        const prompt = 'Quais os supermercados (Continente, Pingo Doce, Lidl, Auchan, Mercadona, Mini Preço) tipicamente abertos perto de coordenadas ' + lat.toFixed(3) + ',' + lng.toFixed(3) + ' em Portugal? '
+            + 'Dá os horários típicos de cada cadeia ao ' + ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][new Date().getDay()] + '. '
+            + 'Responde APENAS JSON: {"lojas":[{"nome":"Nome","horario":"09h-21h","aberto_agora":true,"distancia_est":"~Xkm"}]}';
+
+        const res = await callAI(prompt, null, true);
+        btn.innerHTML = '🔄 Atualizar'; btn.disabled = false;
+
+        if (!res) { return; }
+        try {
+            const data = JSON.parse(res.match(/\{[\s\S]*\}/)[0]);
+            out.innerHTML = (data.lojas||[]).map(function(l) {
+                return '<div class="store-card">'
+                    + '<div class="store-icon">' + ({'Continente':'🔵','Pingo Doce':'🟢','Lidl':'🟡','Auchan':'🔴','Mercadona':'🟠'}[l.nome]||'🏪') + '</div>'
+                    + '<div style="flex-grow:1;">'
+                    + '<b style="font-size:14px;">' + l.nome + '</b>'
+                    + (l.distancia_est ? ' <span style="font-size:11px; color:#aaa;">' + l.distancia_est + '</span>' : '')
+                    + '<br><span class="' + (l.aberto_agora ? 'store-open' : 'store-closed') + '">' + (l.aberto_agora ? '● Aberto' : '● Fechado') + '</span>'
+                    + ' <span style="font-size:12px; color:#666;">· ' + (l.horario||'') + '</span>'
+                    + '</div></div>';
+            }).join('');
+        } catch(e) {}
+
+    }, function() {
+        btn.innerHTML = '📍 Encontrar Supermercados'; btn.disabled = false;
+        out.innerHTML = '<div class="card" style="color:var(--warn);">Permite acesso à localização para ver supermercados próximos.</div>';
+    });
 }
 
 function closeModal() {
