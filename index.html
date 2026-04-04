@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V44.0 FINAL</title>
+    <title>SACO.pt | V45.0</title>
     <style>
         :root { --p: #1a73e8; --s: #1e8e3e; --bg: #f8f9fa; --txt: #202124; --err: #d93025; --v: #673ab7; --warn: #fb8c00; }
         * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; }
@@ -39,21 +39,23 @@
         .spin { width: 20px; height: 20px; border: 3px solid #eee; border-top: 3px solid var(--p); border-radius: 50%; animation: rot 1s linear infinite; }
         @keyframes rot { 100% { transform: rotate(360deg); } }
         
-        /* Alerts */
-        .alert-box { background: #fff3e0; color: #e65100; padding: 10px; border-radius: 10px; font-size: 12px; margin-bottom: 10px; display: none; border-left: 4px solid var(--warn); }
+        /* Item Selection UI */
+        .item-select { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #eee; cursor: pointer; }
+        .item-select input { width: auto; margin: 0; }
+
+        /* Modal Simple */
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; padding: 20px; overflow-y: auto; }
+        .modal-content { background: white; border-radius: 20px; padding: 20px; max-width: 500px; margin: 0 auto; }
     </style>
 </head>
 <body onload="boot()">
 
 <div class="header">
     <div style="font-weight:900; font-size:20px; letter-spacing:-1px;">SACO<span style="color:var(--p)">.pt</span></div>
-    <div id="st" class="badge">V44.0 FINAL</div>
+    <div id="st" class="badge">V45.0</div>
 </div>
 
-<!-- BUSCA & SCANNER -->
 <div id="v-home" class="v active">
-    <div id="quota-msg" class="alert-box">⚠️ Limite de pedidos atingido. Aguarde um momento.</div>
-    
     <div class="card">
         <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-bottom:12px;">
             <button class="btn btn-p" onclick="openCam('prod')">📸 Produto</button>
@@ -61,7 +63,6 @@
             <button class="btn btn-s" style="background:var(--warn)" onclick="openCam('tag')">🏷️ Etiqueta</button>
         </div>
         <input type="file" id="f-in" style="display:none" accept="image/*" capture="environment" onchange="handleImage(this)">
-        
         <input type="text" id="q-in" placeholder="Detergente, Arroz, etc...">
         <div style="display:flex; gap:5px;">
             <input type="text" id="loc-in" placeholder="Sua Cidade (ex: Porto)" style="width:140px; font-size:12px;">
@@ -71,7 +72,6 @@
     <div id="out-home"></div>
 </div>
 
-<!-- ARQUIVO DE GASTOS -->
 <div id="v-history" class="v">
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
         <div class="card" style="margin-bottom:0; text-align:center">
@@ -86,12 +86,11 @@
     <div id="out-history"></div>
 </div>
 
-<!-- CARRINHO INTELIGENTE -->
 <div id="v-cart" class="v">
     <div class="card">
         <textarea id="cart-txt" rows="12" placeholder="Sua lista de compras..." onchange="saveC()"></textarea>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-            <button class="btn btn-s" onclick="compareStoresWithGrounding()">🚀 Melhor Loja HOJE</button>
+            <button class="btn btn-s" onclick="compareStoresWithGrounding()">🚀 Melhor Loja</button>
             <button class="btn btn-wa" onclick="shareWA()">🟢 WhatsApp</button>
         </div>
         <button class="btn btn-outline" style="margin-top:10px;" onclick="copyList()">📋 Copiar Texto</button>
@@ -99,17 +98,27 @@
     <div id="out-cart"></div>
 </div>
 
-<!-- DEFINIÇÕES -->
 <div id="v-cfg" class="v">
     <div class="card">
         <h3>Configuração</h3>
-        <p style="font-size:12px; color:#666; margin-bottom:10px;">A sua API Key e os seus dados nunca saem deste telemóvel.</p>
         <input type="password" id="key-in" placeholder="Google Gemini API Key">
         <select id="model-sel"></select>
-        <button class="btn btn-p" onclick="loadModels()">🔄 Validar Conexão</button>
+        <button class="btn btn-p" onclick="loadModels()">🔄 Validar</button>
         <button class="btn btn-s" style="margin-top:10px" onclick="saveConfig()">💾 Guardar</button>
         <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
         <button class="btn" style="background:var(--err)" onclick="clearAllData()">🗑️ Apagar Tudo</button>
+    </div>
+</div>
+
+<!-- Modal de Seleção de Itens -->
+<div id="modal">
+    <div class="modal-content">
+        <h3 id="modal-title">Selecionar Itens</h3>
+        <div id="modal-body" style="margin: 15px 0;"></div>
+        <div style="display:flex; gap:10px;">
+            <button class="btn btn-s" onclick="exportToCart()">🛒 Add ao Carrinho</button>
+            <button class="btn btn-outline" onclick="closeModal()">Fechar</button>
+        </div>
     </div>
 </div>
 
@@ -121,7 +130,7 @@
 </nav>
 
 <script>
-let state = { camMode: "prod" };
+let state = { camMode: "prod", selectedBill: null };
 
 function boot() {
     const k = localStorage.getItem('s_k'), m = localStorage.getItem('s_m'), 
@@ -133,7 +142,6 @@ function boot() {
     renderHistory();
 }
 
-// CORREÇÃO: Extrator de JSON melhorado para faturas e buscas
 function parseDeep(text) {
     try {
         const match = text.match(/\[[\s\S]*\]|\{[\s\S]*\}/);
@@ -143,61 +151,21 @@ function parseDeep(text) {
 
 async function callAI(payload, search = false) {
     const k = localStorage.getItem('s_k'), m = localStorage.getItem('s_m');
-    if(!k || !m) { alert("Configure a sua API Key nas Definições."); tab('cfg', document.querySelectorAll('.nav-i')[3]); return null; }
-    
+    if(!k || !m) { alert("Configura a API Key."); tab('cfg', document.querySelectorAll('.nav-i')[3]); return null; }
     if(search) payload.tools = [{ google_search: {} }];
-
-    updateStatus("A processar...", "orange");
+    updateStatus("...", "orange");
     try {
         const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${k}`, {
             method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
         });
-        
-        if(r.status === 429) {
-            document.getElementById('quota-msg').style.display = 'block';
-            setTimeout(() => document.getElementById('quota-msg').style.display = 'none', 10000);
-            throw new Error("Quota");
-        }
-
         const d = await r.json();
         updateStatus("OK", "green");
         return d.candidates[0].content.parts[0].text;
-    } catch(e) { 
-        updateStatus("Erro", "red"); 
-        return null; 
-    }
-}
-
-async function searchRealPrices() {
-    const q = document.getElementById('q-in').value;
-    const loc = document.getElementById('loc-in').value;
-    const out = document.getElementById('out-home');
-    if(!q) return;
-    localStorage.setItem('s_l', loc);
-
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin" style="margin:0 auto 10px;"></div>Comparando preços reais...</div>';
-    
-    const prompt = `Preço REAL HOJE para "${q}" em Portugal, zona de ${loc || 'Portugal Continental'}. 
-    Verifica Continente, Pingo Doce, Mercadona, Lidl, Aldi e Auchan. 
-    Responde APENAS JSON: [{"loja":"Nome","preco":0.00,"obs":"produto e promoção"}]`;
-    
-    const res = await callAI({ contents: [{ parts: [{ text: prompt }] }] }, true);
-    const data = parseDeep(res);
-    
-    if(data) {
-        out.innerHTML = `<div class="card">${data.map(i => `
-            <div class="price-row">
-                <span><b>${i.loja}</b><br><small style="color:#666">${i.obs||''}</small></span>
-                <span style="color:var(--p); font-weight:bold">${Number(i.preco).toFixed(2)}€</span>
-            </div>`).join('')}</div>`;
-    } else {
-        out.innerHTML = '<div class="card">Não foi possível obter dados. Tente especificar a marca.</div>';
-    }
+    } catch(e) { updateStatus("Erro", "red"); return null; }
 }
 
 async function handleImage(inp) {
     if(!inp.files[0]) return;
-    updateStatus("A ler...", "orange");
     const reader = new FileReader();
     reader.onload = (e) => {
         const img = new Image();
@@ -211,25 +179,17 @@ async function handleImage(inp) {
             const b64 = cv.toDataURL('image/jpeg', 0.8).split(',')[1];
             
             let p = "";
-            if(state.camMode === 'prod') p = "Identifica este produto. Responde apenas: Marca + Nome + Peso.";
-            if(state.camMode === 'bill') p = "Lê esta fatura. Extrai os produtos limpos e o TOTAL FINAL pago. Responde APENAS JSON: {\"itens\":[\"Item 1\", \"Item 2\"], \"total\": 0.00}";
-            if(state.camMode === 'tag') p = "Lê esta etiqueta de preço de prateleira. Diz o Nome do produto e o Preço/Kg ou Preço/Unidade.";
+            if(state.camMode === 'prod') p = "Identifica o produto. Marca + Nome.";
+            if(state.camMode === 'bill') p = "Extrai os itens e TOTAL da fatura. Responde JSON: {\"itens\":[\"Item 1\", \"Item 2\"], \"total\": 0.00}";
+            if(state.camMode === 'tag') p = "Extrai nome e preço desta etiqueta.";
 
             const res = await callAI({ contents: [{ parts: [{ inline_data: { mime_type: "image/jpeg", data: b64 } }, { text: p }] }] });
-            
-            if(res) {
-                if(state.camMode === 'prod' || state.camMode === 'tag') {
-                    document.getElementById('q-in').value = res.trim();
-                    searchRealPrices();
-                } else if(state.camMode === 'bill') {
-                    const data = parseDeep(res);
-                    if(data && data.itens) {
-                        saveToHistory(data.itens.join(', '), data.total);
-                        document.getElementById('cart-txt').value += (document.getElementById('cart-txt').value ? "\n" : "") + data.itens.join('\n');
-                        saveC();
-                        tab('history', document.querySelectorAll('.nav-i')[1]);
-                    }
-                }
+            if(res && state.camMode === 'bill') {
+                const data = parseDeep(res);
+                if(data) { saveToHistory(data.itens, data.total); tab('history', document.querySelectorAll('.nav-i')[1]); }
+            } else if(res) {
+                document.getElementById('q-in').value = res.trim();
+                searchRealPrices();
             }
         };
         img.src = e.target.result;
@@ -237,9 +197,9 @@ async function handleImage(inp) {
     reader.readAsDataURL(inp.files[0]);
 }
 
-function saveToHistory(text, total) {
+function saveToHistory(itens, total) {
     let hist = JSON.parse(localStorage.getItem('s_hist') || '[]');
-    hist.unshift({ id: Date.now(), date: new Date().toLocaleDateString('pt-PT'), content: text, total: parseFloat(total) || 0 });
+    hist.unshift({ id: Date.now(), date: new Date().toLocaleDateString('pt-PT'), itens, total: parseFloat(total) || 0 });
     localStorage.setItem('s_hist', JSON.stringify(hist));
     renderHistory();
 }
@@ -249,53 +209,72 @@ function renderHistory() {
     const out = document.getElementById('out-history');
     let totalM = 0;
     hist.forEach(h => totalM += h.total);
-    
     document.getElementById('stat-month').innerText = totalM.toFixed(2) + "€";
     document.getElementById('stat-count').innerText = hist.length;
 
-    if(hist.length === 0) { out.innerHTML = '<div class="card" style="text-align:center; color:#888">Sem faturas guardadas.</div>'; return; }
+    if(hist.length === 0) { out.innerHTML = '<div class="card" style="text-align:center; color:#888">Sem faturas.</div>'; return; }
     out.innerHTML = hist.map(h => `
-        <div class="card" style="border-left:4px solid var(--v)">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                <small style="font-weight:bold; color:var(--v)">${h.date}</small>
-                <b style="font-size:16px;">${h.total.toFixed(2)}€</b>
+        <div class="card" onclick="openBillItems(${h.id})">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <small>${h.date}</small>
+                <b>${h.total.toFixed(2)}€</b>
             </div>
-            <div style="font-size:12px; color:#666; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${h.content}</div>
+            <div style="font-size:12px; color:#666; margin-top:5px;">${h.itens.length} produtos. Clica para ver/repetir.</div>
         </div>
     `).join('');
 }
 
-async function compareStoresWithGrounding() {
-    const txt = document.getElementById('cart-txt').value;
-    const out = document.getElementById('out-cart');
-    if(!txt) return;
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin" style="margin:0 auto 10px;"></div>Consultando stocks e folhetos...</div>';
+function openBillItems(id) {
+    const hist = JSON.parse(localStorage.getItem('s_hist') || '[]');
+    const bill = hist.find(h => h.id === id);
+    if(!bill) return;
+    state.selectedBill = bill;
     
-    const prompt = `Analisa esta lista de compras: "${txt}". Estima o custo total para Portugal hoje nas lojas: Continente, Pingo Doce, Lidl e Mercadona. 
-    Leva em conta marcas brancas para o menor preço possível. Responde APENAS JSON: [{"loja":"Nome","total":0.00,"justificacao":"Dica de poupança"}]`;
-    
-    const res = await callAI({ contents: [{ parts: [{ text: prompt }] }] }, true);
-    const data = parseDeep(res);
-    if(data) {
-        data.sort((a,b) => a.total - b.total);
-        out.innerHTML = `<div class="card" style="border:2px solid var(--s); background:#f1f8e9">🏆 Melhor Opção: <b>${data[0].loja}</b><br><span style="font-size:26px; font-weight:900">${data[0].total.toFixed(2)}€</span><br><small>${data[0].justificacao}</small></div>` + 
-        data.slice(1).map(i => `<div class="card" style="display:flex; justify-content:space-between"><b>${i.loja}</b><span>${i.total.toFixed(2)}€</span></div>`).join('');
+    document.getElementById('modal-title').innerText = `Produtos de ${bill.date}`;
+    document.getElementById('modal-body').innerHTML = bill.itens.map((it, idx) => `
+        <label class="item-select">
+            <input type="checkbox" value="${it}" checked>
+            <span>${it}</span>
+        </label>
+    `).join('');
+    document.getElementById('modal').style.display = 'block';
+}
+
+function exportToCart() {
+    const selected = Array.from(document.querySelectorAll('#modal-body input:checked')).map(i => i.value);
+    if(selected.length > 0) {
+        let current = document.getElementById('cart-txt').value;
+        document.getElementById('cart-txt').value = (current ? current + "\n" : "") + selected.join('\n');
+        saveC();
+        closeModal();
+        tab('cart', document.querySelectorAll('.nav-i')[2]);
+        alert(`${selected.length} itens adicionados ao carrinho!`);
     }
 }
 
-function shareWA() {
-    const txt = document.getElementById('cart-txt').value;
-    if(!txt) return;
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent("🛒 *Minha Lista SACO.pt*:\n\n" + txt)}`, '_blank');
-}
-
-function openCam(m) { state.camMode = m; document.getElementById('f-in').click(); }
-function saveConfig() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); alert("Configurações guardadas!"); }
+function closeModal() { document.getElementById('modal').style.display = 'none'; }
 function saveC() { localStorage.setItem('s_c', document.getElementById('cart-txt').value); }
-function clearAllData() { if(confirm("Apagar todos os dados e histórico?")) { localStorage.clear(); location.reload(); } }
+function tab(id, el) { 
+    document.querySelectorAll('.v').forEach(v => v.classList.remove('active')); 
+    document.querySelectorAll('.nav-i').forEach(n => n.classList.remove('active')); 
+    document.getElementById('v-'+id).classList.add('active'); el.classList.add('active'); 
+}
+function openCam(m) { state.camMode = m; document.getElementById('f-in').click(); }
+function saveConfig() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); alert("Guardado!"); }
 function updateStatus(m, c) { const e = document.getElementById('st'); e.innerHTML = m; e.style.color = {green:'#1e8e3e', orange:'#fb8c00', red:'#d93025'}[c]; }
-function tab(id, el) { document.querySelectorAll('.v').forEach(v => v.classList.remove('active')); document.querySelectorAll('.nav-i').forEach(n => n.classList.remove('active')); document.getElementById('v-'+id).classList.add('active'); el.classList.add('active'); }
-function copyList() { navigator.clipboard.writeText(document.getElementById('cart-txt').value).then(() => alert("Lista copiada!")); }
+
+async function searchRealPrices() {
+    const q = document.getElementById('q-in').value;
+    const loc = document.getElementById('loc-in').value;
+    const out = document.getElementById('out-home');
+    if(!q) return;
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="spin" style="margin:0 auto;"></div></div>';
+    const res = await callAI({ contents: [{ parts: [{ text: `Preço hoje para "${q}" em ${loc||'Portugal'}. JSON: [{"loja":"Nome","preco":0.00}]` }] }] }, true);
+    const data = parseDeep(res);
+    if(data) {
+        out.innerHTML = `<div class="card">${data.map(i => `<div class="price-row"><span>${i.loja}</span><b>${i.preco.toFixed(2)}€</b></div>`).join('')}</div>`;
+    }
+}
 
 async function loadModels(saved) {
     const k = document.getElementById('key-in').value;
@@ -313,7 +292,7 @@ async function loadModels(saved) {
             sel.appendChild(o);
         });
         updateStatus("Ligado", "green");
-    } catch(e) { updateStatus("Erro Key", "red"); }
+    } catch(e) { updateStatus("Erro", "red"); }
 }
 </script>
 </body>
