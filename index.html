@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V58.5 - Exportação</title>
+    <title>SACO.pt | V58.6 - Exportar para Carrinho</title>
     <style>
         :root { --p: #1a73e8; --s: #1e8e3e; --bg: #f8f9fa; --txt: #202124; --err: #d93025; --v: #673ab7; --warn: #f29900; --card: #ffffff; }
         * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -13,7 +13,7 @@
         .v.active { display: block; animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         .card { background: var(--card); border-radius: 16px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 15px; border: 1px solid rgba(0,0,0,0.03); }
-        .btn { border: none; border-radius: 12px; padding: 16px; font-weight: 700; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 14px; color: white; transition: all 0.2s; }
+        .btn { border: none; border-radius: 12px; padding: 16px; font-weight: 700; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; color: white; transition: all 0.2s; }
         .btn:active { transform: scale(0.98); }
         .btn-p { background: var(--p); }
         .btn-s { background: var(--s); }
@@ -27,7 +27,6 @@
         .nav-i span { font-size: 22px; margin-bottom: 4px; }
         .badge { font-size: 10px; padding: 4px 12px; border-radius: 20px; font-weight: bold; text-transform: uppercase; }
         
-        /* Checkbox customizada */
         .check-container { display: flex; align-items: center; gap: 12px; width: 100%; }
         input[type="checkbox"] { width: 22px; height: 22px; margin: 0; cursor: pointer; }
 
@@ -54,7 +53,7 @@
         </div>
         <input type="file" id="f-in" style="display:none" accept="image/*">
         <div style="margin-top:20px;">
-            <input type="text" id="q-in" placeholder="O que procuras?">
+            <input type="text" id="q-in" placeholder="Ex: Arroz Agulha">
             <button class="btn btn-s" onclick="searchRealPrices()">🔍 Comparar Preços</button>
         </div>
     </div>
@@ -64,28 +63,29 @@
 <!-- VISTA PROMOS -->
 <div id="v-gen" class="v">
     <div class="card">
-        <h3>🔥 Promos do Dia</h3>
-        <button class="btn btn-warn" onclick="fetchPromos()" style="margin-top:10px;">✨ Ver destaques</button>
+        <h3>🔥 Promos em Destaque</h3>
+        <button class="btn btn-warn" onclick="fetchPromos()" style="margin-top:10px;">✨ Ver no Mercado</button>
     </div>
     <div id="out-promos"></div>
 </div>
 
-<!-- VISTA ARQUIVO (MODIFICADA) -->
+<!-- VISTA ARQUIVO -->
 <div id="v-history" class="v">
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:15px;">
-        <div class="card" style="text-align:center; padding:15px; margin-bottom:0;">
-            <small style="color:#666;">Total Selecionado</small><br>
-            <span id="stat-sel-val" style="font-size:20px; font-weight:900; color:var(--s)">0.00€</span>
+        <div class="card" style="text-align:center; padding:12px; margin-bottom:0;">
+            <small style="color:#666;">Seleção</small><br>
+            <span id="stat-sel-val" style="font-size:18px; font-weight:900; color:var(--s)">0.00€</span>
         </div>
-        <div class="card" style="text-align:center; padding:15px; margin-bottom:0;">
-            <small style="color:#666;">Gasto Mês</small><br>
-            <span id="stat-month" style="font-size:20px; font-weight:900; color:var(--v)">0.00€</span>
+        <div class="card" style="text-align:center; padding:12px; margin-bottom:0;">
+            <small style="color:#666;">Total Mês</small><br>
+            <span id="stat-month" style="font-size:18px; font-weight:900; color:var(--v)">0.00€</span>
         </div>
     </div>
 
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
-        <button class="btn btn-p" onclick="exportCSV()" style="padding:10px; font-size:12px;">📥 Exportar CSV</button>
-        <button class="btn btn-err" onclick="deleteSelected()" style="padding:10px; font-size:12px; background:#fce8e6; color:var(--err);">🗑️ Apagar Sel.</button>
+    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-bottom:15px;">
+        <button class="btn btn-s" onclick="exportToCart()" style="padding:10px; font-size:11px;">🛒 P/ Carrinho</button>
+        <button class="btn btn-p" onclick="exportCSV()" style="padding:10px; font-size:11px;">📥 CSV</button>
+        <button class="btn btn-err" onclick="deleteSelected()" style="padding:10px; font-size:11px; background:#fce8e6; color:var(--err);">🗑️ Apagar</button>
     </div>
 
     <div id="out-history"></div>
@@ -94,9 +94,10 @@
 <!-- VISTA LISTA -->
 <div id="v-cart" class="v">
     <div class="card">
-        <h3>🛒 Lista</h3>
-        <textarea id="cart-txt" rows="8" oninput="saveC()"></textarea>
-        <button class="btn btn-s" onclick="compareStoresDetailed()">🚀 Comparar Lojas</button>
+        <h3>🛒 Lista de Compras</h3>
+        <p style="font-size:11px; color:#666; margin-bottom:10px;">Produtos extraídos das faturas ou adicionados à mão.</p>
+        <textarea id="cart-txt" rows="10" placeholder="Ex: Leite Magro..." oninput="saveC()"></textarea>
+        <button class="btn btn-s" onclick="compareStoresDetailed()">🚀 Comparar Lojas Online</button>
     </div>
     <div id="out-cart"></div>
 </div>
@@ -105,7 +106,7 @@
 <div id="v-cfg" class="v">
     <div class="card">
         <h3>Config</h3>
-        <input type="password" id="key-in" placeholder="API Key" onchange="fetchModels()">
+        <input type="password" id="key-in" placeholder="API Key Google" onchange="fetchModels()">
         <select id="model-sel"></select>
         <button class="btn btn-p" onclick="saveConfig()">Guardar</button>
     </div>
@@ -114,7 +115,7 @@
 <!-- MODAL -->
 <div id="modal" onclick="closeModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
-        <h3 id="m-title">A processar...</h3>
+        <h3 id="m-title">Processando...</h3>
         <div id="modal-body"></div>
         <div id="m-footer-val" style="display:none">
             <input type="number" id="modal-total-val" step="0.01" style="font-size:22px; font-weight:900;">
@@ -187,8 +188,8 @@ async function fetchModels() {
 async function callAI(prompt, search = false, image = null) {
     const k = localStorage.getItem('s_k'), m = localStorage.getItem('s_m') || 'gemini-1.5-flash';
     if(!k) return null;
-    updateStatus("...", "orange");
-    const payload = { contents: [{ parts: [{ text: prompt }] }] };
+    updateStatus("IA...", "orange");
+    const payload = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.1 } };
     if(image) payload.contents[0].parts.unshift({ inline_data: { mime_type: "image/jpeg", data: image } });
     if(search) payload.tools = [{ google_search: {} }];
     try {
@@ -207,7 +208,7 @@ async function processBill(b64) {
     const res = await callAI("Extrai itens e TOTAL. JSON: {\"itens\":[\"Desc\"], \"total\": 0.00}", false, b64);
     const data = parseJSON(res);
     if(data) {
-        document.getElementById('m-title').innerText = "Validar";
+        document.getElementById('m-title').innerText = "Validar Leitura";
         document.getElementById('modal-total-val').value = data.total;
         document.getElementById('modal-body').innerHTML = data.itens.map(it => `<input type="text" class="bill-it" value="${it}">`).join('');
         document.getElementById('m-footer-val').style.display = 'block';
@@ -228,12 +229,11 @@ function saveEditedBill() {
     renderHistory(); closeModal(); tab('history', document.querySelectorAll('.nav-i')[2]);
 }
 
-// GESTÃO DE ARQUIVO E EXPORTAÇÃO
+// ARQUIVO E EXPORTAÇÃO PARA CARRINHO
 function renderHistory() {
     const h = JSON.parse(localStorage.getItem('s_h') || '[]');
     const out = document.getElementById('out-history');
     let totalMes = 0;
-    
     out.innerHTML = h.map(i => {
         totalMes += parseFloat(i.total || 0);
         return `
@@ -243,11 +243,10 @@ function renderHistory() {
                 <div style="display:flex; justify-content:space-between">
                     <b>${i.date}</b> <b>${parseFloat(i.total).toFixed(2)}€</b>
                 </div>
-                <div style="font-size:11px; color:#666;">${i.itens.length} itens</div>
+                <div style="font-size:11px; color:#666;">${i.itens.length} artigos</div>
             </div>
         </div>`;
     }).join('');
-    
     document.getElementById('stat-month').innerText = totalMes.toFixed(2) + "€";
     updateSelTotal();
 }
@@ -258,10 +257,31 @@ function updateSelTotal() {
     document.getElementById('stat-sel-val').innerText = t.toFixed(2) + "€";
 }
 
+function exportToCart() {
+    const h = JSON.parse(localStorage.getItem('s_h') || '[]');
+    const selectedIds = Array.from(document.querySelectorAll('.hist-check:checked')).map(c => c.dataset.id);
+    
+    if(selectedIds.length === 0) { alert("Seleciona pelo menos um recibo."); return; }
+    
+    let allProducts = [];
+    h.filter(i => selectedIds.includes(i.id.toString())).forEach(bill => {
+        allProducts = allProducts.concat(bill.itens);
+    });
+    
+    // Remove duplicados e junta ao carrinho atual
+    let uniqueNew = [...new Set(allProducts)];
+    let currentCart = document.getElementById('cart-txt').value;
+    document.getElementById('cart-txt').value = (currentCart + "\n" + uniqueNew.join("\n")).trim();
+    saveC();
+    
+    tab('cart', document.querySelectorAll('.nav-i')[3]);
+    alert("Produtos adicionados à lista!");
+}
+
 function deleteSelected() {
     const ids = Array.from(document.querySelectorAll('.hist-check:checked')).map(c => c.dataset.id);
     if(ids.length === 0) return;
-    if(confirm(`Apagar ${ids.length} faturas?`)) {
+    if(confirm(`Apagar ${ids.length} recibos?`)) {
         let h = JSON.parse(localStorage.getItem('s_h') || '[]');
         h = h.filter(i => !ids.includes(i.id.toString()));
         localStorage.setItem('s_h', JSON.stringify(h));
@@ -273,37 +293,28 @@ function exportCSV() {
     const h = JSON.parse(localStorage.getItem('s_h') || '[]');
     const selectedIds = Array.from(document.querySelectorAll('.hist-check:checked')).map(c => c.dataset.id);
     const toExport = selectedIds.length > 0 ? h.filter(i => selectedIds.includes(i.id.toString())) : h;
-    
-    if(toExport.length === 0) { alert("Nada para exportar."); return; }
-
+    if(toExport.length === 0) return;
     let csv = "Data;Total;Itens\n";
-    toExport.forEach(i => {
-        csv += `${i.date};${i.total.toString().replace('.',',')};"${i.itens.join(' | ')}"\n`;
-    });
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    toExport.forEach(i => csv += `${i.date};${i.total};"${i.itens.join(', ')}"\n`);
+    const blob = new Blob([csv], { type: 'text/csv' });
     const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `saco_export_${Date.now()}.csv`);
-    document.body.appendChild(link);
+    link.href = URL.createObjectURL(blob);
+    link.download = "saco_export.csv";
     link.click();
-    document.body.removeChild(link);
 }
 
-// RESTO DAS FUNÇÕES
 async function searchRealPrices() {
     const q = document.getElementById('q-in').value;
     if(!q) return;
     document.getElementById('out-home').innerHTML = '<div class="loading-spin"></div>';
     const res = await callAI(`Preço de "${q}" em Portugal. JSON: [{"loja":"Nome","preco":0.00,"produto":"Desc"}]`, true);
     const data = parseJSON(res);
-    if(data) document.getElementById('out-home').innerHTML = `<div class="card">${data.map(i => `<div class="res-row"><div><b>${i.loja}</b><br><small>${i.produto}</small></div><b>${i.preco}€</b></div>`).join('')}</div>`;
+    if(data) document.getElementById('out-home').innerHTML = `<div class="card">${data.map(i => `<div class="res-row" style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:10px 0;"><div><b>${i.loja}</b><br><small>${i.produto}</small></div><b>${i.preco}€</b></div>`).join('')}</div>`;
 }
 
 async function fetchPromos() {
     document.getElementById('out-promos').innerHTML = '<div class="loading-spin"></div>';
-    const res = await callAI(`Promos hoje. JSON: [{"super":"Nome","titulo":"Oferta"}]`, true);
+    const res = await callAI(`Promos hoje Portugal. JSON: [{"super":"Nome","titulo":"Oferta"}]`, true);
     const data = parseJSON(res);
     if(data) document.getElementById('out-promos').innerHTML = data.map(i => `<div class="card"><b>${i.super}</b><p>${i.titulo}</p></div>`).join('');
 }
@@ -312,9 +323,9 @@ async function compareStoresDetailed() {
     const txt = document.getElementById('cart-txt').value;
     if(!txt) return;
     document.getElementById('out-cart').innerHTML = '<div class="loading-spin"></div>';
-    const res = await callAI(`Custo total de "${txt}" Continente vs Pingo Doce. JSON: [{"loja":"Nome","total":0.00}]`, true);
+    const res = await callAI(`Custo total de "${txt}" Continente vs Pingo Doce vs Auchan. JSON: [{"loja":"Nome","total":0.00}]`, true);
     const data = parseJSON(res);
-    if(data) document.getElementById('out-cart').innerHTML = data.map(i => `<div class="card"><b>${i.loja}</b>: ${i.total}€</div>`).join('');
+    if(data) document.getElementById('out-cart').innerHTML = data.map(i => `<div class="card" style="display:flex; justify-content:space-between"><b>${i.loja}</b><b>${i.total}€</b></div>`).join('');
 }
 
 function updateStatus(m, c) { const e = document.getElementById('st'); e.innerText = m; e.style.color = c; }
