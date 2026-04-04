@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V57.1 - Otimizado</title>
+    <title>SACO.pt | V57.2 - Filtro de Motores</title>
     <style>
         :root { --p: #1a73e8; --s: #1e8e3e; --bg: #f8f9fa; --txt: #202124; --err: #d93025; --v: #673ab7; --warn: #f29900; --card: #ffffff; }
         * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
@@ -108,8 +108,9 @@
         <label style="font-size:12px; font-weight:bold; color:#5f6368;">Chave API Google</label>
         <input type="password" id="key-in" placeholder="Inserir Key" onchange="fetchModels()">
         
-        <label style="font-size:12px; font-weight:bold; color:#5f6368;">Motor Ativo</label>
+        <label style="font-size:12px; font-weight:bold; color:#5f6368;">Motor Ativo (Filtro Inteligente)</label>
         <select id="model-sel"></select>
+        <small style="color:#666; display:block; margin-top:-8px; margin-bottom:15px; font-size:11px;">Apenas motores com Visão e Pesquisa Google são mostrados.</small>
         
         <button class="btn btn-p" onclick="saveConfig()">💾 Guardar Config</button>
         <button class="btn btn-err" onclick="clearAllData()" style="margin-top:25px; padding:10px; font-size:12px;">Reset de Dados</button>
@@ -141,7 +142,6 @@
 
 <script>
 let currentMode = 'bill';
-const apiKey = ""; // Usado apenas no ambiente de execução
 
 function boot() {
     const k = localStorage.getItem('s_k'), c = localStorage.getItem('s_c');
@@ -150,7 +150,7 @@ function boot() {
         fetchModels(); 
     } else { 
         updateStatus("Sem Chave", "red"); 
-        document.getElementById('model-sel').innerHTML = '<option value="gemini-2.5-flash-preview-09-2025">Gemini 2.5 Flash</option>'; 
+        document.getElementById('model-sel').innerHTML = '<option value="gemini-1.5-flash">1.5 Flash (Default)</option>'; 
     }
     if(c) document.getElementById('cart-txt').value = c;
     renderHistory();
@@ -173,6 +173,7 @@ async function handleMedia(e) {
     reader.readAsDataURL(e.target.files[0]);
 }
 
+// Filtro inteligente para mostrar apenas modelos capazes de correr esta APP
 async function fetchModels() {
     const k = document.getElementById('key-in').value;
     const sel = document.getElementById('model-sel');
@@ -183,16 +184,36 @@ async function fetchModels() {
         if(d.models) {
             sel.innerHTML = "";
             const saved = localStorage.getItem('s_m');
-            d.models.filter(m => m.supportedGenerationMethods.includes("generateContent")).forEach(m => {
-                const name = m.name.split('/').pop();
-                if(!name.includes('vision') && !name.includes('embedding')) {
-                    let opt = document.createElement('option');
-                    opt.value = name;
-                    opt.text = name.replace('gemini-', '').toUpperCase();
-                    if(name === saved || (name === 'gemini-2.5-flash-preview-09-2025')) opt.selected = true;
-                    sel.appendChild(opt);
-                }
+            
+            // FILTRO: Apenas modelos Pro ou Flash que não sejam embedding/técnicos
+            // E que sejam versões 1.5 ou superiores para garantir suporte a imagem/pesquisa
+            const validModels = d.models.filter(m => {
+                const name = m.name.toLowerCase();
+                const isFlashOrPro = name.includes('flash') || name.includes('pro');
+                const isModern = name.includes('1.5') || name.includes('2.0') || name.includes('2.5');
+                const isNotTool = !name.includes('embedding') && !name.includes('aqa') && !name.includes('vision-preview');
+                
+                return isFlashOrPro && isModern && isNotTool;
             });
+
+            validModels.forEach(m => {
+                const name = m.name.split('/').pop();
+                let opt = document.createElement('option');
+                opt.value = name;
+                // Formatação bonita para o utilizador
+                let label = name.replace('gemini-', '').toUpperCase();
+                if(label.includes('FLASH')) label += " (Rápido)";
+                if(label.includes('PRO')) label += " (Inteligente)";
+                
+                opt.text = label;
+                if(name === saved || (!saved && name === 'gemini-1.5-flash')) opt.selected = true;
+                sel.appendChild(opt);
+            });
+            
+            if(sel.options.length === 0) {
+                sel.innerHTML = '<option value="gemini-1.5-flash">Gemini 1.5 Flash (Recomendado)</option>';
+            }
+            
             updateStatus("Ligado", "green");
         }
     } catch(e) { updateStatus("Erro Key", "red"); }
@@ -206,77 +227,58 @@ function tab(id, btn) {
     window.scrollTo(0,0);
 }
 
-// Implementação de Exponential Backoff para robustez lógica
 async function callAI(prompt, search = false, image = null) {
-    const k = localStorage.getItem('s_k'), m = localStorage.getItem('s_m') || 'gemini-2.5-flash-preview-09-2025';
+    const k = localStorage.getItem('s_k'), m = localStorage.getItem('s_m') || 'gemini-1.5-flash';
     if(!k) { 
         updateStatus("Sem Chave", "red");
-        alert("Por favor, configura a API Key em 'Config' primeiro."); 
+        alert("Configura a API Key em 'Config'"); 
         return null; 
     }
     
     updateStatus("IA...", "orange");
-    const payload = { 
-        contents: [{ parts: [{ text: prompt }] }] 
-    };
+    const payload = { contents: [{ parts: [{ text: prompt }] }] };
     
     if(image) {
-        payload.contents[0].parts.push({ 
-            inlineData: { mimeType: "image/jpeg", data: image } 
+        payload.contents[0].parts.unshift({ 
+            inline_data: { mime_type: "image/jpeg", data: image } 
         });
     }
     
     if(search) {
-        payload.tools = [{ "google_search": {} }];
+        payload.tools = [{ google_search: {} }];
     }
 
     let delay = 1000;
     for (let i = 0; i < 5; i++) {
         try {
             const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${k}`, {
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                method: 'POST', body: JSON.stringify(payload)
             });
-            
-            if (r.status === 429) throw new Error("Rate limit");
-            if (!r.ok) throw new Error(`HTTP ${r.status}`);
-            
             const d = await r.json();
+            if(d.error) throw new Error(d.error.message);
+            
             updateStatus("Ligado", "green");
-            return d.candidates?.[0]?.content?.parts?.[0]?.text || null;
+            return d.candidates[0].content.parts[0].text;
         } catch(e) {
-            if (i === 4) {
-                updateStatus("Erro Rede", "red");
-                alert("Erro ao comunicar com a IA após várias tentativas. Verifica a tua ligação.");
-                return null;
-            }
-            await new Promise(res => setTimeout(res, delay));
+            if(i === 4) { updateStatus("Erro IA", "red"); return null; }
+            await new Promise(r => setTimeout(r, delay));
             delay *= 2;
         }
     }
 }
 
-// Limpeza de JSON robusta para evitar erros de sintaxe da IA
 function cleanJSON(txt) {
     if(!txt) return null;
     try {
-        let s = txt.trim();
-        // Remove blocos de código markdown
-        s = s.replace(/^```json\s*/i, "").replace(/```\s*$/i, "");
-        
+        let s = txt.replace(/```json|```/g, "").trim();
         const start = Math.min(
             s.indexOf('[') === -1 ? Infinity : s.indexOf('['),
             s.indexOf('{') === -1 ? Infinity : s.indexOf('{')
         );
         const end = Math.max(s.lastIndexOf(']'), s.lastIndexOf('}'));
-        
         if(start === Infinity || end === -1) return null;
         return JSON.parse(s.substring(start, end + 1));
-    } catch(e) { 
-        console.error("Erro no parse JSON:", e);
-        return null; 
-    }
+    } catch(e) { return null; }
 }
 
 async function searchRealPrices() {
@@ -287,9 +289,9 @@ async function searchRealPrices() {
     
     if(!q) return;
     btn.disabled = true;
-    out.innerHTML = `<div class="card" style="text-align:center"><div class="loading-spin"></div>Procurando em ${loc}...</div>`;
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="loading-spin"></div>Procurando preços reais...</div>';
     
-    const res = await callAI(`Preço atual de "${q}" em Portugal (${loc}) no Continente, Pingo Doce, Lidl, Auchan. Devolve JSON: [{"loja":"Nome","preco":0.00,"produto":"Nome"}]`, true);
+    const res = await callAI(`Preço atual de "${q}" em Portugal (${loc}) no Continente, Pingo Doce, Lidl, Auchan. JSON: [{"loja":"Nome","preco":0.00,"produto":"Nome"}]`, true);
     const data = cleanJSON(res);
     
     btn.disabled = false;
@@ -299,13 +301,11 @@ async function searchRealPrices() {
                 <span><b>${i.loja}</b><br><small style="color:#666">${i.produto}</small></span>
                 <b style="color:var(--p); font-size:18px;">${Number(i.preco).toFixed(2)}€</b>
             </div>`).join('')}</div>`;
-    } else { 
-        out.innerHTML = '<div class="card">Sem resultados. Tenta simplificar a pesquisa (ex: "Leite UHT").</div>'; 
-    }
+    } else { out.innerHTML = '<div class="card">Sem resultados. Tenta ser mais específico.</div>'; }
 }
 
 async function processBill(b64) {
-    document.getElementById('m-title').innerText = "Lendo Fatura...";
+    document.getElementById('m-title').innerText = "Digitalizando Fatura...";
     document.getElementById('modal-body').innerHTML = '<div class="loading-spin"></div>';
     document.getElementById('m-footer-val').style.display = 'none';
     document.getElementById('modal').style.display = 'block';
@@ -315,91 +315,56 @@ async function processBill(b64) {
     
     if(data) {
         document.getElementById('m-title').innerText = "Validar Dados";
-        document.getElementById('modal-total-val').value = parseFloat(data.total || 0).toFixed(2);
+        document.getElementById('modal-total-val').value = data.total;
         document.getElementById('modal-body').innerHTML = (data.itens || []).map(it => `<input type="text" class="bill-it" value="${it}" style="margin-bottom:5px; padding:10px;">`).join('');
         document.getElementById('m-footer-val').style.display = 'block';
-    } else { 
-        document.getElementById('modal-body').innerHTML = "Não foi possível ler a imagem. Tenta aproximar mais a câmara."; 
-    }
+    } else { document.getElementById('modal-body').innerHTML = "Erro ao ler a fatura. Tenta uma foto com mais luz."; }
 }
 
 async function processProduct(b64) {
-    const res = await callAI("Que produto é este? Diz marca e nome.", false, b64);
-    if(res) { 
-        document.getElementById('q-in').value = res.trim(); 
-        searchRealPrices(); 
-    }
+    const res = await callAI("Que produto é este? Diz só marca e nome curto.", false, b64);
+    if(res) { document.getElementById('q-in').value = res.trim(); searchRealPrices(); }
 }
 
 function saveEditedBill() {
     const itens = Array.from(document.querySelectorAll('.bill-it')).map(i => i.value);
     const total = parseFloat(document.getElementById('modal-total-val').value || 0);
     let hist = JSON.parse(localStorage.getItem('s_h') || '[]');
-    hist.unshift({ 
-        id: Date.now(), 
-        total: isNaN(total) ? 0 : total, 
-        itens, 
-        date: new Date().toLocaleDateString('pt-PT') 
-    });
+    hist.unshift({ id: Date.now(), total, itens, date: new Date().toLocaleDateString('pt-PT') });
     localStorage.setItem('s_h', JSON.stringify(hist));
-    renderHistory(); 
-    closeModal(); 
-    tab('history', document.querySelectorAll('.nav-i')[2]);
+    renderHistory(); closeModal(); tab('history', document.querySelectorAll('.nav-i')[2]);
 }
 
 async function fetchPromos() {
     const out = document.getElementById('out-promos');
     const btn = document.getElementById('btn-promos');
     btn.disabled = true;
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="loading-spin"></div>Analisando folhetos...</div>';
-    
-    const res = await callAI(`Top 5 promoções hoje em Portugal (Lidl, Continente). JSON: [{"super":"Nome","titulo":"Oferta"}]`, true);
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="loading-spin"></div>Lendo folhetos online...</div>';
+    const res = await callAI(`Top 5 promoções hoje em Portugal (Continente, Lidl). JSON: [{"super":"Nome","titulo":"Oferta"}]`, true);
     const data = cleanJSON(res);
     btn.disabled = false;
-    
-    if(data && Array.isArray(data)) {
-        out.innerHTML = data.map(i => `<div class="card"><b>${i.super}</b><p style="margin-top:5px">${i.titulo}</p></div>`).join('');
-    } else {
-        out.innerHTML = '<div class="card">Erro ao carregar folhetos. Tenta mais tarde.</div>';
-    }
+    if(data) out.innerHTML = data.map(i => `<div class="card"><b>${i.super}</b><p>${i.titulo}</p></div>`).join('');
 }
 
 async function compareStoresDetailed() {
     const txt = document.getElementById('cart-txt').value;
     const out = document.getElementById('out-cart');
     const btn = document.getElementById('btn-cart');
-    
     if(!txt) return;
     btn.disabled = true;
-    out.innerHTML = '<div class="card" style="text-align:center"><div class="loading-spin"></div>Simulando compras...</div>';
-    
+    out.innerHTML = '<div class="card" style="text-align:center"><div class="loading-spin"></div>Calculando poupança...</div>';
     const res = await callAI(`Simula custo total de "${txt}" no Continente vs Pingo Doce. JSON: [{"loja":"Nome","total":0.00}]`, true);
     const data = cleanJSON(res);
     btn.disabled = false;
-    
-    if(data && Array.isArray(data)) {
-        out.innerHTML = data.map(i => `<div class="card" style="display:flex; justify-content:space-between"><b>${i.loja}</b><span style="color:var(--s); font-weight:900;">${Number(i.total).toFixed(2)}€</span></div>`).join('');
-    }
+    if(data) out.innerHTML = data.map(i => `<div class="card" style="display:flex; justify-content:space-between"><b>${i.loja}</b><span style="color:var(--s); font-weight:900;">${Number(i.total).toFixed(2)}€</span></div>`).join('');
 }
 
 function renderHistory() {
     const hist = JSON.parse(localStorage.getItem('s_h') || '[]');
-    let t = 0; 
-    hist.forEach(h => {
-        const val = parseFloat(h.total);
-        if(!isNaN(val)) t += val;
-    });
-    
+    let t = 0; hist.forEach(h => t += (parseFloat(h.total) || 0));
     document.getElementById('stat-month').innerText = t.toFixed(2) + "€";
     document.getElementById('stat-count').innerText = hist.length;
-    
-    const out = document.getElementById('out-history');
-    if(hist.length === 0) {
-        out.innerHTML = '<div class="card" style="text-align:center; color:#666">Nenhum recibo guardado.</div>';
-        return;
-    }
-    
-    out.innerHTML = hist.map(h => `
+    document.getElementById('out-history').innerHTML = hist.map(h => `
         <div class="card" style="border-left: 5px solid var(--v);">
             <div style="display:flex; justify-content:space-between"><b>${h.date}</b> <b style="color:var(--v)">${parseFloat(h.total).toFixed(2)}€</b></div>
             <div style="font-size:12px; color:#666; margin-top:10px;">${(h.itens || []).slice(0,3).join(', ')}...</div>
@@ -409,28 +374,17 @@ function renderHistory() {
 function closeModal() { document.getElementById('modal').style.display = 'none'; }
 function saveC() { localStorage.setItem('s_c', document.getElementById('cart-txt').value); }
 function saveConfig() { 
-    const k = document.getElementById('key-in').value;
-    const m = document.getElementById('model-sel').value;
-    if(!k) { alert("A chave é obrigatória."); return; }
-    localStorage.setItem('s_k', k); 
-    localStorage.setItem('s_m', m); 
+    localStorage.setItem('s_k', document.getElementById('key-in').value); 
+    localStorage.setItem('s_m', document.getElementById('model-sel').value); 
     fetchModels(); 
-    alert("Configuração guardada com sucesso!"); 
+    alert("Configuração Gravada!"); 
 }
-
 function updateStatus(m, c) { 
     const e = document.getElementById('st'); 
-    e.innerText = m; 
-    e.style.color = c; 
+    e.innerText = m; e.style.color = c; 
     e.style.background = c === 'red' ? '#fce8e6' : (c === 'orange' ? '#fff4e5' : '#e6f4ea'); 
 }
-
-function clearAllData() { 
-    if(confirm("Desejas apagar todos os recibos e configurações?")) { 
-        localStorage.clear(); 
-        location.reload(); 
-    } 
-}
+function clearAllData() { if(confirm("Apagar tudo?")) { localStorage.clear(); location.reload(); } }
 </script>
 </body>
 </html>
