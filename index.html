@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V48.0 - Campanhas & Preços</title>
+    <title>SACO.pt | V49.0 - Gestão de Listas</title>
     <style>
         :root { --p: #1a73e8; --s: #1e8e3e; --bg: #f8f9fa; --txt: #202124; --err: #d93025; --v: #673ab7; --warn: #fb8c00; }
         * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; }
@@ -45,7 +45,7 @@
 
 <div class="header">
     <div style="font-weight:900; font-size:20px; letter-spacing:-1px;">SACO<span style="color:var(--p)">.pt</span></div>
-    <div id="st" class="badge">V48.0</div>
+    <div id="st" class="badge">V49.0</div>
 </div>
 
 <!-- BUSCA -->
@@ -59,7 +59,7 @@
         <input type="file" id="f-in" style="display:none" accept="image/*" capture="environment" onchange="handleImage(this)">
         <input type="text" id="q-in" placeholder="Ex: Arroz Cigala, Detergente...">
         <div style="display:flex; gap:5px;">
-            <input type="text" id="loc-in" placeholder="Cidade (ex: Braga)" style="width:140px;">
+            <input type="text" id="loc-in" placeholder="Cidade" style="width:140px;">
             <button class="btn btn-s" onclick="searchRealPrices()">🔍 Buscar Preços</button>
         </div>
     </div>
@@ -70,7 +70,7 @@
 <div id="v-promos" class="v">
     <div class="card" style="background: linear-gradient(135deg, #fff 0%, #fff9f0 100%);">
         <h3 style="color:var(--warn)">🔥 Campanhas Ativas</h3>
-        <p style="font-size:12px; margin-bottom:10px;">IA consulta folhetos do Continente, Pingo Doce, Lidl e Auchan.</p>
+        <p style="font-size:12px; margin-bottom:10px;">Pesquisa promoções ativas hoje em Portugal.</p>
         <button class="btn" style="background:var(--warn)" onclick="fetchPromos()">Atualizar Promoções</button>
     </div>
     <div id="out-promos"></div>
@@ -88,8 +88,11 @@
 <!-- CARRINHO -->
 <div id="v-cart" class="v">
     <div class="card">
-        <textarea id="cart-txt" rows="10" placeholder="Escreve a tua lista..." onchange="saveC()"></textarea>
-        <button class="btn btn-s" onclick="compareStoresDetailed()">🚀 Comparar Total por Supermercado</button>
+        <textarea id="cart-txt" rows="10" placeholder="Escreve a tua lista..." oninput="saveC()"></textarea>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+            <button class="btn btn-s" onclick="compareStoresDetailed()">🚀 Comparar</button>
+            <button class="btn btn-outline" style="color:var(--err); border-color:var(--err);" onclick="clearCart()">🗑️ Limpar Lista</button>
+        </div>
     </div>
     <div id="out-cart"></div>
 </div>
@@ -102,23 +105,28 @@
         <select id="model-sel"></select>
         <button class="btn btn-p" onclick="loadModels()">Validar</button>
         <button class="btn btn-s" style="margin-top:10px" onclick="saveConfig()">Guardar</button>
-        <button class="btn btn-err" style="margin-top:20px; opacity:0.7" onclick="clearAllData()">🗑️ Apagar Dados</button>
+        <button class="btn btn-err" style="margin-top:20px; opacity:0.7" onclick="clearAllData()">⚠️ Apagar Configurações</button>
     </div>
 </div>
 
-<!-- MODAL EDITOR -->
+<!-- MODAL EDITOR (Arquivo/Scan) -->
 <div id="modal">
     <div class="modal-content">
-        <h3 id="modal-title">Confirmar Dados</h3>
-        <div id="modal-body" style="margin: 15px 0;"></div>
+        <h3 id="modal-title">Detalhes do Recibo</h3>
+        <div id="modal-body" style="margin: 15px 0; max-height: 250px; overflow-y: auto;"></div>
+        
         <div class="card" style="background:#f0f7ff; padding:10px;">
-            <label style="font-size:11px;">Total Pago (€):</label>
+            <label style="font-size:11px; font-weight: bold;">Total (€):</label>
             <input type="number" id="modal-total-val" step="0.01" style="font-size:18px; font-weight:bold; margin-top:5px;">
         </div>
+
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
             <button class="btn btn-s" onclick="saveEditedBill()">💾 Guardar</button>
             <button class="btn btn-outline" onclick="closeModal()">Sair</button>
         </div>
+        
+        <!-- Botão de eliminação só aparece para recibos existentes -->
+        <button id="btn-del-bill" class="btn btn-err" style="margin-top:10px; display:none; padding:8px;" onclick="deleteSelectedBill()">🗑️ Eliminar Recibo</button>
     </div>
 </div>
 
@@ -152,9 +160,9 @@ function parseJSON(text) {
 
 async function callAI(payload, search = false) {
     const k = localStorage.getItem('s_k'), m = localStorage.getItem('s_m');
-    if(!k || !m) return alert("API Key não configurada!");
+    if(!k || !m) return alert("Configura a API Key em 'Config'.");
     if(search) payload.tools = [{ google_search: {} }];
-    updateStatus("...", "orange");
+    updateStatus("IA...", "orange");
     try {
         const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${k}`, {
             method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
@@ -173,30 +181,29 @@ async function searchRealPrices() {
     localStorage.setItem('s_l', loc);
     out.innerHTML = '<div class="spin"></div>';
     
-    const p = `Pesquisa o preço REAL HOJE para "${q}" em lojas de ${loc} (Continente, Pingo Doce, Auchan, Mercadona). Responde APENAS JSON: [{"loja":"Nome","preco":0.00,"detalhe":"produto exato encontrado"}]`;
+    const p = `Preço atual para "${q}" em supermercados de ${loc} (Continente, Pingo Doce, Lidl). JSON: [{"loja":"Nome","preco":0.00,"detalhe":"produto"}]`;
     const res = await callAI({ contents: [{ parts: [{ text: p }] }] }, true);
     const data = parseJSON(res);
     
     if(data) {
         out.innerHTML = `<div class="card">${data.map(i => `
             <div class="price-row">
-                <span style="font-size:14px;"><b>${i.loja}</b><br><small style="color:#666">${i.detalhe||''}</small></span>
-                <b style="color:var(--p); font-size:16px;">${Number(i.preco).toFixed(2)}€</b>
+                <span><b>${i.loja}</b><br><small>${i.detalhe||''}</small></span>
+                <b style="color:var(--p);">${Number(i.preco).toFixed(2)}€</b>
             </div>`).join('')}</div>`;
-    } else { out.innerHTML = '<div class="card">Erro na busca. Tenta ser mais específico.</div>'; }
+    } else { out.innerHTML = '<div class="card">Sem resultados. Tenta simplificar a busca.</div>'; }
 }
 
 async function fetchPromos() {
     const out = document.getElementById('out-promos');
     out.innerHTML = '<div class="spin"></div>';
-    const p = `Quais as melhores campanhas de supermercado (Continente, Pingo Doce, Lidl, Aldi) ativas hoje em Portugal? Lista produtos em destaque. Responde em JSON: [{"super":"Nome","titulo":"Promo","desc":"detalhes"}]`;
+    const p = `Lista 5 promoções imperdíveis de supermercado em Portugal hoje (Continente, Lidl, Pingo Doce). JSON: [{"super":"Nome","titulo":"Promo","desc":"detalhes"}]`;
     const res = await callAI({ contents: [{ parts: [{ text: p }] }] }, true);
     const data = parseJSON(res);
     if(data) {
         out.innerHTML = data.map(i => `
             <div class="promo-card">
-                <div style="font-weight:bold; color:var(--warn); margin-bottom:4px;">${i.super} - ${i.titulo}</div>
-                <div style="font-size:13px; color:#444;">${i.desc}</div>
+                <b>${i.super}</b>: ${i.titulo}<br><small>${i.desc}</small>
             </div>
         `).join('');
     }
@@ -206,31 +213,34 @@ async function compareStoresDetailed() {
     const txt = document.getElementById('cart-txt').value;
     const out = document.getElementById('out-cart');
     if(!txt) return;
-    out.innerHTML = '<div class="spin"></div>A calcular melhor carrinho...';
+    out.innerHTML = '<div class="spin"></div>Calculando totais...';
     
-    const p = `Analisa esta lista: "${txt}". Calcula o total aproximado para o carrinho completo no Continente, Pingo Doce e Lidl em Portugal. Responde APENAS JSON: [{"loja":"Nome","total":0.00,"obs":"ponto positivo"}]`;
+    const p = `Quanto custaria esta lista: "${txt}" no Continente, Pingo Doce e Lidl? Responde JSON: [{"loja":"Nome","total":0.00,"obs":"ponto forte"}]`;
     const res = await callAI({ contents: [{ parts: [{ text: p }] }] }, true);
     const data = parseJSON(res);
     if(data) {
         data.sort((a,b) => a.total - b.total);
-        out.innerHTML = `<div class="card" style="border:2px solid var(--s)">
-            <small>Melhor Escolha:</small>
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h2 style="color:var(--s)">${data[0].loja}</h2>
-                <h2 style="color:var(--s)">${data[0].total.toFixed(2)}€</h2>
-            </div>
-            <p style="font-size:12px; color:#666;">${data[0].obs}</p>
+        out.innerHTML = `<div class="card" style="background:#e8f5e9; border:1px solid var(--s)">
+            <b>Vencedor: ${data[0].loja}</b><br><h2 style="color:var(--s)">${data[0].total.toFixed(2)}€</h2>
         </div>` + data.slice(1).map(i => `
-            <div class="card" style="display:flex; justify-content:space-between; padding:10px;">
-                <span>${i.loja}</span>
-                <b>${i.total.toFixed(2)}€</b>
+            <div class="card" style="display:flex; justify-content:space-between">
+                <span>${i.loja}</span><b>${i.total.toFixed(2)}€</b>
             </div>
         `).join('');
     }
 }
 
+function clearCart() {
+    if(confirm("Limpar toda a lista de compras?")) {
+        document.getElementById('cart-txt').value = "";
+        saveC();
+        document.getElementById('out-cart').innerHTML = "";
+    }
+}
+
 async function handleImage(inp) {
     if(!inp.files[0]) return;
+    updateStatus("Processando...", "orange");
     const reader = new FileReader();
     reader.onload = (e) => {
         const img = new Image();
@@ -242,9 +252,9 @@ async function handleImage(inp) {
             cv.getContext('2d').drawImage(img, 0,0,w,h);
             const b64 = cv.toDataURL('image/jpeg', 0.8).split(',')[1];
             
-            let p = state.camMode === 'bill' ? 
-                "Extrai itens e TOTAL. JSON: {\"itens\":[\"Item\"], \"total\": 0.00}" : 
-                "Identifica o produto. Marca + Nome.";
+            const p = state.camMode === 'bill' ? 
+                "Lê fatura. Itens e total. JSON: {\"itens\":[\"Item\"], \"total\": 0.00}" : 
+                "O que é este produto? Nome curto.";
 
             const res = await callAI({ contents: [{ parts: [{ inline_data: { mime_type: "image/jpeg", data: b64 } }, { text: p }] }] });
             if(res && state.camMode === 'bill') {
@@ -263,6 +273,7 @@ async function handleImage(inp) {
 function openBillEditor(data, isNew, id = null) {
     state.viewingBillId = id;
     document.getElementById('modal-total-val').value = data.total || 0;
+    document.getElementById('btn-del-bill').style.display = id ? 'block' : 'none';
     const body = document.getElementById('modal-body');
     body.innerHTML = data.itens.map((it, idx) => `
         <div style="display:flex; gap:5px; margin-bottom:5px;">
@@ -277,9 +288,24 @@ function saveEditedBill() {
     const itens = Array.from(document.querySelectorAll('.bill-it')).map(i => i.value);
     const total = parseFloat(document.getElementById('modal-total-val').value) || 0;
     let hist = JSON.parse(localStorage.getItem('s_hist') || '[]');
-    hist.unshift({ id: Date.now(), date: new Date().toLocaleDateString('pt-PT'), itens, total });
+    
+    if(state.viewingBillId) {
+        const idx = hist.findIndex(h => h.id === state.viewingBillId);
+        if(idx !== -1) hist[idx] = { ...hist[idx], itens, total };
+    } else {
+        hist.unshift({ id: Date.now(), date: new Date().toLocaleDateString('pt-PT'), itens, total });
+    }
+    
     localStorage.setItem('s_hist', JSON.stringify(hist));
     renderHistory(); closeModal(); tab('history', document.querySelectorAll('.nav-i')[2]);
+}
+
+function deleteSelectedBill() {
+    if(!confirm("Eliminar este recibo permanentemente?")) return;
+    let hist = JSON.parse(localStorage.getItem('s_hist') || '[]');
+    hist = hist.filter(h => h.id !== state.viewingBillId);
+    localStorage.setItem('s_hist', JSON.stringify(hist));
+    renderHistory(); closeModal();
 }
 
 function renderHistory() {
@@ -291,7 +317,7 @@ function renderHistory() {
     out.innerHTML = hist.map(h => `
         <div class="card" onclick="openBillEditor({itens:${JSON.stringify(h.itens).replace(/"/g, '&quot;')}, total:${h.total}}, false, ${h.id})">
             <div style="display:flex; justify-content:space-between"><b>${h.date}</b><b style="color:var(--v)">${h.total.toFixed(2)}€</b></div>
-            <small style="color:#666">${h.itens.length} itens</small>
+            <small style="color:#666">${h.itens.length} itens encontrados</small>
         </div>
     `).join('');
 }
@@ -302,11 +328,11 @@ function tab(id, el) {
     document.getElementById('v-'+id).classList.add('active'); 
     el.classList.add('active'); 
 }
-function closeModal() { document.getElementById('modal').style.display = 'none'; }
+function closeModal() { document.getElementById('modal').style.display = 'none'; state.viewingBillId = null; }
 function openCam(m) { state.camMode = m; document.getElementById('f-in').click(); }
 function saveC() { localStorage.setItem('s_c', document.getElementById('cart-txt').value); }
-function saveConfig() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); alert("Guardado!"); }
-function clearAllData() { if(confirm("Apagar tudo?")) { localStorage.clear(); location.reload(); } }
+function saveConfig() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); alert("Configuração guardada!"); }
+function clearAllData() { if(confirm("Apagar todas as configurações e histórico?")) { localStorage.clear(); location.reload(); } }
 function updateStatus(m, c) { const e = document.getElementById('st'); e.innerHTML = m; e.style.color = {green:'#1e8e3e', orange:'#fb8c00', red:'#d93025'}[c]; }
 
 async function loadModels(saved) {
@@ -328,4 +354,4 @@ async function loadModels(saved) {
 }
 </script>
 </body>
-</html>
+</html>w
