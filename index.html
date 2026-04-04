@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V59.0 - Inventário Visão</title>
+    <title>SACO.pt | V59.5 - Recolha de Dados Avançada</title>
     <style>
         :root { --p: #1a73e8; --s: #1e8e3e; --bg: #f8f9fa; --txt: #202124; --err: #d93025; --v: #673ab7; --warn: #f29900; --card: #ffffff; }
         * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -27,8 +27,7 @@
         .nav-i span { font-size: 22px; margin-bottom: 4px; }
         .badge { font-size: 10px; padding: 4px 12px; border-radius: 20px; font-weight: bold; text-transform: uppercase; }
         
-        .check-container { display: flex; align-items: center; gap: 12px; width: 100%; }
-        input[type="checkbox"] { width: 22px; height: 22px; margin: 0; cursor: pointer; }
+        .data-tag { display: inline-block; padding: 4px 8px; border-radius: 6px; background: #e8f0fe; font-size: 10px; margin: 2px; color: var(--p); font-weight: bold; }
 
         #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; backdrop-filter: blur(4px); }
         .modal-content { background: #fff; border-radius: 24px; padding: 20px; max-width: 450px; margin: 20px auto; width: 94%; max-height: 90vh; display: flex; flex-direction: column; }
@@ -44,32 +43,39 @@
     <div id="st" class="badge" style="background:#fce8e6; color:var(--err)">Offline</div>
 </div>
 
-<!-- VISTA BUSCA -->
+<!-- VISTA BUSCA / RECOLHA -->
 <div id="v-home" class="v active">
     <div class="card">
-        <h3 style="margin-bottom:15px;">Captura Inteligente</h3>
+        <h3 style="margin-bottom:10px;">Recolha de Dados Visuais</h3>
+        <p style="font-size:12px; color:#666; margin-bottom:15px;">Ajuda a IA a interpretar os teus padrões de consumo.</p>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
             <button class="btn btn-v" onclick="triggerInput('bill')"><span>🧾</span> Recibo</button>
             <button class="btn btn-warn" onclick="triggerInput('fridge')"><span>❄️</span> Despensa</button>
         </div>
         <input type="file" id="f-in" style="display:none" accept="image/*">
-        
-        <div style="margin-top:20px; padding-top:15px; border-top:1px solid #eee;">
-            <input type="text" id="q-in" placeholder="Pesquisar produto...">
-            <button class="btn btn-s" onclick="searchRealPrices()">🔍 Comparar Preços</button>
-        </div>
+    </div>
+
+    <div class="card">
+        <h3>Pesquisa de Mercado</h3>
+        <input type="text" id="q-in" placeholder="Ex: Café em cápsulas">
+        <button class="btn btn-s" onclick="searchRealPrices()">🔍 Analisar Preços</button>
     </div>
     <div id="out-home"></div>
 </div>
 
-<!-- VISTA PROMOS (Sugeridas pelo Inventário) -->
+<!-- VISTA PERFIL (NOVO: INTERPRETAÇÃO DE DADOS) -->
 <div id="v-gen" class="v">
     <div class="card">
-        <h3>🔥 Sugestões p/ Reposição</h3>
-        <p id="inv-summary" style="font-size:12px; color:#666; margin-top:5px;">Analisa o frigorífico para ver sugestões personalizadas.</p>
-        <button class="btn btn-warn" onclick="fetchPromos()" style="margin-top:10px;">✨ Analisar Mercado</button>
+        <h3>🧠 Perfil de Consumidor</h3>
+        <p style="font-size:12px; color:#666;">Dados acumulados das tuas fotos e recibos.</p>
+        <div id="data-mining-tags" style="margin-top:15px;"></div>
     </div>
-    <div id="out-promos"></div>
+    
+    <div class="card">
+        <h3>🎯 Sugestões Personalizadas</h3>
+        <div id="ai-insight" style="font-size:13px; font-style:italic; color:#444;">Aguardando dados suficientes para análise...</div>
+        <button class="btn btn-p" style="margin-top:15px; padding:10px;" onclick="generateInsights()">Gerar Nova Análise</button>
+    </div>
 </div>
 
 <!-- VISTA ARQUIVO -->
@@ -80,38 +86,34 @@
             <span id="stat-sel-val" style="font-size:18px; font-weight:900; color:var(--s)">0.00€</span>
         </div>
         <div class="card" style="text-align:center; padding:12px; margin-bottom:0;">
-            <small style="color:#666;">Total Mês</small><br>
+            <small style="color:#666;">Histórico</small><br>
             <span id="stat-month" style="font-size:18px; font-weight:900; color:var(--v)">0.00€</span>
         </div>
     </div>
-
     <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-bottom:15px;">
         <button class="btn btn-s" onclick="exportToCart()" style="padding:10px; font-size:11px;">🛒 Carrinho</button>
         <button class="btn btn-p" onclick="exportCSV()" style="padding:10px; font-size:11px;">📥 CSV</button>
         <button class="btn btn-err" onclick="deleteSelected()" style="padding:10px; font-size:11px; background:#fce8e6; color:var(--err);">🗑️ Apagar</button>
     </div>
-
     <div id="out-history"></div>
 </div>
 
 <!-- VISTA LISTA -->
 <div id="v-cart" class="v">
     <div class="card">
-        <h3>🛒 Lista de Compras</h3>
-        <textarea id="cart-txt" rows="10" placeholder="O que precisas comprar?" oninput="saveC()"></textarea>
-        <button class="btn btn-s" onclick="compareStoresDetailed()">🚀 Onde poupo mais?</button>
+        <h3>🛒 Lista & Comparação</h3>
+        <textarea id="cart-txt" rows="10" placeholder="A tua lista inteligente..." oninput="saveC()"></textarea>
+        <button class="btn btn-s" onclick="compareStoresDetailed()">🚀 Comparar Lojas</button>
     </div>
-    <div id="out-cart"></div>
 </div>
 
-<!-- VISTA CONFIG (Google Integration) -->
+<!-- VISTA CONFIG -->
 <div id="v-cfg" class="v">
     <div class="card">
-        <h3>Integração Google AI</h3>
-        <p style="font-size:11px; color:#666; margin-bottom:15px;">Liga a tua conta através da API Key para análise visual avançada.</p>
-        <input type="password" id="key-in" placeholder="Google Gemini API Key" onchange="fetchModels()">
+        <h3>Configuração</h3>
+        <input type="password" id="key-in" placeholder="Gemini API Key" onchange="fetchModels()">
         <select id="model-sel"></select>
-        <button class="btn btn-p" onclick="saveConfig()">💾 Guardar Configurações</button>
+        <button class="btn btn-p" onclick="saveConfig()">Guardar</button>
     </div>
 </div>
 
@@ -121,21 +123,15 @@
         <h3 id="m-title">Processando...</h3>
         <div id="modal-body"></div>
         <div id="m-footer-val" style="display:none">
-            <div style="background:#f1f3f4; padding:10px; border-radius:8px; margin-bottom:10px;">
-                <small>Total Detetado:</small>
-                <input type="number" id="modal-total-val" step="0.01" style="font-size:20px; font-weight:900; border:none; background:transparent;">
-            </div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-                <button class="btn btn-s" onclick="saveEditedBill()">Confirmar</button>
-                <button class="btn" style="background:#eee; color:#333" onclick="closeModal()">Sair</button>
-            </div>
+            <input type="number" id="modal-total-val" step="0.01" style="font-size:22px; font-weight:900;">
+            <button class="btn btn-s" onclick="saveEditedBill()">Confirmar Dados</button>
         </div>
     </div>
 </div>
 
 <nav class="nav">
-    <button class="nav-i active" onclick="tab('home', this)"><span>🔎</span>Busca</button>
-    <button class="nav-i" onclick="tab('gen', this)"><span>🔥</span>Promos</button>
+    <button class="nav-i active" onclick="tab('home', this)"><span>🔎</span>Recolha</button>
+    <button class="nav-i" onclick="tab('gen', this)"><span>🧠</span>Perfil</button>
     <button class="nav-i" onclick="tab('history', this)"><span>🧾</span>Arquivo</button>
     <button class="nav-i" onclick="tab('cart', this)"><span>🛒</span>Lista</button>
     <button class="nav-i" onclick="tab('cfg', this)"><span>⚙️</span>Config</button>
@@ -145,10 +141,11 @@
 let currentMode = 'bill';
 
 function boot() {
-    const k = localStorage.getItem('s_k'), c = localStorage.getItem('s_c');
+    const k = localStorage.getItem('s_k');
     if(k) { document.getElementById('key-in').value = k; fetchModels(); }
-    if(c) document.getElementById('cart-txt').value = c;
+    document.getElementById('cart-txt').value = localStorage.getItem('s_c') || "";
     renderHistory();
+    renderDataTags();
     document.getElementById('f-in').addEventListener('change', handleMedia);
 }
 
@@ -157,6 +154,7 @@ function tab(id, btn) {
     document.querySelectorAll('.nav-i').forEach(n => n.classList.remove('active'));
     document.getElementById('v-' + id).classList.add('active');
     btn.classList.add('active');
+    if(id === 'gen') renderDataTags();
     if(id === 'history') renderHistory();
 }
 
@@ -169,8 +167,7 @@ function handleMedia(e) {
     reader.onload = (ev) => {
         const b64 = ev.target.result.split(',')[1];
         if(currentMode === 'bill') processBill(b64);
-        else if(currentMode === 'fridge') processInventory(b64);
-        else processProduct(b64);
+        else processFridgeData(b64);
         e.target.value = '';
     };
     reader.readAsDataURL(file);
@@ -209,71 +206,101 @@ async function callAI(prompt, search = false, image = null) {
 
 function parseJSON(txt) { try { return JSON.parse(txt.replace(/```json|```/gi, "").trim()); } catch(e) { return null; } }
 
+// LOGICA DE RECOLHA DE DADOS (FRIGORIFICO/DESPENSA)
+async function processFridgeData(b64) {
+    document.getElementById('modal').style.display = 'block';
+    document.getElementById('m-title').innerText = "Interpretando Conteúdo...";
+    document.getElementById('modal-body').innerHTML = '<div class="loading-spin"></div>';
+    document.getElementById('m-footer-val').style.display = 'none';
+
+    // Prompt focado em recolha de dados e categorização, não apenas falta de stock
+    const prompt = `Analisa esta foto de despensa/frigorífico. Extrai: 1. Marcas visíveis, 2. Categorias de produtos, 3. Estado de preenchimento (0-100%). JSON: {"tags":["marca ou categoria"], "analise":"resumo do perfil de consumo"}`;
+    
+    const res = await callAI(prompt, false, b64);
+    const data = parseJSON(res);
+    
+    if(data) {
+        let tags = JSON.parse(localStorage.getItem('s_tags') || '[]');
+        tags = [...new Set([...tags, ...data.tags])].slice(-20); // Guarda as últimas 20 tags únicas
+        localStorage.setItem('s_tags', JSON.stringify(tags));
+        localStorage.setItem('s_last_insight', data.analise);
+        
+        document.getElementById('m-title').innerText = "Dados Recolhidos";
+        document.getElementById('modal-body').innerHTML = `
+            <p style="font-size:13px; margin-bottom:10px;">${data.analise}</p>
+            <div style="background:#f8f9fa; padding:10px; border-radius:12px;">
+                <b>Metadados extraídos:</b><br>
+                ${data.tags.map(t => `<span class="data-tag">${t}</span>`).join('')}
+            </div>
+        `;
+    } else closeModal();
+}
+
+async function generateInsights() {
+    const h = localStorage.getItem('s_h') || "[]";
+    const tags = localStorage.getItem('s_tags') || "[]";
+    document.getElementById('ai-insight').innerHTML = '<div class="loading-spin"></div>';
+    
+    const prompt = `Com base nestas tags de preferência ${tags} e histórico de compras ${h.substring(0,500)}, faz uma análise crítica do perfil do utilizador e sugere 3 estratégias de poupança em Portugal. Resposta curta em texto corrido.`;
+    
+    const res = await callAI(prompt, true);
+    if(res) {
+        document.getElementById('ai-insight').innerText = res;
+        localStorage.setItem('s_last_insight', res);
+    }
+}
+
+function renderDataTags() {
+    const tags = JSON.parse(localStorage.getItem('s_tags') || '[]');
+    const ins = localStorage.getItem('s_last_insight') || "Analisa fotos para gerar perfis.";
+    document.getElementById('data-mining-tags').innerHTML = tags.map(t => `<span class="data-tag">${t}</span>`).join('');
+    document.getElementById('ai-insight').innerText = ins;
+}
+
+// LOGICA DE RECIBOS
 async function processBill(b64) {
     document.getElementById('modal').style.display = 'block';
     document.getElementById('modal-body').innerHTML = '<div class="loading-spin"></div>';
     const res = await callAI("Extrai itens e TOTAL. JSON: {\"itens\":[\"Desc\"], \"total\": 0.00}", false, b64);
     const data = parseJSON(res);
     if(data) {
-        document.getElementById('m-title').innerText = "Validar Leitura";
+        document.getElementById('m-title').innerText = "Confirmar Recibo";
         document.getElementById('modal-total-val').value = data.total;
         document.getElementById('modal-body').innerHTML = data.itens.map(it => `<input type="text" class="bill-it" value="${it}">`).join('');
         document.getElementById('m-footer-val').style.display = 'block';
     } else closeModal();
 }
 
-async function processInventory(b64) {
-    document.getElementById('modal').style.display = 'block';
-    document.getElementById('m-title').innerText = "Analisando Despensa...";
-    document.getElementById('modal-body').innerHTML = '<div class="loading-spin"></div>';
-    document.getElementById('m-footer-val').style.display = 'none';
+function saveEditedBill() {
+    const itens = Array.from(document.querySelectorAll('.bill-it')).map(i => i.value);
+    const total = parseFloat(document.getElementById('modal-total-val').value || 0);
+    let h = JSON.parse(localStorage.getItem('s_h') || '[]');
+    h.unshift({ id: Date.now(), total, itens, date: new Date().toLocaleDateString('pt-PT') });
+    localStorage.setItem('s_h', JSON.stringify(h));
     
-    const h = localStorage.getItem('s_h') || '[]';
-    const prompt = `Analisa esta foto de frigorífico/despensa. Cruza com o histórico de compras: ${h.substring(0, 1000)}. Identifica o que está a acabar ou em falta. JSON: {"em_falta":["item"], "resumo":"Texto curto"}`;
-    
-    const res = await callAI(prompt, false, b64);
-    const data = parseJSON(res);
-    
-    if(data) {
-        document.getElementById('m-title').innerText = "Sugestões de Inventário";
-        document.getElementById('inv-summary').innerText = data.resumo;
-        document.getElementById('modal-body').innerHTML = `
-            <p style="font-size:13px; margin-bottom:10px;">${data.resumo}</p>
-            <div style="background:#e8f0fe; padding:10px; border-radius:12px;">
-                <b style="font-size:12px;">Detetado como em falta:</b><br>
-                ${data.em_falta.map(it => `<div style="padding:5px 0; border-bottom:1px solid #fff;">✅ ${it}</div>`).join('')}
-            </div>
-            <button class="btn btn-s" onclick="addToCartFromInv('${data.em_falta.join(',')}')" style="margin-top:15px;">Adicionar à Lista</button>
-        `;
-    } else closeModal();
+    // Extrai categorias dos itens para as tags de perfil
+    itens.forEach(it => {
+        let tags = JSON.parse(localStorage.getItem('s_tags') || '[]');
+        if(it.length > 3) tags.push(it.split(' ')[0]); // Adiciona a primeira palavra como potencial categoria
+        localStorage.setItem('s_tags', JSON.stringify([...new Set(tags)].slice(-30)));
+    });
+
+    renderHistory(); closeModal(); tab('history', document.querySelectorAll('.nav-i')[2]);
 }
 
-function addToCartFromInv(itemsStr) {
-    const items = itemsStr.split(',');
-    let current = document.getElementById('cart-txt').value;
-    document.getElementById('cart-txt').value = (current + "\n" + items.join("\n")).trim();
-    saveC();
-    closeModal();
-    tab('cart', document.querySelectorAll('.nav-i')[3]);
-}
-
+// RESTANTE LOGICA UI
 function renderHistory() {
     const h = JSON.parse(localStorage.getItem('s_h') || '[]');
     const out = document.getElementById('out-history');
-    let totalMes = 0;
+    let total = 0;
     out.innerHTML = h.map(i => {
-        totalMes += parseFloat(i.total || 0);
-        return `
-        <div class="card check-container" style="border-left:5px solid var(--v)">
+        total += parseFloat(i.total || 0);
+        return `<div class="card" style="display:flex; align-items:center; gap:10px;">
             <input type="checkbox" class="hist-check" data-id="${i.id}" data-val="${i.total}" onchange="updateSelTotal()">
-            <div style="flex-grow:1">
-                <div style="display:flex; justify-content:space-between">
-                    <b>${i.date}</b> <b>${parseFloat(i.total).toFixed(2)}€</b>
-                </div>
-            </div>
+            <div style="flex-grow:1"><b>${i.date}</b><br><small>${i.total.toFixed(2)}€</small></div>
         </div>`;
     }).join('');
-    document.getElementById('stat-month').innerText = totalMes.toFixed(2) + "€";
+    document.getElementById('stat-month').innerText = total.toFixed(2) + "€";
 }
 
 function updateSelTotal() {
@@ -282,32 +309,21 @@ function updateSelTotal() {
     document.getElementById('stat-sel-val').innerText = t.toFixed(2) + "€";
 }
 
-function exportToCart() {
-    const h = JSON.parse(localStorage.getItem('s_h') || '[]');
-    const selectedIds = Array.from(document.querySelectorAll('.hist-check:checked')).map(c => c.dataset.id);
-    if(selectedIds.length === 0) return;
-    let products = [];
-    h.filter(i => selectedIds.includes(i.id.toString())).forEach(bill => products = products.concat(bill.itens));
-    document.getElementById('cart-txt').value = (document.getElementById('cart-txt').value + "\n" + [...new Set(products)].join("\n")).trim();
-    saveC();
-    tab('cart', document.querySelectorAll('.nav-i')[3]);
-}
-
 async function searchRealPrices() {
     const q = document.getElementById('q-in').value;
     if(!q) return;
     document.getElementById('out-home').innerHTML = '<div class="loading-spin"></div>';
-    const res = await callAI(`Preços hoje Portugal para "${q}". JSON: [{"loja":"Nome","preco":0.00,"produto":"Desc"}]`, true);
+    const res = await callAI(`Preço de "${q}" em Portugal. JSON: [{"loja":"Nome","preco":0.00,"produto":"Desc"}]`, true);
     const data = parseJSON(res);
-    if(data) document.getElementById('out-home').innerHTML = `<div class="card">${data.map(i => `<div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #eee;"><div><b>${i.loja}</b><br><small>${i.produto}</small></div><b>${i.preco}€</b></div>`).join('')}</div>`;
+    if(data) document.getElementById('out-home').innerHTML = data.map(i => `<div class="card" style="display:flex; justify-content:space-between"><b>${i.loja}</b><b>${i.preco}€</b></div>`).join('');
 }
 
 function updateStatus(m, c) { const e = document.getElementById('st'); e.innerText = m; e.style.color = c; }
 function saveC() { localStorage.setItem('s_c', document.getElementById('cart-txt').value); }
 function closeModal() { document.getElementById('modal').style.display = 'none'; }
-function saveConfig() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); fetchModels(); alert("Configurado!"); }
-function deleteSelected() { /* ... similar logic ... */ }
-function saveEditedBill() { /* ... similar logic ... */ }
+function saveConfig() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); fetchModels(); alert("Gravado!"); }
+function exportToCart() { /* ... */ }
+function deleteSelected() { /* ... */ }
 function exportCSV() { /* ... */ }
 </script>
 </body>
