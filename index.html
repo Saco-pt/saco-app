@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V47.0 - Editor de Recibos</title>
+    <title>SACO.pt | V48.0 - Campanhas & Preços</title>
     <style>
         :root { --p: #1a73e8; --s: #1e8e3e; --bg: #f8f9fa; --txt: #202124; --err: #d93025; --v: #673ab7; --warn: #fb8c00; }
         * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; }
-        body { background: var(--bg); color: var(--txt); padding-bottom: 90px; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: var(--txt); padding-bottom: 90px; overflow-x: hidden; }
         
         .header { background: #fff; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
         .v { display: none; padding: 15px; max-width: 500px; margin: 0 auto; }
@@ -25,30 +25,30 @@
         textarea, input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; margin-bottom: 8px; outline: none; background: white; }
         
         .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; height: 75px; border-top: 1px solid #eee; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
-        .nav-i { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: #5f6368; cursor: pointer; }
+        .nav-i { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; color: #5f6368; cursor: pointer; }
         .nav-i.active { color: var(--p); font-weight: bold; }
+        .nav-i span { font-size: 20px; margin-bottom: 4px; }
         
         .badge { font-size: 10px; padding: 3px 10px; border-radius: 20px; font-weight: bold; background: #eee; }
+        .price-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f1f1; }
         
-        /* Modal System */
         #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; padding: 15px; overflow-y: auto; }
         .modal-content { background: white; border-radius: 20px; padding: 20px; max-width: 500px; margin: 10px auto; }
         
-        .edit-item-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; background: #f9f9f9; padding: 8px; border-radius: 8px; }
-        .edit-item-row input[type="text"] { margin: 0; padding: 8px; font-size: 13px; }
-        .edit-item-row input[type="checkbox"] { width: 18px; height: 18px; }
+        .spin { width: 20px; height: 20px; border: 3px solid #eee; border-top: 3px solid var(--p); border-radius: 50%; animation: rot 1s linear infinite; margin: 10px auto; }
+        @keyframes rot { 100% { transform: rotate(360deg); } }
 
-        .price-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .promo-card { border-left: 4px solid var(--warn); margin-bottom: 10px; padding: 10px; background: #fffaf0; border-radius: 8px; }
     </style>
 </head>
 <body onload="boot()">
 
 <div class="header">
     <div style="font-weight:900; font-size:20px; letter-spacing:-1px;">SACO<span style="color:var(--p)">.pt</span></div>
-    <div id="st" class="badge">V47.0</div>
+    <div id="st" class="badge">V48.0</div>
 </div>
 
-<!-- ABA BUSCA -->
+<!-- BUSCA -->
 <div id="v-home" class="v active">
     <div class="card">
         <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-bottom:12px;">
@@ -57,91 +57,81 @@
             <button class="btn btn-s" style="background:var(--warn)" onclick="openCam('tag')">🏷️ Tag</button>
         </div>
         <input type="file" id="f-in" style="display:none" accept="image/*" capture="environment" onchange="handleImage(this)">
-        <input type="text" id="q-in" placeholder="Pesquisar preço...">
+        <input type="text" id="q-in" placeholder="Ex: Arroz Cigala, Detergente...">
         <div style="display:flex; gap:5px;">
-            <input type="text" id="loc-in" placeholder="Cidade" style="width:100px;">
-            <button class="btn btn-s" onclick="searchRealPrices()">🔍 Buscar</button>
+            <input type="text" id="loc-in" placeholder="Cidade (ex: Braga)" style="width:140px;">
+            <button class="btn btn-s" onclick="searchRealPrices()">🔍 Buscar Preços</button>
         </div>
     </div>
     <div id="out-home"></div>
 </div>
 
-<!-- ABA ARQUIVO -->
+<!-- CAMPANHAS -->
+<div id="v-promos" class="v">
+    <div class="card" style="background: linear-gradient(135deg, #fff 0%, #fff9f0 100%);">
+        <h3 style="color:var(--warn)">🔥 Campanhas Ativas</h3>
+        <p style="font-size:12px; margin-bottom:10px;">IA consulta folhetos do Continente, Pingo Doce, Lidl e Auchan.</p>
+        <button class="btn" style="background:var(--warn)" onclick="fetchPromos()">Atualizar Promoções</button>
+    </div>
+    <div id="out-promos"></div>
+</div>
+
+<!-- ARQUIVO -->
 <div id="v-history" class="v">
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
-        <div class="card" style="margin-bottom:0; text-align:center">
-            <small>Total Mês</small><br>
-            <span id="stat-month" style="font-size:20px; font-weight:900; color:var(--v)">0.00€</span>
-        </div>
-        <div class="card" style="margin-bottom:0; text-align:center">
-            <small>Talões</small><br>
-            <span id="stat-count" style="font-size:20px; font-weight:900">0</span>
-        </div>
+        <div class="card" style="margin-bottom:0; text-align:center"><small>Total Mês</small><br><span id="stat-month" style="font-size:18px; font-weight:900; color:var(--v)">0.00€</span></div>
+        <div class="card" style="margin-bottom:0; text-align:center"><small>Talões</small><br><span id="stat-count" style="font-size:18px; font-weight:900">0</span></div>
     </div>
     <div id="out-history"></div>
 </div>
 
-<!-- ABA CARRINHO -->
+<!-- CARRINHO -->
 <div id="v-cart" class="v">
     <div class="card">
-        <textarea id="cart-txt" rows="12" placeholder="Sua lista..." onchange="saveC()"></textarea>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-            <button class="btn btn-s" onclick="compareStoresWithGrounding()">🚀 Comparar Lojas</button>
-            <button class="btn btn-outline" onclick="copyList()">📋 Copiar</button>
-        </div>
+        <textarea id="cart-txt" rows="10" placeholder="Escreve a tua lista..." onchange="saveC()"></textarea>
+        <button class="btn btn-s" onclick="compareStoresDetailed()">🚀 Comparar Total por Supermercado</button>
     </div>
     <div id="out-cart"></div>
 </div>
 
-<!-- ABA CONFIG -->
+<!-- CONFIG -->
 <div id="v-cfg" class="v">
     <div class="card">
-        <h3>Configurações</h3>
-        <input type="password" id="key-in" placeholder="API Key">
+        <h3>Definições</h3>
+        <input type="password" id="key-in" placeholder="Gemini API Key">
         <select id="model-sel"></select>
         <button class="btn btn-p" onclick="loadModels()">Validar</button>
         <button class="btn btn-s" style="margin-top:10px" onclick="saveConfig()">Guardar</button>
-        <button class="btn btn-err" style="margin-top:20px" onclick="clearAllData()">🗑️ Apagar Tudo</button>
+        <button class="btn btn-err" style="margin-top:20px; opacity:0.7" onclick="clearAllData()">🗑️ Apagar Dados</button>
     </div>
 </div>
 
-<!-- MODAL: EDITOR DE RECIBO -->
+<!-- MODAL EDITOR -->
 <div id="modal">
     <div class="modal-content">
-        <h3 id="modal-title">Editar Recibo</h3>
-        <p style="font-size:11px; color:#666; margin-bottom:10px;">Verifica os itens e o total antes de guardar.</p>
-        
-        <div id="modal-items-list" style="max-height: 350px; overflow-y: auto; margin-bottom:15px;">
-            <!-- Itens injetados aqui -->
-        </div>
-
+        <h3 id="modal-title">Confirmar Dados</h3>
+        <div id="modal-body" style="margin: 15px 0;"></div>
         <div class="card" style="background:#f0f7ff; padding:10px;">
-            <label style="font-size:12px; font-weight:bold;">Total do Talão (€):</label>
-            <input type="number" id="modal-total-val" step="0.01" style="margin:5px 0 0; font-size:18px; font-weight:900; color:var(--v);">
+            <label style="font-size:11px;">Total Pago (€):</label>
+            <input type="number" id="modal-total-val" step="0.01" style="font-size:18px; font-weight:bold; margin-top:5px;">
         </div>
-
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-            <button id="modal-save-btn" class="btn btn-s" onclick="saveEditedBill()">💾 Guardar</button>
-            <button id="modal-export-btn" class="btn btn-p" style="display:none;" onclick="exportSelectedToCart()">🛒 Carrinho</button>
-            <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+            <button class="btn btn-s" onclick="saveEditedBill()">💾 Guardar</button>
+            <button class="btn btn-outline" onclick="closeModal()">Sair</button>
         </div>
-        <button id="modal-del-btn" class="btn btn-err" style="margin-top:10px; padding:8px; display:none;" onclick="deleteCurrentBill()">Apagar Recibo</button>
     </div>
 </div>
 
 <nav class="nav">
     <div class="nav-i active" onclick="tab('home',this)"><span>🔎</span>Busca</div>
+    <div class="nav-i" onclick="tab('promos',this)"><span>🔥</span>Promos</div>
     <div class="nav-i" onclick="tab('history',this)"><span>🧾</span>Arquivo</div>
     <div class="nav-i" onclick="tab('cart',this)"><span>🛒</span>Carrinho</div>
     <div class="nav-i" onclick="tab('cfg',this)"><span>⚙️</span>Config</div>
 </nav>
 
 <script>
-let state = { 
-    camMode: "prod", 
-    tempBill: null, // Para novos scans
-    viewingBillId: null // Para consulta no arquivo
-};
+let state = { camMode: "prod", viewingBillId: null };
 
 function boot() {
     const k = localStorage.getItem('s_k'), m = localStorage.getItem('s_m'), 
@@ -153,7 +143,6 @@ function boot() {
     renderHistory();
 }
 
-// Utilitários
 function parseJSON(text) {
     try {
         const match = text.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
@@ -161,18 +150,11 @@ function parseJSON(text) {
     } catch(e) { return null; }
 }
 
-function updateStatus(m, c) {
-    const e = document.getElementById('st');
-    e.innerHTML = m;
-    e.style.color = {green:'#1e8e3e', orange:'#fb8c00', red:'#d93025'}[c] || 'black';
-}
-
-// IA
 async function callAI(payload, search = false) {
     const k = localStorage.getItem('s_k'), m = localStorage.getItem('s_m');
-    if(!k || !m) return alert("Configura a API Key primeiro.");
+    if(!k || !m) return alert("API Key não configurada!");
     if(search) payload.tools = [{ google_search: {} }];
-    updateStatus("IA...", "orange");
+    updateStatus("...", "orange");
     try {
         const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${k}`, {
             method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
@@ -183,28 +165,88 @@ async function callAI(payload, search = false) {
     } catch(e) { updateStatus("Erro", "red"); return null; }
 }
 
-// Câmera e Processamento
+async function searchRealPrices() {
+    const q = document.getElementById('q-in').value;
+    const loc = document.getElementById('loc-in').value || 'Portugal';
+    const out = document.getElementById('out-home');
+    if(!q) return;
+    localStorage.setItem('s_l', loc);
+    out.innerHTML = '<div class="spin"></div>';
+    
+    const p = `Pesquisa o preço REAL HOJE para "${q}" em lojas de ${loc} (Continente, Pingo Doce, Auchan, Mercadona). Responde APENAS JSON: [{"loja":"Nome","preco":0.00,"detalhe":"produto exato encontrado"}]`;
+    const res = await callAI({ contents: [{ parts: [{ text: p }] }] }, true);
+    const data = parseJSON(res);
+    
+    if(data) {
+        out.innerHTML = `<div class="card">${data.map(i => `
+            <div class="price-row">
+                <span style="font-size:14px;"><b>${i.loja}</b><br><small style="color:#666">${i.detalhe||''}</small></span>
+                <b style="color:var(--p); font-size:16px;">${Number(i.preco).toFixed(2)}€</b>
+            </div>`).join('')}</div>`;
+    } else { out.innerHTML = '<div class="card">Erro na busca. Tenta ser mais específico.</div>'; }
+}
+
+async function fetchPromos() {
+    const out = document.getElementById('out-promos');
+    out.innerHTML = '<div class="spin"></div>';
+    const p = `Quais as melhores campanhas de supermercado (Continente, Pingo Doce, Lidl, Aldi) ativas hoje em Portugal? Lista produtos em destaque. Responde em JSON: [{"super":"Nome","titulo":"Promo","desc":"detalhes"}]`;
+    const res = await callAI({ contents: [{ parts: [{ text: p }] }] }, true);
+    const data = parseJSON(res);
+    if(data) {
+        out.innerHTML = data.map(i => `
+            <div class="promo-card">
+                <div style="font-weight:bold; color:var(--warn); margin-bottom:4px;">${i.super} - ${i.titulo}</div>
+                <div style="font-size:13px; color:#444;">${i.desc}</div>
+            </div>
+        `).join('');
+    }
+}
+
+async function compareStoresDetailed() {
+    const txt = document.getElementById('cart-txt').value;
+    const out = document.getElementById('out-cart');
+    if(!txt) return;
+    out.innerHTML = '<div class="spin"></div>A calcular melhor carrinho...';
+    
+    const p = `Analisa esta lista: "${txt}". Calcula o total aproximado para o carrinho completo no Continente, Pingo Doce e Lidl em Portugal. Responde APENAS JSON: [{"loja":"Nome","total":0.00,"obs":"ponto positivo"}]`;
+    const res = await callAI({ contents: [{ parts: [{ text: p }] }] }, true);
+    const data = parseJSON(res);
+    if(data) {
+        data.sort((a,b) => a.total - b.total);
+        out.innerHTML = `<div class="card" style="border:2px solid var(--s)">
+            <small>Melhor Escolha:</small>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h2 style="color:var(--s)">${data[0].loja}</h2>
+                <h2 style="color:var(--s)">${data[0].total.toFixed(2)}€</h2>
+            </div>
+            <p style="font-size:12px; color:#666;">${data[0].obs}</p>
+        </div>` + data.slice(1).map(i => `
+            <div class="card" style="display:flex; justify-content:space-between; padding:10px;">
+                <span>${i.loja}</span>
+                <b>${i.total.toFixed(2)}€</b>
+            </div>
+        `).join('');
+    }
+}
+
 async function handleImage(inp) {
     if(!inp.files[0]) return;
-    updateStatus("Lendo...", "orange");
     const reader = new FileReader();
     reader.onload = (e) => {
         const img = new Image();
         img.onload = async () => {
             const cv = document.createElement('canvas'); const max = 1024;
             let w = img.width, h = img.height;
-            if(w > h) { if(w > max) { h *= max/w; w = max; } } else { if(h > max) { w *= max/h; h = max; } }
+            if(w>h) { if(w>max){ h*=max/w; w=max; } } else { if(h>max){ w*=max/h; h=max; } }
             cv.width = w; cv.height = h;
             cv.getContext('2d').drawImage(img, 0,0,w,h);
             const b64 = cv.toDataURL('image/jpeg', 0.8).split(',')[1];
             
-            let p = "";
-            if(state.camMode === 'prod') p = "Qual é este produto? Marca e Nome curto.";
-            if(state.camMode === 'bill') p = "Extrai itens e TOTAL da fatura. Responde APENAS JSON: {\"itens\":[\"Item 1\", \"Item 2\"], \"total\": 0.00}";
-            if(state.camMode === 'tag') p = "Lê etiqueta. Nome e Preço.";
+            let p = state.camMode === 'bill' ? 
+                "Extrai itens e TOTAL. JSON: {\"itens\":[\"Item\"], \"total\": 0.00}" : 
+                "Identifica o produto. Marca + Nome.";
 
             const res = await callAI({ contents: [{ parts: [{ inline_data: { mime_type: "image/jpeg", data: b64 } }, { text: p }] }] });
-            
             if(res && state.camMode === 'bill') {
                 const data = parseJSON(res);
                 if(data) openBillEditor(data, true);
@@ -218,152 +260,54 @@ async function handleImage(inp) {
     reader.readAsDataURL(inp.files[0]);
 }
 
-// Gestão de Modal e Edição
-function openBillEditor(data, isNew = false, id = null) {
-    state.tempBill = data;
+function openBillEditor(data, isNew, id = null) {
     state.viewingBillId = id;
-    
-    document.getElementById('modal-title').innerText = isNew ? "Novo Recibo Detetado" : "Consultar Recibo";
     document.getElementById('modal-total-val').value = data.total || 0;
-    
-    // Botões contextuais
-    document.getElementById('modal-save-btn').style.display = 'block';
-    document.getElementById('modal-export-btn').style.display = isNew ? 'none' : 'block';
-    document.getElementById('modal-del-btn').style.display = isNew ? 'none' : 'block';
-
-    const list = document.getElementById('modal-items-list');
-    list.innerHTML = data.itens.map((it, idx) => `
-        <div class="edit-item-row">
-            <input type="checkbox" class="bill-item-check" data-idx="${idx}" checked>
-            <input type="text" class="bill-item-text" value="${it}" style="flex:1;">
-            <button onclick="this.parentElement.remove()" style="border:none; background:none; color:red; font-weight:bold; padding:5px;">✕</button>
+    const body = document.getElementById('modal-body');
+    body.innerHTML = data.itens.map((it, idx) => `
+        <div style="display:flex; gap:5px; margin-bottom:5px;">
+            <input type="text" class="bill-it" value="${it}" style="margin:0; padding:8px; font-size:13px;">
+            <button onclick="this.parentElement.remove()" style="background:none; border:none; color:red;">✕</button>
         </div>
     `).join('');
-
     document.getElementById('modal').style.display = 'block';
 }
 
 function saveEditedBill() {
-    const items = Array.from(document.querySelectorAll('.bill-item-text')).map(input => input.value);
+    const itens = Array.from(document.querySelectorAll('.bill-it')).map(i => i.value);
     const total = parseFloat(document.getElementById('modal-total-val').value) || 0;
-    
     let hist = JSON.parse(localStorage.getItem('s_hist') || '[]');
-    
-    if(state.viewingBillId) {
-        // Atualizar existente
-        const idx = hist.findIndex(h => h.id === state.viewingBillId);
-        if(idx !== -1) {
-            hist[idx].itens = items;
-            hist[idx].total = total;
-        }
-    } else {
-        // Criar novo
-        hist.unshift({
-            id: Date.now(),
-            date: new Date().toLocaleDateString('pt-PT'),
-            itens: items,
-            total: total
-        });
-    }
-    
+    hist.unshift({ id: Date.now(), date: new Date().toLocaleDateString('pt-PT'), itens, total });
     localStorage.setItem('s_hist', JSON.stringify(hist));
-    renderHistory();
-    closeModal();
-    if(!state.viewingBillId) tab('history', document.querySelectorAll('.nav-i')[1]);
+    renderHistory(); closeModal(); tab('history', document.querySelectorAll('.nav-i')[2]);
 }
 
-function exportSelectedToCart() {
-    const selected = Array.from(document.querySelectorAll('.edit-item-row'))
-        .filter(row => row.querySelector('.bill-item-check').checked)
-        .map(row => row.querySelector('.bill-item-text').value);
-    
-    if(selected.length === 0) return alert("Seleciona pelo menos um item.");
-    
-    let current = document.getElementById('cart-txt').value;
-    document.getElementById('cart-txt').value = (current ? current + "\n" : "") + selected.join('\n');
-    saveC();
-    closeModal();
-    tab('cart', document.querySelectorAll('.nav-i')[2]);
-    alert("Itens adicionados ao carrinho!");
-}
-
-function deleteCurrentBill() {
-    if(!confirm("Apagar este recibo permanentemente?")) return;
-    let hist = JSON.parse(localStorage.getItem('s_hist') || '[]');
-    hist = hist.filter(h => h.id !== state.viewingBillId);
-    localStorage.setItem('s_hist', JSON.stringify(hist));
-    renderHistory();
-    closeModal();
-}
-
-// Histórico
 function renderHistory() {
     const hist = JSON.parse(localStorage.getItem('s_hist') || '[]');
     const out = document.getElementById('out-history');
-    let tM = 0;
-    hist.forEach(h => tM += h.total);
+    let tM = 0; hist.forEach(h => tM += h.total);
     document.getElementById('stat-month').innerText = tM.toFixed(2) + "€";
     document.getElementById('stat-count').innerText = hist.length;
-
-    if(hist.length === 0) {
-        out.innerHTML = '<div class="card" style="text-align:center; color:#999;">Sem recibos no arquivo.</div>';
-        return;
-    }
-    
     out.innerHTML = hist.map(h => `
         <div class="card" onclick="openBillEditor({itens:${JSON.stringify(h.itens).replace(/"/g, '&quot;')}, total:${h.total}}, false, ${h.id})">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <small><b>${h.date}</b></small>
-                <b style="color:var(--v); font-size:16px;">${h.total.toFixed(2)}€</b>
-            </div>
-            <div style="font-size:12px; color:#666; margin-top:4px;">${h.itens.length} itens encontrados.</div>
+            <div style="display:flex; justify-content:space-between"><b>${h.date}</b><b style="color:var(--v)">${h.total.toFixed(2)}€</b></div>
+            <small style="color:#666">${h.itens.length} itens</small>
         </div>
     `).join('');
 }
 
-// Navegação e Outros
-function tab(id, el) {
-    document.querySelectorAll('.v').forEach(v => v.classList.remove('active'));
-    document.querySelectorAll('.nav-i').forEach(n => n.classList.remove('active'));
-    document.getElementById('v-'+id).classList.add('active');
-    el.classList.add('active');
+function tab(id, el) { 
+    document.querySelectorAll('.v').forEach(v => v.classList.remove('active')); 
+    document.querySelectorAll('.nav-i').forEach(n => n.classList.remove('active')); 
+    document.getElementById('v-'+id).classList.add('active'); 
+    el.classList.add('active'); 
 }
-
-function closeModal() { document.getElementById('modal').style.display = 'none'; state.viewingBillId = null; }
+function closeModal() { document.getElementById('modal').style.display = 'none'; }
 function openCam(m) { state.camMode = m; document.getElementById('f-in').click(); }
 function saveC() { localStorage.setItem('s_c', document.getElementById('cart-txt').value); }
-function saveConfig() { 
-    localStorage.setItem('s_k', document.getElementById('key-in').value); 
-    localStorage.setItem('s_m', document.getElementById('model-sel').value); 
-    alert("Definições guardadas!"); 
-}
-function clearAllData() { if(confirm("Limpar todo o histórico e configurações?")) { localStorage.clear(); location.reload(); } }
-function copyList() { navigator.clipboard.writeText(document.getElementById('cart-txt').value).then(() => alert("Copiado!")); }
-
-async function searchRealPrices() {
-    const q = document.getElementById('q-in').value;
-    const loc = document.getElementById('loc-in').value;
-    const out = document.getElementById('out-home');
-    if(!q) return;
-    out.innerHTML = '<div class="card" style="text-align:center;">Buscando preços reais...</div>';
-    const res = await callAI({ contents: [{ parts: [{ text: `Preço hoje em ${loc||'Portugal'} para "${q}". JSON: [{"loja":"Nome","preco":0.00}]` }] }] }, true);
-    const data = parseJSON(res);
-    if(data) {
-        out.innerHTML = `<div class="card">${data.map(i => `<div class="price-row"><span>${i.loja}</span><b style="color:var(--p)">${i.preco.toFixed(2)}€</b></div>`).join('')}</div>`;
-    }
-}
-
-async function compareStoresWithGrounding() {
-    const txt = document.getElementById('cart-txt').value;
-    if(!txt) return;
-    const out = document.getElementById('out-cart');
-    out.innerHTML = '<div class="card" style="text-align:center;">Estimando cabaz...</div>';
-    const res = await callAI({ contents: [{ parts: [{ text: `Analisa: "${txt}". Quanto custa em média no Continente, Lidl e Pingo Doce? JSON: [{"loja":"Nome","total":0.00}]` }] }] }, true);
-    const data = parseJSON(res);
-    if(data) {
-        out.innerHTML = data.map(i => `<div class="card" style="display:flex; justify-content:space-between"><b>${i.loja}</b><span>${i.total.toFixed(2)}€</span></div>`).join('');
-    }
-}
+function saveConfig() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); alert("Guardado!"); }
+function clearAllData() { if(confirm("Apagar tudo?")) { localStorage.clear(); location.reload(); } }
+function updateStatus(m, c) { const e = document.getElementById('st'); e.innerHTML = m; e.style.color = {green:'#1e8e3e', orange:'#fb8c00', red:'#d93025'}[c]; }
 
 async function loadModels(saved) {
     const k = document.getElementById('key-in').value;
