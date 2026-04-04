@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V59.5 - Recolha de Dados Avançada</title>
+    <title>SACO.pt | V59.5 - Gestão de Dados</title>
     <style>
         :root { --p: #1a73e8; --s: #1e8e3e; --bg: #f8f9fa; --txt: #202124; --err: #d93025; --v: #673ab7; --warn: #f29900; --card: #ffffff; }
         * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -28,6 +28,8 @@
         .badge { font-size: 10px; padding: 4px 12px; border-radius: 20px; font-weight: bold; text-transform: uppercase; }
         
         .data-tag { display: inline-block; padding: 4px 8px; border-radius: 6px; background: #e8f0fe; font-size: 10px; margin: 2px; color: var(--p); font-weight: bold; }
+        .check-container { display: flex; align-items: center; gap: 12px; width: 100%; }
+        input[type="checkbox"] { width: 20px; height: 20px; margin: 0; accent-color: var(--p); }
 
         #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; backdrop-filter: blur(4px); }
         .modal-content { background: #fff; border-radius: 24px; padding: 20px; max-width: 450px; margin: 20px auto; width: 94%; max-height: 90vh; display: flex; flex-direction: column; }
@@ -43,42 +45,37 @@
     <div id="st" class="badge" style="background:#fce8e6; color:var(--err)">Offline</div>
 </div>
 
-<!-- VISTA BUSCA / RECOLHA -->
+<!-- BUSCA -->
 <div id="v-home" class="v active">
     <div class="card">
-        <h3 style="margin-bottom:10px;">Recolha de Dados Visuais</h3>
-        <p style="font-size:12px; color:#666; margin-bottom:15px;">Ajuda a IA a interpretar os teus padrões de consumo.</p>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+        <h3>Recolha de Dados Visuais</h3>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:15px;">
             <button class="btn btn-v" onclick="triggerInput('bill')"><span>🧾</span> Recibo</button>
             <button class="btn btn-warn" onclick="triggerInput('fridge')"><span>❄️</span> Despensa</button>
         </div>
         <input type="file" id="f-in" style="display:none" accept="image/*">
     </div>
-
     <div class="card">
-        <h3>Pesquisa de Mercado</h3>
-        <input type="text" id="q-in" placeholder="Ex: Café em cápsulas">
+        <input type="text" id="q-in" placeholder="Ex: Arroz Agulha">
         <button class="btn btn-s" onclick="searchRealPrices()">🔍 Analisar Preços</button>
     </div>
     <div id="out-home"></div>
 </div>
 
-<!-- VISTA PERFIL (NOVO: INTERPRETAÇÃO DE DADOS) -->
+<!-- PERFIL -->
 <div id="v-gen" class="v">
     <div class="card">
         <h3>🧠 Perfil de Consumidor</h3>
-        <p style="font-size:12px; color:#666;">Dados acumulados das tuas fotos e recibos.</p>
-        <div id="data-mining-tags" style="margin-top:15px;"></div>
+        <div id="data-mining-tags" style="margin-top:10px;"></div>
     </div>
-    
     <div class="card">
-        <h3>🎯 Sugestões Personalizadas</h3>
-        <div id="ai-insight" style="font-size:13px; font-style:italic; color:#444;">Aguardando dados suficientes para análise...</div>
-        <button class="btn btn-p" style="margin-top:15px; padding:10px;" onclick="generateInsights()">Gerar Nova Análise</button>
+        <h3>🎯 Sugestões Inteligentes</h3>
+        <div id="ai-insight" style="font-size:13px; font-style:italic; color:#444;">Aguardando dados...</div>
+        <button class="btn btn-p" style="margin-top:15px;" onclick="generateInsights()">Analisar Hábitos</button>
     </div>
 </div>
 
-<!-- VISTA ARQUIVO -->
+<!-- ARQUIVO -->
 <div id="v-history" class="v">
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:15px;">
         <div class="card" style="text-align:center; padding:12px; margin-bottom:0;">
@@ -86,34 +83,36 @@
             <span id="stat-sel-val" style="font-size:18px; font-weight:900; color:var(--s)">0.00€</span>
         </div>
         <div class="card" style="text-align:center; padding:12px; margin-bottom:0;">
-            <small style="color:#666;">Histórico</small><br>
+            <small style="color:#666;">Total Acumulado</small><br>
             <span id="stat-month" style="font-size:18px; font-weight:900; color:var(--v)">0.00€</span>
         </div>
     </div>
     <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-bottom:15px;">
         <button class="btn btn-s" onclick="exportToCart()" style="padding:10px; font-size:11px;">🛒 Carrinho</button>
         <button class="btn btn-p" onclick="exportCSV()" style="padding:10px; font-size:11px;">📥 CSV</button>
-        <button class="btn btn-err" onclick="deleteSelected()" style="padding:10px; font-size:11px; background:#fce8e6; color:var(--err);">🗑️ Apagar</button>
+        <button class="btn btn-err" onclick="deleteSelected()" style="padding:10px; font-size:11px; background:#fce8e6; color:var(--err);">🗑️ Limpar</button>
     </div>
     <div id="out-history"></div>
 </div>
 
-<!-- VISTA LISTA -->
+<!-- LISTA -->
 <div id="v-cart" class="v">
     <div class="card">
-        <h3>🛒 Lista & Comparação</h3>
-        <textarea id="cart-txt" rows="10" placeholder="A tua lista inteligente..." oninput="saveC()"></textarea>
-        <button class="btn btn-s" onclick="compareStoresDetailed()">🚀 Comparar Lojas</button>
+        <h3>🛒 Lista Inteligente</h3>
+        <p style="font-size:11px; color:#666; margin-bottom:10px;">Produtos sugeridos ou adicionados manualmente.</p>
+        <textarea id="cart-txt" rows="12" placeholder="Ex: Leite, Ovos, Pão..." oninput="saveC()"></textarea>
+        <button class="btn btn-s" onclick="compareStoresDetailed()">🚀 Comparar em Lojas Reais</button>
     </div>
+    <div id="out-cart"></div>
 </div>
 
-<!-- VISTA CONFIG -->
+<!-- CONFIG -->
 <div id="v-cfg" class="v">
     <div class="card">
-        <h3>Configuração</h3>
+        <h3>⚙️ Configurações</h3>
         <input type="password" id="key-in" placeholder="Gemini API Key" onchange="fetchModels()">
         <select id="model-sel"></select>
-        <button class="btn btn-p" onclick="saveConfig()">Guardar</button>
+        <button class="btn btn-p" onclick="saveConfig()">Guardar Alterações</button>
     </div>
 </div>
 
@@ -122,9 +121,10 @@
     <div class="modal-content" onclick="event.stopPropagation()">
         <h3 id="m-title">Processando...</h3>
         <div id="modal-body"></div>
-        <div id="m-footer-val" style="display:none">
-            <input type="number" id="modal-total-val" step="0.01" style="font-size:22px; font-weight:900;">
-            <button class="btn btn-s" onclick="saveEditedBill()">Confirmar Dados</button>
+        <div id="m-footer-val" style="display:none; padding-top:15px; border-top:1px solid #eee;">
+            <label style="font-size:11px; color:#666;">Valor Total do Recibo:</label>
+            <input type="number" id="modal-total-val" step="0.01" style="font-size:22px; font-weight:900; margin-top:5px;">
+            <button class="btn btn-s" onclick="saveEditedBill()">Confirmar e Arquivar</button>
         </div>
     </div>
 </div>
@@ -206,98 +206,39 @@ async function callAI(prompt, search = false, image = null) {
 
 function parseJSON(txt) { try { return JSON.parse(txt.replace(/```json|```/gi, "").trim()); } catch(e) { return null; } }
 
-// LOGICA DE RECOLHA DE DADOS (FRIGORIFICO/DESPENSA)
+// RECOLHA DE DADOS FRIGORÍFICO
 async function processFridgeData(b64) {
     document.getElementById('modal').style.display = 'block';
-    document.getElementById('m-title').innerText = "Interpretando Conteúdo...";
+    document.getElementById('m-title').innerText = "Análise Visual...";
     document.getElementById('modal-body').innerHTML = '<div class="loading-spin"></div>';
     document.getElementById('m-footer-val').style.display = 'none';
 
-    // Prompt focado em recolha de dados e categorização, não apenas falta de stock
-    const prompt = `Analisa esta foto de despensa/frigorífico. Extrai: 1. Marcas visíveis, 2. Categorias de produtos, 3. Estado de preenchimento (0-100%). JSON: {"tags":["marca ou categoria"], "analise":"resumo do perfil de consumo"}`;
-    
+    const prompt = `Analisa a foto da despensa. Extrai Marcas e Categorias. JSON: {"tags":["marca","categoria"], "analise":"resumo curto"}`;
     const res = await callAI(prompt, false, b64);
     const data = parseJSON(res);
     
     if(data) {
         let tags = JSON.parse(localStorage.getItem('s_tags') || '[]');
-        tags = [...new Set([...tags, ...data.tags])].slice(-20); // Guarda as últimas 20 tags únicas
+        tags = [...new Set([...tags, ...data.tags])].slice(-30);
         localStorage.setItem('s_tags', JSON.stringify(tags));
-        localStorage.setItem('s_last_insight', data.analise);
-        
-        document.getElementById('m-title').innerText = "Dados Recolhidos";
-        document.getElementById('modal-body').innerHTML = `
-            <p style="font-size:13px; margin-bottom:10px;">${data.analise}</p>
-            <div style="background:#f8f9fa; padding:10px; border-radius:12px;">
-                <b>Metadados extraídos:</b><br>
-                ${data.tags.map(t => `<span class="data-tag">${t}</span>`).join('')}
-            </div>
-        `;
+        document.getElementById('m-title').innerText = "Dados Sincronizados";
+        document.getElementById('modal-body').innerHTML = `<p>${data.analise}</p><div style="margin-top:10px;">${data.tags.map(t => `<span class="data-tag">${t}</span>`).join('')}</div>`;
     } else closeModal();
 }
 
-async function generateInsights() {
-    const h = localStorage.getItem('s_h') || "[]";
-    const tags = localStorage.getItem('s_tags') || "[]";
-    document.getElementById('ai-insight').innerHTML = '<div class="loading-spin"></div>';
-    
-    const prompt = `Com base nestas tags de preferência ${tags} e histórico de compras ${h.substring(0,500)}, faz uma análise crítica do perfil do utilizador e sugere 3 estratégias de poupança em Portugal. Resposta curta em texto corrido.`;
-    
-    const res = await callAI(prompt, true);
-    if(res) {
-        document.getElementById('ai-insight').innerText = res;
-        localStorage.setItem('s_last_insight', res);
-    }
-}
-
-function renderDataTags() {
-    const tags = JSON.parse(localStorage.getItem('s_tags') || '[]');
-    const ins = localStorage.getItem('s_last_insight') || "Analisa fotos para gerar perfis.";
-    document.getElementById('data-mining-tags').innerHTML = tags.map(t => `<span class="data-tag">${t}</span>`).join('');
-    document.getElementById('ai-insight').innerText = ins;
-}
-
-// LOGICA DE RECIBOS
-async function processBill(b64) {
-    document.getElementById('modal').style.display = 'block';
-    document.getElementById('modal-body').innerHTML = '<div class="loading-spin"></div>';
-    const res = await callAI("Extrai itens e TOTAL. JSON: {\"itens\":[\"Desc\"], \"total\": 0.00}", false, b64);
-    const data = parseJSON(res);
-    if(data) {
-        document.getElementById('m-title').innerText = "Confirmar Recibo";
-        document.getElementById('modal-total-val').value = data.total;
-        document.getElementById('modal-body').innerHTML = data.itens.map(it => `<input type="text" class="bill-it" value="${it}">`).join('');
-        document.getElementById('m-footer-val').style.display = 'block';
-    } else closeModal();
-}
-
-function saveEditedBill() {
-    const itens = Array.from(document.querySelectorAll('.bill-it')).map(i => i.value);
-    const total = parseFloat(document.getElementById('modal-total-val').value || 0);
-    let h = JSON.parse(localStorage.getItem('s_h') || '[]');
-    h.unshift({ id: Date.now(), total, itens, date: new Date().toLocaleDateString('pt-PT') });
-    localStorage.setItem('s_h', JSON.stringify(h));
-    
-    // Extrai categorias dos itens para as tags de perfil
-    itens.forEach(it => {
-        let tags = JSON.parse(localStorage.getItem('s_tags') || '[]');
-        if(it.length > 3) tags.push(it.split(' ')[0]); // Adiciona a primeira palavra como potencial categoria
-        localStorage.setItem('s_tags', JSON.stringify([...new Set(tags)].slice(-30)));
-    });
-
-    renderHistory(); closeModal(); tab('history', document.querySelectorAll('.nav-i')[2]);
-}
-
-// RESTANTE LOGICA UI
+// ARQUIVO E GESTÃO
 function renderHistory() {
     const h = JSON.parse(localStorage.getItem('s_h') || '[]');
     const out = document.getElementById('out-history');
     let total = 0;
     out.innerHTML = h.map(i => {
         total += parseFloat(i.total || 0);
-        return `<div class="card" style="display:flex; align-items:center; gap:10px;">
+        return `<div class="card check-container">
             <input type="checkbox" class="hist-check" data-id="${i.id}" data-val="${i.total}" onchange="updateSelTotal()">
-            <div style="flex-grow:1"><b>${i.date}</b><br><small>${i.total.toFixed(2)}€</small></div>
+            <div style="flex-grow:1">
+                <div style="display:flex; justify-content:space-between"><b>${i.date}</b> <b>${parseFloat(i.total).toFixed(2)}€</b></div>
+                <small style="color:#666">${i.itens.slice(0,3).join(', ')}...</small>
+            </div>
         </div>`;
     }).join('');
     document.getElementById('stat-month').innerText = total.toFixed(2) + "€";
@@ -309,22 +250,115 @@ function updateSelTotal() {
     document.getElementById('stat-sel-val').innerText = t.toFixed(2) + "€";
 }
 
+function exportToCart() {
+    const h = JSON.parse(localStorage.getItem('s_h') || '[]');
+    const selectedIds = Array.from(document.querySelectorAll('.hist-check:checked')).map(c => c.dataset.id);
+    if(selectedIds.length === 0) return alert("Seleciona recibos primeiro.");
+    
+    let allProducts = [];
+    h.filter(i => selectedIds.includes(i.id.toString())).forEach(bill => {
+        allProducts = allProducts.concat(bill.itens);
+    });
+    
+    const currentList = document.getElementById('cart-txt').value;
+    const newList = [...new Set([...currentList.split('\n'), ...allProducts])].filter(x => x.trim()).join('\n');
+    document.getElementById('cart-txt').value = newList;
+    saveC();
+    tab('cart', document.querySelectorAll('.nav-i')[3]);
+}
+
+function deleteSelected() {
+    const selectedIds = Array.from(document.querySelectorAll('.hist-check:checked')).map(c => c.dataset.id);
+    if(selectedIds.length === 0) return;
+    if(!confirm("Apagar recibos selecionados?")) return;
+    
+    let h = JSON.parse(localStorage.getItem('s_h') || '[]');
+    h = h.filter(i => !selectedIds.includes(i.id.toString()));
+    localStorage.setItem('s_h', JSON.stringify(h));
+    renderHistory();
+    updateSelTotal();
+}
+
+function exportCSV() {
+    const h = JSON.parse(localStorage.getItem('s_h') || '[]');
+    if(h.length === 0) return;
+    let csv = "Data;Total;Itens\n";
+    h.forEach(i => {
+        csv += `${i.date};${i.total};${i.itens.join('|')}\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', 'saco_historico.csv');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+// RECIBOS
+async function processBill(b64) {
+    document.getElementById('modal').style.display = 'block';
+    document.getElementById('m-title').innerText = "Lendo Recibo...";
+    document.getElementById('modal-body').innerHTML = '<div class="loading-spin"></div>';
+    const res = await callAI("Extrai itens e TOTAL. JSON: {\"itens\":[\"Desc\"], \"total\": 0.00}", false, b64);
+    const data = parseJSON(res);
+    if(data) {
+        document.getElementById('m-title').innerText = "Confirmar Dados";
+        document.getElementById('modal-total-val').value = data.total;
+        document.getElementById('modal-body').innerHTML = data.itens.map(it => `<input type="text" class="bill-it" value="${it}" style="margin-bottom:5px;">`).join('');
+        document.getElementById('m-footer-val').style.display = 'block';
+    } else closeModal();
+}
+
+function saveEditedBill() {
+    const itens = Array.from(document.querySelectorAll('.bill-it')).map(i => i.value);
+    const total = parseFloat(document.getElementById('modal-total-val').value || 0);
+    let h = JSON.parse(localStorage.getItem('s_h') || '[]');
+    h.unshift({ id: Date.now(), total, itens, date: new Date().toLocaleDateString('pt-PT') });
+    localStorage.setItem('s_h', JSON.stringify(h));
+    renderHistory();
+    closeModal();
+    tab('history', document.querySelectorAll('.nav-i')[2]);
+}
+
+// UTILITÁRIOS
+async function generateInsights() {
+    const h = localStorage.getItem('s_h') || "[]";
+    const tags = localStorage.getItem('s_tags') || "[]";
+    document.getElementById('ai-insight').innerHTML = '<div class="loading-spin"></div>';
+    const res = await callAI(`Analisa o perfil ${tags} e histórico ${h.substring(0,500)}. Dá 2 dicas de poupança.`, true);
+    if(res) document.getElementById('ai-insight').innerText = res;
+}
+
+function renderDataTags() {
+    const tags = JSON.parse(localStorage.getItem('s_tags') || '[]');
+    document.getElementById('data-mining-tags').innerHTML = tags.length ? tags.map(t => `<span class="data-tag">${t}</span>`).join('') : "Sem tags ainda.";
+}
+
 async function searchRealPrices() {
     const q = document.getElementById('q-in').value;
     if(!q) return;
     document.getElementById('out-home').innerHTML = '<div class="loading-spin"></div>';
-    const res = await callAI(`Preço de "${q}" em Portugal. JSON: [{"loja":"Nome","preco":0.00,"produto":"Desc"}]`, true);
+    const res = await callAI(`Preço de "${q}" em Portugal. JSON: [{"loja":"Nome","preco":0.00}]`, true);
     const data = parseJSON(res);
-    if(data) document.getElementById('out-home').innerHTML = data.map(i => `<div class="card" style="display:flex; justify-content:space-between"><b>${i.loja}</b><b>${i.preco}€</b></div>`).join('');
+    if(data) document.getElementById('out-home').innerHTML = data.map(i => `<div class="card" style="display:flex; justify-content:space-between"><b>${i.loja}</b><b style="color:var(--p)">${i.preco.toFixed(2)}€</b></div>`).join('');
+}
+
+async function compareStoresDetailed() {
+    const list = document.getElementById('cart-txt').value;
+    if(!list) return;
+    document.getElementById('out-cart').innerHTML = '<div class="loading-spin"></div>';
+    const res = await callAI(`Com base na lista: ${list}, estima o total no Continente vs Pingo Doce. JSON: [{"loja":"Nome","total":0.00}]`, true);
+    const data = parseJSON(res);
+    if(data) document.getElementById('out-cart').innerHTML = `<div class="card"><h4>Estimativa de Cabaz:</h4>${data.map(i => `<div style="display:flex; justify-content:space-between; padding:8px 0;"><span>${i.loja}</span><b>${i.total.toFixed(2)}€</b></div>`).join('')}</div>`;
 }
 
 function updateStatus(m, c) { const e = document.getElementById('st'); e.innerText = m; e.style.color = c; }
 function saveC() { localStorage.setItem('s_c', document.getElementById('cart-txt').value); }
 function closeModal() { document.getElementById('modal').style.display = 'none'; }
-function saveConfig() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); fetchModels(); alert("Gravado!"); }
-function exportToCart() { /* ... */ }
-function deleteSelected() { /* ... */ }
-function exportCSV() { /* ... */ }
+function saveConfig() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); fetchModels(); alert("Configurações salvas."); }
 </script>
 </body>
 </html>
