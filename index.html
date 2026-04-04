@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt | V59.9 - Analisador Ativo</title>
+    <title>SACO.pt | V60.0 - Comparador Ativo</title>
     <style>
         :root { --p: #1a73e8; --s: #1e8e3e; --bg: #f8f9fa; --txt: #202124; --err: #d93025; --v: #673ab7; --warn: #f29900; --card: #ffffff; }
         * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -14,7 +14,7 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         .card { background: var(--card); border-radius: 16px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 15px; border: 1px solid rgba(0,0,0,0.03); }
         .btn { border: none; border-radius: 12px; padding: 16px; font-weight: 700; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; color: white; transition: all 0.2s; }
-        .btn:active { transform: scale(0.98); opacity: 0.9; }
+        .btn:disabled { opacity: 0.6; filter: grayscale(1); }
         .btn-p { background: var(--p); }
         .btn-s { background: var(--s); }
         .btn-v { background: var(--v); }
@@ -29,11 +29,10 @@
         #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; backdrop-filter: blur(4px); }
         .modal-content { background: #fff; border-radius: 24px; padding: 20px; max-width: 450px; margin: 20px auto; width: 94%; max-height: 90vh; display: flex; flex-direction: column; }
         #modal-body { overflow-y: auto; flex-grow: 1; margin: 15px 0; }
-        .loading-spin { border: 3px solid #f3f3f3; border-top: 3px solid var(--p); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 10px auto; }
+        .loading-spin { border: 3px solid #f3f3f3; border-top: 3px solid var(--p); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .res-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
-        .res-row:last-child { border: none; }
-        .hist-item { display: flex; align-items: center; gap: 15px; padding: 15px; background: #fff; border-radius: 16px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .comp-card { border-left: 4px solid var(--p); padding-left: 12px; margin-bottom: 15px; }
+        .winner { border-left: 4px solid var(--s); background: #f1f8f3; }
     </style>
 </head>
 <body onload="boot()">
@@ -43,7 +42,7 @@
     <div id="st" style="font-size:10px; font-weight:bold; color: var(--s);">SISTEMA OK</div>
 </div>
 
-<!-- ABA BUSCA -->
+<!-- BUSCA -->
 <div id="v-home" class="v active">
     <div class="card">
         <h3>Recolha de Dados Visuais</h3>
@@ -54,13 +53,13 @@
         <input type="file" id="f-in" style="display:none" accept="image/*">
     </div>
     <div class="card">
-        <input type="text" id="q-in" placeholder="Ex: Arroz, Leite, Detergente...">
+        <input type="text" id="q-in" placeholder="Ex: Café, Atum...">
         <button class="btn btn-s" id="btn-search" onclick="searchRealPrices()">🔍 Analisar Mercado</button>
     </div>
     <div id="out-home"></div>
 </div>
 
-<!-- ABA PERFIL -->
+<!-- PERFIL -->
 <div id="v-gen" class="v">
     <div class="card">
         <h3>🧠 Perfil de Consumidor</h3>
@@ -68,12 +67,12 @@
     </div>
     <div class="card">
         <h3>🎯 Sugestões IA</h3>
-        <div id="ai-insight" style="font-size:13px; font-style:italic;">Fotografa recibos e a despensa para treinar o teu perfil.</div>
+        <div id="ai-insight" style="font-size:13px; font-style:italic;">Fotografa recibos para treinar o teu perfil.</div>
         <button class="btn btn-p" style="margin-top:15px;" onclick="generateInsights()">Analisar Hábitos</button>
     </div>
 </div>
 
-<!-- ABA ARQUIVO -->
+<!-- ARQUIVO -->
 <div id="v-history" class="v">
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:15px;">
         <div class="card" style="text-align:center; padding:12px; margin-bottom:0;">
@@ -91,16 +90,17 @@
     <div id="out-history"></div>
 </div>
 
-<!-- ABA LISTA -->
+<!-- LISTA (Onde corrigimos a análise) -->
 <div id="v-cart" class="v">
     <div class="card">
         <h3>🛒 Lista Inteligente</h3>
-        <textarea id="cart-txt" rows="10" placeholder="A tua lista..." oninput="saveC()"></textarea>
-        <button class="btn btn-s" onclick="tab('home', document.querySelector('.nav-i'))">🚀 Voltar para Busca</button>
+        <textarea id="cart-txt" rows="10" placeholder="Insere ou cola os teus itens aqui..." oninput="saveC()"></textarea>
+        <button class="btn btn-s" id="btn-comp-list" onclick="analyzeCartList()">🚀 Comparar Lojas e Somar</button>
     </div>
+    <div id="out-cart"></div>
 </div>
 
-<!-- ABA CONFIG -->
+<!-- CONFIG -->
 <div id="v-cfg" class="v">
     <div class="card">
         <h3>⚙️ Configuração API</h3>
@@ -146,8 +146,6 @@ function tab(id, btn) {
     document.querySelectorAll('.nav-i').forEach(n => n.classList.remove('active'));
     document.getElementById('v-' + id).classList.add('active');
     btn.classList.add('active');
-    if(id === 'gen') renderDataTags();
-    if(id === 'history') renderHistory();
 }
 
 function triggerInput(mode) { currentMode = mode; document.getElementById('f-in').click(); }
@@ -167,94 +165,89 @@ function handleMedia(e) {
 
 async function callAI(prompt, b64 = null, grounding = false) {
     const k = localStorage.getItem('s_k'), m = localStorage.getItem('s_m') || 'gemini-1.5-flash';
-    if(!k) { alert("Configura a API Key primeiro!"); return null; }
-    
-    const payload = { 
-        contents: [{ parts: [{ text: prompt }] }] 
-    };
-    
+    if(!k) { alert("Configura a API Key em 'Config'!"); return null; }
+    const payload = { contents: [{ parts: [{ text: prompt }] }] };
     if(b64) payload.contents[0].parts.unshift({ inline_data: { mime_type: "image/jpeg", data: b64 } });
     if(grounding) payload.tools = [{ google_search: {} }];
 
     try {
         const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${k}`, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload) 
+            method: 'POST', body: JSON.stringify(payload) 
         });
         const d = await r.json();
         return d.candidates[0].content.parts[0].text;
-    } catch(e) { 
-        console.error(e);
-        return null; 
-    }
+    } catch(e) { return null; }
 }
 
-async function searchRealPrices() {
-    const query = document.getElementById('q-in').value;
-    if(!query) return;
+async function analyzeCartList() {
+    const list = document.getElementById('cart-txt').value;
+    if(!list.trim()) return;
     
-    const out = document.getElementById('out-home');
-    const btn = document.getElementById('btn-search');
-    btn.innerHTML = '<div class="loading-spin" style="width:14px; height:14px; margin:0"></div>';
+    const out = document.getElementById('out-cart');
+    const btn = document.getElementById('btn-comp-list');
+    btn.innerHTML = '<div class="loading-spin"></div> Analisando...';
     btn.disabled = true;
 
-    const prompt = `Pesquisa o preço atual de "${query}" nos supermercados em Portugal (Continente, Pingo Doce, Auchan, Lidl). Retorna APENAS um JSON: [{"loja":"Nome", "preco":0.00, "obs":"detalhe"}].`;
-    
+    const prompt = `Analisa esta lista de compras em Portugal: "${list}". 
+    Pesquisa o preço total estimado nos supermercados Continente, Pingo Doce e Auchan.
+    Retorna APENAS um JSON: {"comparativo":[{"loja":"Nome", "total":0.00, "itens_faltantes":0}], "melhor_loja":"Nome", "analise":"resumo"}.`;
+
     const res = await callAI(prompt, null, true);
-    btn.innerHTML = '🔍 Analisar Mercado';
+    btn.innerHTML = '🚀 Comparar Lojas e Somar';
     btn.disabled = false;
 
     if(res) {
         try {
             const data = JSON.parse(res.replace(/```json|```/gi, "").trim());
-            out.innerHTML = `<div class="card"><h3>Resultados: ${query}</h3>` + 
-                data.map(i => `<div class="res-row">
-                    <b>${i.loja}</b>
-                    <span style="color:var(--p); font-weight:bold;">${parseFloat(i.preco).toFixed(2)}€</span>
-                </div>`).join('') + `</div>`;
-        } catch(e) {
-            out.innerHTML = `<div class="card">Erro na análise. Tenta novamente.</div>`;
-        }
+            out.innerHTML = `
+                <div class="card">
+                    <h4>Resultado da Comparação</h4>
+                    <p style="font-size:12px; margin:10px 0;">${data.analise}</p>
+                    ${data.comparativo.map(c => `
+                        <div class="comp-card ${c.loja === data.melhor_loja ? 'winner' : ''}">
+                            <div style="display:flex; justify-content:space-between">
+                                <b>${c.loja === data.melhor_loja ? '🏆 ' : ''}${c.loja}</b>
+                                <b style="color:var(--s)">${c.total.toFixed(2)}€</b>
+                            </div>
+                            <small>${c.itens_faltantes > 0 ? '⚠️ '+c.itens_faltantes+' itens não encontrados' : '✅ Lista completa'}</small>
+                        </div>
+                    `).join('')}
+                    <div style="text-align:center; padding-top:10px; font-weight:bold; color:var(--p)">
+                        Poupança Estimada: ${Math.abs(data.comparativo[0].total - data.comparativo[1].total).toFixed(2)}€
+                    </div>
+                </div>
+            `;
+        } catch(e) { out.innerHTML = `<div class="card">Erro ao processar dados. Tenta ser mais específico na lista.</div>`; }
+    }
+}
+
+async function searchRealPrices() {
+    const q = document.getElementById('q-in').value;
+    if(!q) return;
+    const out = document.getElementById('out-home');
+    const btn = document.getElementById('btn-search');
+    btn.innerHTML = '<div class="loading-spin"></div>';
+    btn.disabled = true;
+    const res = await callAI(`Preço atual de "${q}" em supermercados PT. JSON: [{"loja":"Nome", "preco":0.00}].`, null, true);
+    btn.innerHTML = '🔍 Analisar Mercado'; btn.disabled = false;
+    if(res) {
+        const data = JSON.parse(res.replace(/```json|```/gi, "").trim());
+        out.innerHTML = `<div class="card"><h4>Preços: ${q}</h4>` + data.map(i => `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee"><span>${i.loja}</span><b>${i.preco.toFixed(2)}€</b></div>`).join('') + `</div>`;
     }
 }
 
 async function processBill(b64) {
     document.getElementById('modal').style.display = 'block';
-    document.getElementById('modal-body').innerHTML = '<div class="loading-spin"></div>';
-    document.getElementById('m-footer-val').style.display = 'none';
-    const prompt = "Extrai itens e TOTAL do recibo. JSON: {\"itens\":[\"Desc\"], \"total\":0.00}. Garante que 'itens' são STRINGS.";
+    document.getElementById('modal-body').innerHTML = '<div class="loading-spin" style="margin:20px auto"></div>';
+    const prompt = "Extrai itens e TOTAL. JSON: {\"itens\":[\"Desc\"], \"total\":0.00}. Itens = strings.";
     const res = await callAI(prompt, b64);
-    if(!res) { closeModal(); return; }
-    
-    let data;
-    try { data = JSON.parse(res.replace(/```json|```/gi, "").trim()); } catch(e) { closeModal(); return; }
-    
-    if(data) {
-        document.getElementById('m-title').innerText = "Validar Recibo";
-        document.getElementById('modal-total-val').value = data.total || 0;
-        const cleanItens = (data.itens || []).map(it => (typeof it === 'object' ? (it.nome || it.desc || "Item") : String(it)));
-        document.getElementById('modal-body').innerHTML = cleanItens.map(it => `<input type="text" class="bill-it" value="${it}" style="width:100%; padding:12px; margin-bottom:8px; border:1px solid #ddd; border-radius:10px;">`).join('');
-        document.getElementById('m-footer-val').style.display = 'block';
-    }
-}
-
-async function processFridgeData(b64) {
-    document.getElementById('modal').style.display = 'block';
-    document.getElementById('modal-body').innerHTML = '<div class="loading-spin"></div>';
-    const prompt = "Analisa a despensa. JSON: {\"tags\":[\"Item\"], \"analise\":\"resumo\"}";
-    const res = await callAI(prompt, b64);
-    if(!res) { closeModal(); return; }
-    
-    let data;
-    try { data = JSON.parse(res.replace(/```json|```/gi, "").trim()); } catch(e) { closeModal(); return; }
-    if(data) {
-        let tags = JSON.parse(localStorage.getItem('s_tags') || '[]');
-        tags = [...new Set([...tags, ...data.tags])].slice(-30);
-        localStorage.setItem('s_tags', JSON.stringify(tags));
-        document.getElementById('m-title').innerText = "Dados Recolhidos";
-        document.getElementById('modal-body').innerHTML = `<p>${data.analise}</p><div style="margin-top:10px;">${data.tags.map(t => `<span class="data-tag">${t}</span>`).join('')}</div>`;
-    }
+    if(!res) return closeModal();
+    let data = JSON.parse(res.replace(/```json|```/gi, "").trim());
+    document.getElementById('m-title').innerText = "Validar Recibo";
+    document.getElementById('modal-total-val').value = data.total || 0;
+    const clean = (data.itens || []).map(it => String(typeof it === 'object' ? it.desc || "Item" : it));
+    document.getElementById('modal-body').innerHTML = clean.map(it => `<input type="text" class="bill-it" value="${it}" style="margin-bottom:8px;">`).join('');
+    document.getElementById('m-footer-val').style.display = 'block';
 }
 
 function saveEditedBill() {
@@ -263,73 +256,63 @@ function saveEditedBill() {
     let h = JSON.parse(localStorage.getItem('s_h') || '[]');
     h.unshift({ id: Date.now(), total, itens, date: new Date().toLocaleDateString('pt-PT') });
     localStorage.setItem('s_h', JSON.stringify(h));
-    renderHistory(); closeModal(); tab('history', document.querySelectorAll('.nav-i')[2]);
+    renderHistory(); closeModal();
 }
 
 function renderHistory() {
     const h = JSON.parse(localStorage.getItem('s_h') || '[]');
-    let total = 0;
+    let t = 0;
     document.getElementById('out-history').innerHTML = h.map(i => {
-        total += i.total;
-        return `<div class="hist-item">
-            <input type="checkbox" class="hist-check" data-id="${i.id}" data-val="${i.total}" onchange="updateSelTotal()" style="width:20px; height:20px;">
-            <div style="flex-grow:1"><b>${i.date}</b><br><small>${i.total.toFixed(2)}€</small></div>
-        </div>`;
+        t += i.total;
+        return `<div class="card" style="display:flex; align-items:center; gap:10px; padding:12px;"><input type="checkbox" class="hist-check" data-id="${i.id}" data-val="${i.total}" onchange="updateSelTotal()"><div style="flex-grow:1"><b>${i.date}</b> - ${i.total.toFixed(2)}€</div></div>`;
     }).join('');
-    document.getElementById('stat-month').innerText = total.toFixed(2) + "€";
+    document.getElementById('stat-month').innerText = t.toFixed(2) + "€";
 }
 
 function updateSelTotal() {
-    let t = 0;
-    document.querySelectorAll('.hist-check:checked').forEach(c => t += parseFloat(c.dataset.val));
+    let t = 0; document.querySelectorAll('.hist-check:checked').forEach(c => t += parseFloat(c.dataset.val));
     document.getElementById('stat-sel-val').innerText = t.toFixed(2) + "€";
 }
 
 function deleteSelected() {
     let h = JSON.parse(localStorage.getItem('s_h') || '[]');
-    const selected = Array.from(document.querySelectorAll('.hist-check:checked')).map(c => c.dataset.id);
-    h = h.filter(i => !selected.includes(i.id.toString()));
-    localStorage.setItem('s_h', JSON.stringify(h));
+    const ids = Array.from(document.querySelectorAll('.hist-check:checked')).map(c => c.dataset.id);
+    localStorage.setItem('s_h', JSON.stringify(h.filter(i => !ids.includes(i.id.toString()))));
     renderHistory(); updateSelTotal();
 }
 
 function exportCSV() {
     const h = JSON.parse(localStorage.getItem('s_h') || '[]');
-    let csv = "Data;Total;Itens\n";
-    h.forEach(i => csv += `${i.date};${i.total};${i.itens.join('|')}\n`);
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'saco_export.csv'; a.click();
+    let c = "Data;Total;Itens\n" + h.map(i => `${i.date};${i.total};${i.itens.join('|')}`).join('\n');
+    const b = new Blob([c], {type:'text/csv'}); const a = document.createElement('a'); a.href=URL.createObjectURL(b); a.download='saco.csv'; a.click();
 }
 
 function exportToCart() {
     const h = JSON.parse(localStorage.getItem('s_h') || '[]');
-    const selected = Array.from(document.querySelectorAll('.hist-check:checked')).map(c => c.dataset.id);
-    let items = [];
-    h.filter(i => selected.includes(i.id.toString())).forEach(i => items = items.concat(i.itens));
-    document.getElementById('cart-txt').value += items.join('\n') + '\n';
+    const ids = Array.from(document.querySelectorAll('.hist-check:checked')).map(c => c.dataset.id);
+    let its = []; h.filter(i => ids.includes(i.id.toString())).forEach(i => its = its.concat(i.itens));
+    document.getElementById('cart-txt').value += its.join('\n') + '\n';
     saveC(); tab('cart', document.querySelectorAll('.nav-i')[3]);
 }
 
 function renderDataTags() {
-    const tags = JSON.parse(localStorage.getItem('s_tags') || '[]');
-    document.getElementById('data-mining-tags').innerHTML = tags.map(t => `<span class="data-tag">${t}</span>`).join('');
+    const t = JSON.parse(localStorage.getItem('s_tags') || '[]');
+    document.getElementById('data-mining-tags').innerHTML = t.map(x => `<span class="data-tag">${x}</span>`).join('');
 }
 
 async function fetchModels() {
-    const k = document.getElementById('key-in').value;
     try {
+        const k = document.getElementById('key-in').value;
         const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${k}`);
         const d = await r.json();
-        const sel = document.getElementById('model-sel');
-        sel.innerHTML = "";
-        d.models.filter(m => m.name.includes('gemini')).forEach(m => sel.add(new Option(m.name.split('/').pop().toUpperCase(), m.name.split('/').pop())));
+        const s = document.getElementById('model-sel'); s.innerHTML = "";
+        d.models.filter(m => m.name.includes('gemini')).forEach(m => s.add(new Option(m.name.split('/').pop().toUpperCase(), m.name.split('/').pop())));
     } catch(e) {}
 }
 
 function saveC() { localStorage.setItem('s_c', document.getElementById('cart-txt').value); }
 function closeModal() { document.getElementById('modal').style.display = 'none'; }
-function saveConfig() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); alert("Guardado!"); }
+function saveConfig() { localStorage.setItem('s_k', document.getElementById('key-in').value); localStorage.setItem('s_m', document.getElementById('model-sel').value); alert("Config Guardada!"); }
 </script>
 </body>
 </html>
