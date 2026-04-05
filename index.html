@@ -2,118 +2,34 @@
 <html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SACO.pt | V64.0 - Full Operational</title>
     <style>
         :root { --p: #1a73e8; --s: #1e8e3e; --bg: #f8f9fa; --txt: #202124; --err: #d93025; --v: #673ab7; --warn: #f29900; --card: #ffffff; }
         * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--txt); padding-bottom: 90px; min-height: 100vh; }
-
         .header { background: #fff; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 100; }
         .v { display: none; padding: 15px; max-width: 500px; margin: 0 auto; }
         .v.active { display: block; animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
         .card { background: var(--card); border-radius: 16px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 15px; border: 1px solid rgba(0,0,0,0.03); }
-        .btn { border: none; border-radius: 12px; padding: 16px; font-weight: 700; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; color: white; transition: all 0.2s; }
+        .btn { border: none; border-radius: 12px; padding: 16px; font-weight: 700; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; color: white; transition: all 0.2s; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
         .btn:disabled { opacity: 0.6; filter: grayscale(1); }
         .btn-p { background: var(--p); }
         .btn-s { background: var(--s); }
         .btn-v { background: var(--v); }
         .btn-warn { background: var(--warn); }
         .btn-err { background: var(--err); }
-
         input, textarea, select { width: 100%; padding: 14px; border: 1px solid #e0e0e0; border-radius: 12px; font-size: 16px; margin-bottom: 12px; background: #fff; outline: none; }
-
-        /* ====================== NAVEGAÇÃO INFERIOR CORRIGIDA (Android + Chrome) ====================== */
-        .nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: #fff;
-            height: 78px;
-            border-top: 1px solid #eee;
-            z-index: 1000;
-            box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.09);
-            padding-bottom: env(safe-area-inset-bottom, 12px);
-        }
-
-        #nav-scroll {
-            display: flex;
-            width: 100%;
-            height: 100%;
-            overflow-x: auto;
-            overflow-y: hidden;
-            -webkit-overflow-scrolling: touch;
-            scroll-behavior: smooth;
-            padding: 6px 12px 4px;
-            gap: 6px;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-            align-items: center;
-        }
-
-        #nav-scroll::-webkit-scrollbar {
-            display: none;
-        }
-
-        /* Gradientes para indicar que é rolável */
-        #nav-scroll::before,
-        #nav-scroll::after {
-            content: '';
-            position: sticky;
-            top: 0;
-            bottom: 0;
-            width: 24px;
-            z-index: 5;
-            pointer-events: none;
-            flex-shrink: 0;
-        }
-
-        #nav-scroll::before {
-            left: 0;
-            background: linear-gradient(to right, rgba(255,255,255,0.95), transparent);
-        }
-
-        #nav-scroll::after {
-            right: 0;
-            background: linear-gradient(to left, rgba(255,255,255,0.95), transparent);
-        }
-
-        .nav-i {
-            flex: 0 0 64px;
-            min-width: 64px;
-            padding: 6px 4px 4px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: #70757a;
-            font-size: 10px;
-            line-height: 1.1;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-        }
-
-        .nav-i span {
-            font-size: 23px;
-            margin-bottom: 3px;
-        }
-
-        .nav-i.active {
-            color: var(--p);
-            font-weight: 700;
-        }
-
-        .nav-i:active {
-            transform: scale(0.88);
-            color: var(--p);
-        }
-
-        /* Estilos restantes da aplicação */
+        .nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; display: flex; height: 75px; border-top: 1px solid #eee; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); touch-action: manipulation; }
+        .nav-i { flex: 0 0 60px; min-width: 60px; height: 100%; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #70757a; font-size: 10px; cursor: pointer; padding: 0 2px; touch-action: manipulation; }
+        .nav-i.active { color: var(--p); font-weight: 700; }
+        .nav-i span { font-size: 22px; margin-bottom: 4px; }
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; backdrop-filter: blur(4px); }
+        .modal-content { background: #fff; border-radius: 24px; padding: 20px; max-width: 450px; margin: 20px auto; width: 94%; max-height: 90vh; display: flex; flex-direction: column; }
+        #modal-body { overflow-y: auto; flex-grow: 1; margin: 15px 0; }
+        .loading-spin { border: 3px solid transparent; border-top: 3px solid #fff; border-radius: 50%; width: 16px; height: 16px; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
         .res-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
         .comp-card { border-left: 4px solid var(--p); padding: 10px; margin-top: 10px; background: #fcfcfc; border-radius: 8px; }
         .winner { border-left-color: var(--s); background: #f1f8f3; }
@@ -132,23 +48,27 @@
         .promo-date { font-size: 11px; color: #aaa; margin-top: 6px; }
         .filter-bar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 14px; scrollbar-width: none; }
         .filter-bar::-webkit-scrollbar { display: none; }
-        .filter-btn { border: 1.5px solid #e0e0e0; background: #fff; border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; color: #555; transition: all 0.15s; flex-shrink: 0; }
+        .filter-btn { border: 1.5px solid #e0e0e0; background: #fff; border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; color: #555; transition: all 0.15s; flex-shrink: 0; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
         .filter-btn.active { background: var(--p); border-color: var(--p); color: #fff; }
         .promo-empty { text-align: center; padding: 40px 20px; color: #aaa; font-size: 13px; }
+        /* CHAT */
         .chat-bubble { max-width: 85%; padding: 10px 14px; border-radius: 18px; font-size: 13px; line-height: 1.5; margin-bottom: 8px; }
         .chat-user { background: var(--p); color: #fff; border-bottom-right-radius: 4px; margin-left: auto; }
         .chat-ai { background: #fff; border: 1px solid #eee; color: var(--txt); border-bottom-left-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
         .chat-wrap { display: flex; flex-direction: column; padding: 10px 0; min-height: 200px; max-height: 55vh; overflow-y: auto; }
         .chat-input-row { display: flex; gap: 8px; align-items: center; }
         .chat-input-row input { margin-bottom: 0; flex-grow: 1; }
+        /* SCAN */
         #barcode-video { width: 100%; border-radius: 12px; background: #000; display: none; }
         .scan-result { padding: 12px; background: #f1f8f3; border-radius: 12px; border-left: 4px solid var(--s); font-size: 13px; }
+        /* INFLATION */
         .inf-bar-wrap { margin: 6px 0; }
         .inf-bar-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px; }
         .inf-bar-bg { background: #eee; border-radius: 20px; height: 8px; }
         .inf-bar-fill { background: var(--p); height: 8px; border-radius: 20px; transition: width 0.6s ease; }
         .inf-bar-fill.up { background: var(--err); }
         .inf-bar-fill.down { background: var(--s); }
+        /* MAP */
         #map-frame { width: 100%; height: 340px; border-radius: 16px; border: none; }
         .store-card { display: flex; gap: 12px; align-items: flex-start; padding: 12px; background: #fff; border-radius: 14px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #eee; }
         .store-icon { font-size: 26px; flex-shrink: 0; }
@@ -171,6 +91,7 @@
             <button class="btn btn-v" onclick="triggerInput('bill')"><span>🧾</span> Recibo</button>
             <button class="btn btn-warn" onclick="triggerInput('fridge')"><span>❄️</span> Despensa</button>
         </div>
+        <!-- FIX: event listener adicionado corretamente via JS no boot() -->
         <input type="file" id="f-in" style="display:none" accept="image/*">
     </div>
     <div class="card">
@@ -325,9 +246,8 @@
     </div>
 </div>
 
-<!-- BARRA DE NAVEGAÇÃO CORRIGIDA -->
 <nav class="nav" id="main-nav">
-    <div id="nav-scroll">
+    <div id="nav-scroll" style="display:flex; width:100%; height:100%; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; -webkit-overflow-scrolling:touch;">
         <button class="nav-i active" onclick="tab('home', this)"><span>🔎</span>Busca</button>
         <button class="nav-i" onclick="tab('scan', this)"><span>📸</span>Scan</button>
         <button class="nav-i" onclick="tab('cart', this)"><span>🛒</span>Lista</button>
@@ -349,20 +269,26 @@ let allPromos = [];
 let activeFilter = 'todos';
 
 function boot() {
+    // FIX: wire up file input event listener properly
     document.getElementById('f-in').addEventListener('change', handleMedia);
 
     const k = localStorage.getItem('s_k');
     if (k) {
         document.getElementById('key-in').value = k;
+        // auto-load models if key already saved, but don't block boot
         fetchModels(true);
     }
     const savedModel = localStorage.getItem('s_m');
+    if (savedModel) {
+        // will be selected after models load via fetchModels
+    }
     document.getElementById('cart-txt').value = localStorage.getItem('s_c') || "";
     renderHistory();
     updateTags();
 }
 
 function tab(id, btn) {
+    // Stop camera if leaving scan tab
     if (id !== 'scan' && scanStream) {
         scanStream.getTracks().forEach(t => t.stop());
         scanStream = null;
@@ -377,9 +303,11 @@ function tab(id, btn) {
     document.querySelectorAll('#nav-scroll .nav-i').forEach(n => n.classList.remove('active'));
     document.getElementById('v-' + id).classList.add('active');
     btn.classList.add('active');
+    // Init chat display on first open
     if (id === 'chat') renderChat();
 }
 
+// FIX: separate trigger from handler
 function triggerInput(mode) {
     currentMode = mode;
     document.getElementById('f-in').click();
@@ -393,12 +321,11 @@ function handleMedia(e) {
         const b64 = ev.target.result.split(',')[1];
         if (currentMode === 'bill') processBill(b64);
         else processFridge(b64);
+        // reset so same file can be picked again
         e.target.value = '';
     };
     reader.readAsDataURL(file);
 }
-
-// ... (todo o resto do JavaScript permanece exatamente igual ao original)
 
 async function callAI(prompt, b64 = null, grounding = false) {
     const k = localStorage.getItem('s_k');
@@ -410,7 +337,7 @@ async function callAI(prompt, b64 = null, grounding = false) {
     if (grounding) payload.tools = [{ google_search: {} }];
 
     try {
-        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/\( {m}:generateContent?key= \){k}`, {
+        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${k}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -424,7 +351,192 @@ async function callAI(prompt, b64 = null, grounding = false) {
     }
 }
 
-// (O resto das funções JavaScript — searchRealPrices, analyzeCartList, processBill, etc. — são exatamente as mesmas do ficheiro original que enviaste)
+async function searchRealPrices() {
+    const q = document.getElementById('q-in').value.trim();
+    if (!q) return;
+    const out = document.getElementById('out-home');
+    const btn = document.getElementById('btn-search');
+    btn.innerHTML = '<div class="loading-spin"></div> A pesquisar...'; btn.disabled = true;
+
+    const res = await callAI(
+        `Pesquisa o preço atual de "${q}" em supermercados de Portugal (Continente, Pingo Doce, Auchan, Lidl, Mercadona).
+        REGRAS OBRIGATÓRIAS:
+        - Inclui APENAS lojas onde encontraste um preço real e confirmado
+        - NUNCA incluas uma loja com preço 0, null ou desconhecido — simplesmente omite-a
+        - O preço deve ser maior que 0
+        - Em "artigo" coloca o nome COMPLETO e EXATO do produto como aparece na loja (marca, gramagem, formato)
+        - Retorna APENAS JSON sem mais nada: [{"loja":"Nome","artigo":"Nome completo do produto","preco":0.00}]`,
+        null, true
+    );
+    btn.innerHTML = '🔍 Comparar Preços Hoje'; btn.disabled = false;
+
+    if (res) {
+        try {
+            const data = JSON.parse(res.replace(/```json|```/gi, "").trim());
+            // Safety filter: remove any entries with price <= 0 or missing
+            const valid = data.filter(i => i.preco && Number(i.preco) > 0);
+            if (!valid.length) {
+                out.innerHTML = `<div class="card" style="color:var(--warn);">Nenhum preço encontrado para "<b>${q}</b>". Tenta um termo mais genérico.</div>`;
+                return;
+            }
+            const sorted = valid.sort((a, b) => a.preco - b.preco);
+            out.innerHTML = `<div class="card"><h4 style="margin-bottom:12px;">Preços: ${q}</h4>` +
+                sorted.map((i, idx) => `
+                    <div class="res-row" style="flex-direction:column; align-items:flex-start; gap:2px;">
+                        <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+                            <span style="font-weight:700;">${idx === 0 ? '🏆 ' : ''}${i.loja}</span>
+                            <b style="color:${idx === 0 ? 'var(--s)' : 'var(--txt)'}; white-space:nowrap; margin-left:8px;">${Number(i.preco).toFixed(2)}€</b>
+                        </div>
+                        ${i.artigo ? `<span style="font-size:11px; color:#888;">${i.artigo}</span>` : ''}
+                    </div>`).join('') +
+                `<div style="font-size:11px; color:#aaa; margin-top:10px;">${sorted.length} loja(s) com preço disponível</div>` +
+                `</div>`;
+        } catch (e) { out.innerHTML = `<div class="card" style="color:var(--err);">Erro na leitura dos dados de mercado.</div>`; }
+    } else {
+        out.innerHTML = `<div class="card" style="color:var(--err);">Sem resposta da API. Verifica a chave em Config.</div>`;
+    }
+}
+
+async function analyzeCartList() {
+    const list = document.getElementById('cart-txt').value.trim();
+    if (!list) return;
+    const out = document.getElementById('out-cart');
+    const btn = document.getElementById('btn-comp-list');
+    btn.innerHTML = '<div class="loading-spin"></div> Calculando...'; btn.disabled = true;
+    out.innerHTML = '';
+
+    const items = list.split('\n').map(l => l.trim()).filter(Boolean);
+    const itemList = items.map((it, i) => (i+1) + '. ' + it).join('\n');
+
+    const prompt = 'Tens uma lista de compras portuguesa:\n' + itemList + '\n\n'
+        + 'Pesquisa os precos atuais de cada item nos supermercados: Continente, Pingo Doce, Lidl, Auchan.\n'
+        + 'Soma o total de cada loja. Indica quantos itens nao encontraste em cada loja.\n'
+        + 'Responde APENAS com JSON valido, sem texto antes ou depois, sem markdown:\n'
+        + '{"comparativo":[{"loja":"Continente","total":0.00,"itens_em_falta":0},{"loja":"Pingo Doce","total":0.00,"itens_em_falta":0},{"loja":"Lidl","total":0.00,"itens_em_falta":0},{"loja":"Auchan","total":0.00,"itens_em_falta":0}],"vencedor":"Nome da loja mais barata","poupanca":0.00,"obs":"resumo em 1 frase"}';
+
+    const res = await callAI(prompt, null, true);
+    btn.innerHTML = '🚀 Onde é mais barato?'; btn.disabled = false;
+
+    if (!res) {
+        out.innerHTML = '<div class="card" style="color:var(--err);">❌ Sem resposta da API. Verifica a chave em Config.</div>';
+        return;
+    }
+
+    try {
+        // Extract JSON even if surrounded by extra text
+        const jsonMatch = res.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('No JSON found in response');
+        const data = JSON.parse(jsonMatch[0]);
+
+        if (!data.comparativo || !Array.isArray(data.comparativo)) throw new Error('Missing comparativo array');
+
+        // Filter only lojas with valid totals > 0
+        const valid = data.comparativo.filter(c => c.total && Number(c.total) > 0);
+        if (!valid.length) throw new Error('All totals are zero or missing');
+
+        const sorted = valid.sort((a, b) => a.total - b.total);
+        const best = sorted[0];
+        const worst = sorted[sorted.length - 1];
+        const savings = (worst.total - best.total).toFixed(2);
+
+        let html = '<div class="card">';
+        html += '<h4 style="margin-bottom:4px;">🏆 Mais barato: ' + best.loja + '</h4>';
+        html += '<p style="font-size:12px; color:#666; margin-bottom:12px;">' + (data.obs || '') + '</p>';
+        if (parseFloat(savings) > 0) {
+            html += '<div style="background:#f1f8f3; border-radius:10px; padding:10px; margin-bottom:12px; font-size:13px; color:var(--s); font-weight:700;">💰 Poupas até ' + savings + '€ vs loja mais cara</div>';
+        }
+        sorted.forEach(function(c, idx) {
+            const isWinner = idx === 0;
+            html += '<div class="comp-card ' + (isWinner ? 'winner' : '') + '">';
+            html += '<div style="display:flex; justify-content:space-between; align-items:center;">';
+            html += '<b>' + (isWinner ? '🏆 ' : '') + c.loja + '</b>';
+            html += '<b style="color:' + (isWinner ? 'var(--s)' : 'var(--txt)') + '; font-size:16px;">' + Number(c.total).toFixed(2) + '€</b>';
+            html += '</div>';
+            if (c.itens_em_falta > 0) {
+                html += '<small style="color:var(--warn);">⚠️ ' + c.itens_em_falta + ' item(ns) não encontrado(s)</small>';
+            } else {
+                html += '<small style="color:#aaa;">✅ Lista completa</small>';
+            }
+            html += '</div>';
+        });
+        html += '<div style="font-size:11px; color:#aaa; margin-top:12px; text-align:center;">' + items.length + ' artigo(s) · ' + sorted.length + ' loja(s) comparadas</div>';
+        html += '</div>';
+        out.innerHTML = html;
+
+    } catch (e) {
+        console.error('Cart parse error:', e, 'Raw:', res);
+        out.innerHTML = '<div class="card"><p style="color:var(--err); margin-bottom:10px;">❌ Erro ao processar. Resposta recebida:</p>'
+            + '<pre style="font-size:10px; background:#f5f5f5; padding:10px; border-radius:8px; overflow:auto; white-space:pre-wrap;">' + res.substring(0, 600) + '</pre></div>';
+    }
+}
+
+async function processBill(b64) {
+    document.getElementById('modal').style.display = 'block';
+    const body = document.getElementById('modal-body');
+    document.getElementById('m-title').innerText = "A digitalizar recibo...";
+    body.innerHTML = '<div style="text-align:center; padding:20px;"><div class="loading-spin" style="border-top-color:var(--p); width:30px; height:30px; margin:0 auto;"></div><br><small>Analisando imagem...</small></div>';
+    document.getElementById('m-footer-val').style.display = 'none';
+
+    const res = await callAI("Extrai TODOS os itens e o TOTAL deste recibo. Retorna APENAS JSON: {\"itens\":[\"Nome do produto\"], \"total\":0.00}.", b64);
+    if (!res) { closeModal(); return; }
+
+    try {
+        const data = JSON.parse(res.replace(/```json|```/gi, "").trim());
+        document.getElementById('m-title').innerText = "Confirmar Recibo";
+        document.getElementById('modal-total-val').value = data.total ?? 0;
+        body.innerHTML = (data.itens || []).map(it =>
+            `<input type="text" class="bill-it" value="${typeof it === 'string' ? it : (it.nome || '')}" style="margin-bottom:8px;">`
+        ).join('');
+        document.getElementById('m-footer-val').style.display = 'block';
+    } catch (e) { body.innerHTML = `<p style="color:var(--err);">Não foi possível ler o recibo.</p>`; }
+}
+
+async function processFridge(b64) {
+    document.getElementById('modal').style.display = 'block';
+    const body = document.getElementById('modal-body');
+    document.getElementById('m-title').innerText = "A analisar despensa...";
+    body.innerHTML = '<div style="text-align:center; padding:20px;"><div class="loading-spin" style="border-top-color:var(--p); width:30px; height:30px; margin:0 auto;"></div><br><small>Identificando produtos...</small></div>';
+
+    const res = await callAI("O que vês nesta despensa/frigorífico? O que provavelmente falta ou está a acabar? Retorna APENAS JSON: {\"falta\":[\"Item\"]}.", b64);
+    if (!res) { closeModal(); return; }
+
+    try {
+        const data = JSON.parse(res.replace(/```json|```/gi, "").trim());
+        document.getElementById('m-title').innerText = "Sugestões de Compra";
+        body.innerHTML = data.falta.map(i =>
+            `<div class="res-row"><span>${i}</span><button class="btn btn-p" onclick="addToCart('${i.replace(/'/g, "\\'")}')" style="width:auto; padding:6px 14px; font-size:12px;">+ Lista</button></div>`
+        ).join('');
+    } catch (e) { body.innerHTML = `<p style="color:var(--err);">Não foi possível analisar a imagem.</p>`; }
+}
+
+async function generateInsights() {
+    const h = localStorage.getItem('s_h') || '[]';
+    const btn = document.getElementById('btn-insight');
+    btn.innerHTML = '<div class="loading-spin"></div> Analisando...'; btn.disabled = true;
+
+    const res = await callAI(`Com base nestes gastos de supermercado: ${h}, dá 3 dicas de poupança específicas e práticas para Portugal. Responde em português.`, null, true);
+    btn.innerHTML = 'Gerar Relatório IA'; btn.disabled = false;
+    if (res) document.getElementById('ai-insight').innerHTML = res.replace(/\n/g, '<br>');
+}
+
+function addToCart(item) {
+    const ta = document.getElementById('cart-txt');
+    ta.value = (ta.value.trim() ? ta.value.trim() + '\n' : '') + item + '\n';
+    saveC();
+    closeModal();
+    // FIX: navigate to cart tab using querySelector instead of hardcoded index
+    const cartBtn = document.querySelector('#nav-scroll .nav-i:nth-child(3)');
+    tab('cart', cartBtn);
+}
+
+function saveEditedBill() {
+    const itens = Array.from(document.querySelectorAll('.bill-it')).map(i => i.value.trim()).filter(Boolean);
+    const total = parseFloat(document.getElementById('modal-total-val').value || 0);
+    let h = JSON.parse(localStorage.getItem('s_h') || '[]');
+    h.unshift({ id: Date.now(), total, itens, date: new Date().toLocaleDateString('pt-PT') });
+    localStorage.setItem('s_h', JSON.stringify(h));
+    renderHistory(); updateTags(); closeModal();
+}
 
 function renderHistory() {
     const h = JSON.parse(localStorage.getItem('s_h') || '[]');
@@ -434,10 +546,10 @@ function renderHistory() {
         : h.map(i => {
             t += i.total;
             return `<div class="card" style="display:flex; align-items:center; gap:10px; padding:12px; cursor:pointer;">
-                <input type="checkbox" class="hist-check" data-id="\( {i.id}" data-val=" \){i.total}" onchange="updateSelTotal()" style="width:auto; margin:0; flex-shrink:0;">
+                <input type="checkbox" class="hist-check" data-id="${i.id}" data-val="${i.total}" onchange="updateSelTotal()" style="width:auto; margin:0; flex-shrink:0;">
                 <div style="flex-grow:1">
                     <b>${i.date}</b> — ${i.total.toFixed(2)}€
-                    <div style="font-size:11px; color:#aaa; margin-top:3px;">\( {i.itens.slice(0, 3).join(', ')} \){i.itens.length > 3 ? ` +${i.itens.length - 3}` : ''}</div>
+                    <div style="font-size:11px; color:#aaa; margin-top:3px;">${i.itens.slice(0, 3).join(', ')}${i.itens.length > 3 ? ` +${i.itens.length - 3}` : ''}</div>
                 </div>
             </div>`;
         }).join('');
@@ -469,6 +581,7 @@ function deleteSelected() {
     renderHistory(); updateSelTotal(); updateTags();
 }
 
+// FIX: exportToCart uses querySelector for nav instead of hardcoded index
 function exportToCart() {
     const ids = Array.from(document.querySelectorAll('.hist-check:checked')).map(c => c.dataset.id);
     if (!ids.length) { alert("Seleciona pelo menos um recibo."); return; }
@@ -485,7 +598,7 @@ function exportToCart() {
 function exportCSV() {
     const h = JSON.parse(localStorage.getItem('s_h') || '[]');
     if (!h.length) { alert("Sem dados para exportar."); return; }
-    let c = "Data;Total;Itens\n" + h.map(i => `\( {i.date}; \){i.total.toFixed(2)};${i.itens.join('|')}`).join('\n');
+    let c = "Data;Total;Itens\n" + h.map(i => `${i.date};${i.total.toFixed(2)};${i.itens.join('|')}`).join('\n');
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([c], { type: 'text/csv;charset=utf-8;' }));
     a.download = 'saco_pt.csv';
@@ -494,9 +607,358 @@ function exportCSV() {
 
 function saveC() { localStorage.setItem('s_c', document.getElementById('cart-txt').value); }
 
-// As restantes funções (loadPromos, renderPromos, startScan, sendChat, calcInflation, loadMap, etc.) 
-// são idênticas às do ficheiro original que enviaste inicialmente.
-// Se precisares de alguma função específica, avisa.
+// ── PROMOÇÕES ──────────────────────────────────────────────
+
+async function loadPromos() {
+    const btn = document.getElementById('btn-load-promos');
+    const out = document.getElementById('out-promo');
+    btn.innerHTML = '<div class="loading-spin"></div> A pesquisar promoções...';
+    btn.disabled = true;
+    out.innerHTML = '';
+
+    const today = new Date().toLocaleDateString('pt-PT');
+    const prompt = 'Pesquisa as promoções e folhetos ATUAIS dos supermercados portugueses: Continente, Pingo Doce, Lidl, Auchan, Mercadona. Data de hoje: ' + today + '. '
+        + 'Inclui promoções ativas AGORA e promoções que começam nos próximos 7 dias. '
+        + 'Para cada promoção retorna: loja, produto, desconto (ex: -30% ou 2x1), preco_original, preco_promocional, data_inicio, data_fim, estado (ativa ou em breve). '
+        + 'Responde APENAS com JSON válido sem markdown: '
+        + '{"promos":[{"loja":"Nome","produto":"Nome completo","desconto":"-30%","preco_original":0.00,"preco_promo":0.00,"data_inicio":"dd/mm","data_fim":"dd/mm","estado":"ativa"}],"atualizado":"' + today + '"}';
+
+    const res = await callAI(prompt, null, true);
+    btn.innerHTML = '🔍 Pesquisar Promoções Agora';
+    btn.disabled = false;
+
+    if (!res) {
+        out.innerHTML = '<div class="card" style="color:var(--err);">❌ Sem resposta. Verifica a chave em Config.</div>';
+        return;
+    }
+
+    try {
+        const jsonMatch = res.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('No JSON');
+        const data = JSON.parse(jsonMatch[0]);
+        allPromos = data.promos || [];
+
+        if (!allPromos.length) {
+            out.innerHTML = '<div class="promo-empty">😔 Nenhuma promoção encontrada neste momento.</div>';
+            return;
+        }
+
+        document.getElementById('promo-updated').innerText = 'Atualizado: ' + (data.atualizado || today);
+        renderPromos();
+
+    } catch(e) {
+        console.error('Promo parse error:', e, res);
+        out.innerHTML = '<div class="card"><p style="color:var(--err); margin-bottom:8px;">❌ Erro ao processar promoções.</p>'
+            + '<pre style="font-size:10px; background:#f5f5f5; padding:10px; border-radius:8px; overflow:auto; white-space:pre-wrap;">' + res.substring(0, 500) + '</pre></div>';
+    }
+}
+
+function renderPromos() {
+    const out = document.getElementById('out-promo');
+    const search = document.getElementById('promo-search').value.toLowerCase();
+
+    let filtered = allPromos.filter(function(p) {
+        const matchSearch = !search
+            || p.produto.toLowerCase().includes(search)
+            || p.loja.toLowerCase().includes(search);
+        const matchFilter = activeFilter === 'todos'
+            || (activeFilter === 'ativas' && p.estado === 'ativa')
+            || (activeFilter === 'em breve' && p.estado === 'em breve')
+            || p.loja.toLowerCase() === activeFilter.toLowerCase();
+        return matchSearch && matchFilter;
+    });
+
+    if (!filtered.length) {
+        out.innerHTML = '<div class="promo-empty">🔍 Nenhuma promoção para este filtro.</div>';
+        return;
+    }
+
+    // Sort: active first, then by discount desc
+    filtered.sort(function(a, b) {
+        if (a.estado === 'ativa' && b.estado !== 'ativa') return -1;
+        if (a.estado !== 'ativa' && b.estado === 'ativa') return 1;
+        return 0;
+    });
+
+    out.innerHTML = filtered.map(function(p) {
+        const isActive = p.estado === 'ativa';
+        const hasPrices = p.preco_original > 0 && p.preco_promo > 0;
+        const saving = hasPrices ? (p.preco_original - p.preco_promo).toFixed(2) : null;
+        return '<div class="promo-card">'
+            + '<span class="promo-badge ' + (isActive ? 'badge-active' : 'badge-soon') + '">' + (isActive ? '🟢 Ativa' : '🟡 Em Breve') + '</span>'
+            + (p.desconto ? '<span class="promo-discount">' + p.desconto + '</span>' : '')
+            + '<div class="promo-store">' + p.loja + '</div>'
+            + '<div class="promo-title">' + p.produto + '</div>'
+            + (hasPrices
+                ? '<div class="promo-desc"><s style="color:#aaa;">' + Number(p.preco_original).toFixed(2) + '€</s> → <b style="color:var(--err);">' + Number(p.preco_promo).toFixed(2) + '€</b>'
+                    + (saving ? ' <span style="color:var(--s);">(-' + saving + '€)</span>' : '') + '</div>'
+                : '')
+            + (p.data_inicio || p.data_fim
+                ? '<div class="promo-date">📅 ' + (p.data_inicio || '') + (p.data_fim ? ' → ' + p.data_fim : '') + '</div>'
+                : '')
+            + '</div>';
+    }).join('');
+}
+
+function setPromoFilter(filter, btn) {
+    activeFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    if (allPromos.length) renderPromos();
+}
+
+function filterPromos() {
+    if (allPromos.length) renderPromos();
+}
+
+// ── SCAN ────────────────────────────────────────────────────
+
+async function startScan() {
+    const video = document.getElementById('barcode-video');
+    const btn = document.getElementById('btn-scan-start');
+    const capBtn = document.getElementById('btn-scan-cap');
+    if (scanStream) {
+        scanStream.getTracks().forEach(t => t.stop());
+        scanStream = null;
+        video.style.display = 'none';
+        btn.innerHTML = '📷 Ativar Câmara';
+        capBtn.disabled = true;
+        return;
+    }
+    try {
+        scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        video.srcObject = scanStream;
+        video.style.display = 'block';
+        btn.innerHTML = '⏹ Parar Câmara';
+        capBtn.disabled = false;
+    } catch(e) {
+        alert('Sem acesso à câmara. Usa o campo manual abaixo.');
+    }
+}
+
+async function captureAndSearch() {
+    const video = document.getElementById('barcode-video');
+    const canvas = document.getElementById('barcode-canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    const b64 = canvas.toDataURL('image/jpeg').split(',')[1];
+    const out = document.getElementById('out-scan');
+    out.innerHTML = '<div class="card" style="text-align:center; padding:20px;"><div class="loading-spin" style="border-top-color:var(--p); width:28px; height:28px; margin:0 auto;"></div><br><small>A identificar produto...</small></div>';
+    const res = await callAI('Identifica o produto nesta imagem pelo código de barras ou pela embalagem. Retorna APENAS JSON: {"ean":"codigo","produto":"Nome completo","marca":"marca","quantidade":"ex: 1kg"}', b64);
+    if (!res) { out.innerHTML = '<div class="card" style="color:var(--err);">Não foi possível identificar.</div>'; return; }
+    try {
+        const jsonMatch = res.match(/\{[\s\S]*\}/);
+        const d = JSON.parse(jsonMatch[0]);
+        out.innerHTML = '<div class="scan-result"><b>' + d.produto + '</b><br><small>' + (d.marca||'') + ' · ' + (d.quantidade||'') + (d.ean ? ' · EAN: '+d.ean : '') + '</small></div>';
+        document.getElementById('q-in').value = d.produto;
+        setTimeout(function() {
+            var homeBtn = document.querySelector('#nav-scroll .nav-i:first-child');
+            tab('home', homeBtn);
+            searchRealPrices();
+        }, 800);
+    } catch(e) { out.innerHTML = '<div class="card" style="color:var(--err);">Erro ao ler produto.</div>'; }
+}
+
+async function searchByBarcode() {
+    const code = document.getElementById('barcode-manual').value.trim();
+    if (!code) return;
+    const out = document.getElementById('out-scan');
+    out.innerHTML = '<div class="card" style="text-align:center; padding:16px;"><div class="loading-spin" style="border-top-color:var(--p); width:24px; height:24px; margin:0 auto;"></div></div>';
+    const res = await callAI('O produto com EAN/código de barras ' + code + ' em Portugal chama-se como? Retorna APENAS JSON: {"produto":"Nome completo","marca":"marca","quantidade":"gramagem"}', null, true);
+    if (!res) return;
+    try {
+        const d = JSON.parse(res.match(/\{[\s\S]*\}/)[0]);
+        out.innerHTML = '<div class="scan-result"><b>' + d.produto + '</b><br><small>' + (d.marca||'') + ' · ' + (d.quantidade||'') + '</small></div>';
+        document.getElementById('q-in').value = d.produto;
+        setTimeout(function() {
+            var homeBtn = document.querySelector('#nav-scroll .nav-i:first-child');
+            tab('home', homeBtn);
+            searchRealPrices();
+        }, 600);
+    } catch(e) { out.innerHTML = '<div class="card" style="color:var(--err);">Código não encontrado.</div>'; }
+}
+
+// ── CHAT IA ─────────────────────────────────────────────────
+
+function quickChat(msg) {
+    document.getElementById('chat-in').value = msg;
+    sendChat();
+}
+
+async function sendChat() {
+    const inp = document.getElementById('chat-in');
+    const msg = inp.value.trim();
+    if (!msg) return;
+    inp.value = '';
+    const wrap = document.getElementById('chat-messages');
+
+    // Add user bubble
+    chatHistory.push({ role: 'user', text: msg });
+    renderChat();
+    wrap.scrollTop = wrap.scrollHeight;
+
+    // Thinking indicator
+    const thinkId = 'think-' + Date.now();
+    wrap.innerHTML += '<div id="' + thinkId + '" class="chat-bubble chat-ai" style="opacity:0.5;">💭 A pensar...</div>';
+    wrap.scrollTop = wrap.scrollHeight;
+
+    const histCtx = chatHistory.slice(-6).map(function(m) { return (m.role === 'user' ? 'Utilizador: ' : 'Assistente: ') + m.text; }).join('
+');
+    const prompt = 'És um assistente de compras especialista em supermercados portugueses (Continente, Pingo Doce, Lidl, Auchan, Mercadona). '
+        + 'Responde sempre em português de Portugal, de forma concisa e útil. '
+        + 'Histórico recente:
+' + histCtx + '
+
+Responde à última mensagem do utilizador.';
+
+    const res = await callAI(prompt, null, true);
+    const reply = res || 'Desculpa, não consegui responder. Tenta novamente.';
+    chatHistory.push({ role: 'ai', text: reply });
+
+    const el = document.getElementById(thinkId);
+    if (el) el.remove();
+    renderChat();
+    wrap.scrollTop = wrap.scrollHeight;
+}
+
+function renderChat() {
+    const wrap = document.getElementById('chat-messages');
+    if (!chatHistory.length) {
+        wrap.innerHTML = '<div style="text-align:center; color:#bbb; font-size:12px; padding:30px 0;">Pergunta qualquer coisa sobre preços,<br>receitas ou poupança 👆</div>';
+        return;
+    }
+    wrap.innerHTML = chatHistory.map(function(m) {
+        return '<div class="chat-bubble ' + (m.role === 'user' ? 'chat-user' : 'chat-ai') + '">' + m.text.replace(/
+/g, '<br>') + '</div>';
+    }).join('');
+}
+
+// ── INFLAÇÃO PESSOAL ────────────────────────────────────────
+async function calcInflation() {
+    const h = JSON.parse(localStorage.getItem('s_h') || '[]');
+    const btn = document.getElementById('btn-inf');
+    const out = document.getElementById('out-inf');
+    const stats = document.getElementById('inf-stats');
+
+    if (h.length < 2) {
+        out.innerHTML = '<div class="card" style="color:var(--warn); text-align:center; padding:20px;">Precisas de pelo menos 2 recibos arquivados para calcular a variação.</div>';
+        return;
+    }
+
+    btn.innerHTML = '<div class="loading-spin"></div> A analisar...'; btn.disabled = true;
+
+    // Calculate basic stats from history
+    const totals = h.map(function(r) { return r.total; });
+    const avg = totals.reduce(function(a,b){return a+b;},0) / totals.length;
+    const max = Math.max.apply(null, totals);
+    const min = Math.min.apply(null, totals);
+    const latest = h[0].total;
+    const oldest = h[h.length-1].total;
+    const variation = oldest > 0 ? (((latest - oldest) / oldest) * 100).toFixed(1) : 0;
+
+    stats.innerHTML = [
+        ['Média por compra', avg.toFixed(2) + '€', '#1a73e8'],
+        ['Última compra', latest.toFixed(2) + '€', '#1e8e3e'],
+        ['Variação total', (variation > 0 ? '+' : '') + variation + '%', variation > 0 ? '#d93025' : '#1e8e3e'],
+        ['Nº de compras', h.length, '#673ab7']
+    ].map(function(s) {
+        return '<div class="card" style="text-align:center; padding:12px; margin-bottom:0;">'
+            + '<small style="color:#888;">' + s[0] + '</small><br>'
+            + '<span style="font-size:18px; font-weight:900; color:' + s[2] + ';">' + s[1] + '</span></div>';
+    }).join('');
+
+    // Get AI analysis of most frequent items and their price evolution
+    const topItems = [];
+    const counts = {};
+    h.forEach(function(r) { r.itens.forEach(function(i){ counts[i]=(counts[i]||0)+1; }); });
+    Object.keys(counts).sort(function(a,b){return counts[b]-counts[a];}).slice(0,8).forEach(function(k){ topItems.push(k); });
+
+    const prompt = 'Analisa a evolução de preços em Portugal para estes produtos que compro habitualmente: '
+        + topItems.join(', ') + '. '
+        + 'Compara os preços de hoje com há 6 meses e há 1 ano. '
+        + 'Responde APENAS JSON: {"itens":[{"produto":"nome","preco_atual":0.00,"preco_6m":0.00,"preco_1a":0.00,"variacao_pct":0.0}],"resumo":"1 frase sobre inflação alimentar em PT"}';
+
+    const res = await callAI(prompt, null, true);
+    btn.innerHTML = '📈 Analisar Variação de Preços'; btn.disabled = false;
+
+    if (!res) { out.innerHTML = '<div class="card" style="color:var(--err);">Sem dados da API.</div>'; return; }
+
+    try {
+        const data = JSON.parse(res.match(/\{[\s\S]*\}/)[0]);
+        let html = '<div class="card"><h4 style="margin-bottom:6px;">Evolução dos teus produtos</h4>';
+        html += '<p style="font-size:12px; color:#666; margin-bottom:14px;">' + (data.resumo||'') + '</p>';
+        (data.itens||[]).forEach(function(it) {
+            const pct = Number(it.variacao_pct);
+            const isUp = pct > 0;
+            const barW = Math.min(Math.abs(pct) * 2, 100);
+            html += '<div class="inf-bar-wrap">'
+                + '<div class="inf-bar-label"><span>' + it.produto + '</span>'
+                + '<span style="color:' + (isUp?'var(--err)':'var(--s)') + '; font-weight:700;">'
+                + (isUp?'+':'') + pct.toFixed(1) + '% · ' + Number(it.preco_atual).toFixed(2) + '€</span></div>'
+                + '<div class="inf-bar-bg"><div class="inf-bar-fill ' + (isUp?'up':'down') + '" style="width:' + barW + '%;"></div></div>'
+                + '</div>';
+        });
+        html += '</div>';
+        out.innerHTML = html;
+    } catch(e) {
+        out.innerHTML = '<div class="card" style="color:var(--err);">Erro ao processar análise.</div>';
+    }
+}
+
+// ── MAPA ────────────────────────────────────────────────────
+async function loadMap() {
+    const btn = document.getElementById('btn-map');
+    const out = document.getElementById('out-map');
+    const mapFrame = document.getElementById('map-frame');
+    btn.innerHTML = '<div class="loading-spin"></div> A localizar...'; btn.disabled = true;
+
+    if (!navigator.geolocation) {
+        btn.innerHTML = '📍 Encontrar Supermercados'; btn.disabled = false;
+        out.innerHTML = '<div class="card" style="color:var(--err);">GPS não disponível neste dispositivo.</div>';
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(async function(pos) {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+
+        // Show Google Maps embed with nearby supermarkets
+        const query = encodeURIComponent('supermercado');
+        var osmUrl = 'https://www.openstreetmap.org/export/embed.html?bbox='
+            + (lng-0.02) + '%2C' + (lat-0.02) + '%2C' + (lng+0.02) + '%2C' + (lat+0.02)
+            + '&layer=mapnik&marker=' + lat + '%2C' + lng;
+        mapFrame.src = osmUrl;
+        mapFrame.style.display = 'block';
+
+        // Get AI info about nearby stores + hours
+        const prompt = 'Quais os supermercados (Continente, Pingo Doce, Lidl, Auchan, Mercadona, Mini Preço) tipicamente abertos perto de coordenadas ' + lat.toFixed(3) + ',' + lng.toFixed(3) + ' em Portugal? '
+            + 'Dá os horários típicos de cada cadeia ao ' + ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][new Date().getDay()] + '. '
+            + 'Responde APENAS JSON: {"lojas":[{"nome":"Nome","horario":"09h-21h","aberto_agora":true,"distancia_est":"~Xkm"}]}';
+
+        const res = await callAI(prompt, null, true);
+        btn.innerHTML = '🔄 Atualizar'; btn.disabled = false;
+
+        if (!res) { return; }
+        try {
+            const data = JSON.parse(res.match(/\{[\s\S]*\}/)[0]);
+            out.innerHTML = (data.lojas||[]).map(function(l) {
+                return '<div class="store-card">'
+                    + '<div class="store-icon">' + ({'Continente':'🔵','Pingo Doce':'🟢','Lidl':'🟡','Auchan':'🔴','Mercadona':'🟠'}[l.nome]||'🏪') + '</div>'
+                    + '<div style="flex-grow:1;">'
+                    + '<b style="font-size:14px;">' + l.nome + '</b>'
+                    + (l.distancia_est ? ' <span style="font-size:11px; color:#aaa;">' + l.distancia_est + '</span>' : '')
+                    + '<br><span class="' + (l.aberto_agora ? 'store-open' : 'store-closed') + '">' + (l.aberto_agora ? '● Aberto' : '● Fechado') + '</span>'
+                    + ' <span style="font-size:12px; color:#666;">· ' + (l.horario||'') + '</span>'
+                    + '</div></div>';
+            }).join('');
+        } catch(e) {}
+
+    }, function() {
+        btn.innerHTML = '📍 Encontrar Supermercados'; btn.disabled = false;
+        out.innerHTML = '<div class="card" style="color:var(--warn);">Permite acesso à localização para ver supermercados próximos.</div>';
+    });
+}
 
 function closeModal() {
     document.getElementById('modal').style.display = 'none';
@@ -514,8 +976,8 @@ function saveConfig() {
     alert("✅ Configuração guardada!");
 }
 
+// FIX: fetchModels now lists ALL models that support generateContent, not just gemini-1.5
 async function fetchModels(silent = false) {
-    // (mantida igual à original)
     const k = document.getElementById('key-in').value.trim() || localStorage.getItem('s_k');
     const statusEl = document.getElementById('model-status');
     const selEl = document.getElementById('model-sel');
@@ -527,7 +989,9 @@ async function fetchModels(silent = false) {
         return;
     }
 
+    // Update key field in case called from boot with stored key
     document.getElementById('key-in').value = k;
+
     statusEl.innerHTML = `<div class="model-loading">🔄 A carregar modelos...</div>`;
     selEl.style.display = 'none';
     countEl.style.display = 'none';
@@ -543,10 +1007,13 @@ async function fetchModels(silent = false) {
             return;
         }
 
-        const supported = (d.models || []).filter(m => m.supportedGenerationMethods?.includes('generateContent'));
+        // FIX: include ALL models that support generateContent, not just gemini-1.5
+        const supported = (d.models || []).filter(m =>
+            m.supportedGenerationMethods?.includes('generateContent')
+        );
 
         if (!supported.length) {
-            statusEl.innerHTML = `<div class="model-error">Nenhum modelo compatível encontrado.</div>`;
+            statusEl.innerHTML = `<div class="model-error">Nenhum modelo compatível encontrado para esta chave.</div>`;
             fetchBtn.disabled = false;
             return;
         }
@@ -554,6 +1021,7 @@ async function fetchModels(silent = false) {
         const savedModel = localStorage.getItem('s_m');
         selEl.innerHTML = "";
 
+        // Group models for better readability
         const groups = {
             'Gemini 2': supported.filter(m => m.name.includes('gemini-2')),
             'Gemini 1.5': supported.filter(m => m.name.includes('gemini-1.5')),
@@ -576,6 +1044,7 @@ async function fetchModels(silent = false) {
             selEl.appendChild(og);
         }
 
+        // Default selection: prefer flash models if nothing saved
         if (!savedModel || !selEl.value) {
             const preferred = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
             for (const p of preferred) {
@@ -590,7 +1059,7 @@ async function fetchModels(silent = false) {
         countEl.innerText = `✅ ${totalAdded} modelo(s) disponíveis`;
 
     } catch (e) {
-        statusEl.innerHTML = `<div class="model-error">❌ Erro de ligação. Verifica a chave e a internet.</div>`;
+        statusEl.innerHTML = `<div class="model-error">❌ Erro de ligação. Verifica a chave e a ligação à internet.</div>`;
     }
 
     fetchBtn.disabled = false;
