@@ -631,6 +631,11 @@ function setFilter(f, btn) {
 }
 
 // ── SCAN ──────────────────────────────────────────────────────
+function scanGoSearch() {
+    goTab('home');
+    setTimeout(searchPrices, 80);
+}
+
 async function toggleCam() {
     const video = document.getElementById('scan-video');
     if (camStream) {
@@ -718,7 +723,7 @@ async function lookupBarcode() {
         '<div style="font-size:11px;color:var(--s);font-weight:700;margin-bottom:4px;">✅ Produto identificado</div>' +
         '<b style="font-size:15px;">' + produto + '</b><br>' +
         '<small style="color:#888;">' + (marca||'') + (quantidade?' · '+quantidade:'') + ' · EAN: ' + code + '</small>' +
-        '<button class="btn btn-s" onclick="searchPrices()" style="margin-top:12px;padding:10px;">🔍 Ver Preços nos Supermercados</button>' +
+        "<button class='btn btn-s' onclick='scanGoSearch()' style='margin-top:12px;padding:10px;'>🔍 Ver Preços nos Supermercados</button>" +
         '</div>';
     document.getElementById('q-in').value = searchName.trim();
 }
