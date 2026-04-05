@@ -340,8 +340,24 @@ async function ai(prompt, b64, ground) {
 }
 
 function parseJSON(txt) {
-    try { const m = txt.match(/\{[\s\S]*\}/); return m ? JSON.parse(m[0]) : null; }
-    catch(e) { return null; }
+    if (!txt) return null;
+    // tenta extrair array [] ou objecto {}
+    try {
+        const arr = txt.match(/\[[\s\S]*\]/);
+        const obj = txt.match(/\{[\s\S]*\}/);
+        // preferir o que aparecer primeiro no texto
+        const ai = arr ? txt.indexOf(arr[0]) : Infinity;
+        const oi = obj ? txt.indexOf(obj[0]) : Infinity;
+        if (ai < oi && arr) return JSON.parse(arr[0]);
+        if (obj) return JSON.parse(obj[0]);
+        return null;
+    } catch(e) {
+        // tentar limpar markdown e repetir
+        try {
+            const clean = txt.replace(/```json|```/gi, '').trim();
+            return JSON.parse(clean);
+        } catch(e2) { return null; }
+    }
 }
 
 function spin() { return '<div class="spin"></div>'; }
@@ -369,13 +385,17 @@ async function searchPrices() {
         'Pesquisa o preco atual de "' + q + '" nos supermercados de Portugal (Continente, Pingo Doce, Lidl, Auchan, Mercadona). ' +
         'REGRAS: inclui APENAS lojas com preco real confirmado acima de 0. ' +
         'Em artigo coloca o nome completo do produto. ' +
-        'Responde APENAS JSON: [{"loja":"Nome","artigo":"Nome completo","preco":0.00}]',
+        'Responde APENAS com um array JSON sem texto adicional nem markdown, exemplo: [{"loja":"Continente","artigo":"Produto X 1kg","preco":1.29},{"loja":"Lidl","artigo":"Produto Y 1kg","preco":0.99}]',
         null, true);
     btn.innerHTML = '🔍 Comparar Preços Hoje'; btn.disabled = false;
     if (!res) { out.innerHTML = '<div class="card" style="color:var(--err)">Sem resposta. Verifica a API key.</div>'; return; }
     const data = parseJSON(res);
-    if (!data || !Array.isArray(data)) { out.innerHTML = '<div class="card" style="color:var(--err)">Erro ao ler dados.</div>'; return; }
-    const valid = data.filter(i => i.preco > 0).sort((a,b) => a.preco - b.preco);
+    if (!data) { out.innerHTML = '<div class="card" style="color:var(--err)">Erro ao processar resposta.<br><small style="color:#aaa;">' + (res||'').substring(0,150) + '</small></div>'; return; }
+    const arr = Array.isArray(data) ? data : (data.lojas || data.precos || data.results || []);
+    if (!Array.isArray(arr)) { out.innerHTML = '<div class="card" style="color:var(--err)">Formato inesperado.<br><small style="color:#aaa;">' + JSON.stringify(data).substring(0,150) + '</small></div>'; return; }
+    // substituir data por arr nas linhas seguintes
+    const dataArr = arr;
+    const valid = dataArr.filter(i => i.preco > 0).sort((a,b) => a.preco - b.preco);
     if (!valid.length) { out.innerHTML = '<div class="card" style="color:var(--warn)">Sem preços encontrados para <b>' + q + '</b>.</div>'; return; }
     let h = '<div class="card"><h4 style="margin-bottom:12px;">Preços: ' + q + '</h4>';
     valid.forEach((i, idx) => {
@@ -631,7 +651,12 @@ async function captureFrame() {
     const b64 = canvas.toDataURL('image/jpeg').split(',')[1];
     const out = document.getElementById('out-scan');
     out.innerHTML = '<div class="card" style="text-align:center;padding:16px;">' + spin().replace('border-top-color:#fff','border-top-color:var(--p)') + ' A identificar...</div>';
-    const res = await ai('Identifica o produto nesta imagem pelo codigo de barras ou embalagem. Responde APENAS JSON: {"ean":"codigo","produto":"Nome completo","marca":"marca","quantidade":"ex: 1kg"}', b64, false);
+    const res = await ai(
+        'Analisa esta imagem de um produto de supermercado portugues. ' +
+        'Identifica: o nome completo do produto, a marca, a quantidade/gramagem, e o codigo EAN se visivel. ' +
+        'Se nao conseguires ler o codigo de barras, identifica pelo aspeto da embalagem, cores e texto visivel. ' +
+        'Responde APENAS JSON sem markdown: {"ean":"codigo ou vazio","produto":"Nome completo do produto","marca":"Marca","quantidade":"ex: 1kg ou 33cl"}',
+        b64, true);
     if (!res) { out.innerHTML = '<div class="card" style="color:var(--err)">Nao foi possivel identificar.</div>'; return; }
     const d = parseJSON(res);
     if (!d) { out.innerHTML = '<div class="card" style="color:var(--err)">Erro ao ler produto.</div>'; return; }
@@ -644,7 +669,11 @@ async function lookupBarcode() {
     const code = document.getElementById('barcode-in').value.trim(); if (!code) return;
     const out = document.getElementById('out-scan');
     out.innerHTML = '<div class="card" style="text-align:center;padding:16px;">' + spin().replace('border-top-color:#fff','border-top-color:var(--p)') + '</div>';
-    const res = await ai('O produto com EAN/codigo de barras ' + code + ' em Portugal chama-se como? Responde APENAS JSON: {"produto":"Nome completo","marca":"marca","quantidade":"gramagem"}', null, true);
+    const res = await ai(
+        'Pesquisa o produto com EAN ' + code + ' vendido em Portugal. ' +
+        'Diz o nome comercial completo, a marca e a quantidade/gramagem. ' +
+        'Responde APENAS JSON sem markdown: {"produto":"Nome completo","marca":"Marca","quantidade":"gramagem"}',
+        null, true);
     if (!res) { out.innerHTML = '<div class="card" style="color:var(--err)">Sem resposta.</div>'; return; }
     const d = parseJSON(res);
     if (!d) { out.innerHTML = '<div class="card" style="color:var(--err)">Codigo nao encontrado.</div>'; return; }
@@ -725,26 +754,144 @@ async function loadMap() {
     const out = document.getElementById('out-map');
     const frame = document.getElementById('map-frame');
     btn.innerHTML = spin() + ' A localizar...'; btn.disabled = true;
-    if (!navigator.geolocation) { btn.innerHTML = '📍 Encontrar Supermercados'; btn.disabled = false; out.innerHTML = '<div class="card" style="color:var(--err)">GPS nao disponivel.</div>'; return; }
+    out.innerHTML = '';
+
+    if (!navigator.geolocation) {
+        btn.innerHTML = '📍 Encontrar Supermercados'; btn.disabled = false;
+        out.innerHTML = '<div class="card" style="color:var(--err)">GPS não disponível neste dispositivo.</div>';
+        return;
+    }
+
     navigator.geolocation.getCurrentPosition(async pos => {
-        const lat = pos.coords.latitude; const lng = pos.coords.longitude;
-        const bbox = (lng-.02)+'%2C'+(lat-.02)+'%2C'+(lng+.02)+'%2C'+(lat+.02);
-        frame.src = 'https://www.openstreetmap.org/export/embed.html?bbox=' + bbox + '&layer=mapnik&marker='+lat+'%2C'+lng;
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const radius = 3000; // 3km
+
+        // Mostrar mapa OSM centrado na posição
+        const d = 0.018; // ~2km em graus
+        const bbox = (lng-d)+'%2C'+(lat-d)+'%2C'+(lng+d)+'%2C'+(lat+d);
+        frame.src = 'https://www.openstreetmap.org/export/embed.html?bbox=' + bbox + '&layer=mapnik&marker=' + lat + '%2C' + lng;
         frame.style.display = 'block';
-        const day = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][new Date().getDay()];
-        const res = await ai('Supermercados (Continente,Pingo Doce,Lidl,Auchan,Mercadona) tipicamente perto de ' + lat.toFixed(3)+','+lng.toFixed(3) + ' em Portugal. Horarios tipicos ao ' + day + '. Responde APENAS JSON: {"lojas":[{"nome":"Nome","horario":"09h-21h","aberto_agora":true}]}', null, true);
+        out.innerHTML = '<div class="card" style="text-align:center;padding:20px;color:#888;"><div class="spin" style="border-top-color:var(--p);width:24px;height:24px;margin:0 auto 10px;"></div>A pesquisar supermercados reais...</div>';
+
+        // Overpass API — busca supermercados REAIS no raio de 3km
+        const overpassQuery = '[out:json][timeout:15];(node["shop"="supermarket"](around:' + radius + ',' + lat + ',' + lng + ');way["shop"="supermarket"](around:' + radius + ',' + lat + ',' + lng + '););out center 20;';
+
+        let stores = [];
+        try {
+            const r = await fetch('https://overpass-api.de/api/interpreter', {
+                method: 'POST',
+                body: 'data=' + encodeURIComponent(overpassQuery)
+            });
+            const osm = await r.json();
+            const elements = osm.elements || [];
+
+            // Mapear nomes OSM → nomes PT + ícones
+            const chainMap = {
+                'continente': { nome:'Continente', icon:'🔵' },
+                'pingo doce': { nome:'Pingo Doce', icon:'🟢' },
+                'lidl': { nome:'Lidl', icon:'🟡' },
+                'auchan': { nome:'Auchan', icon:'🔴' },
+                'mercadona': { nome:'Mercadona', icon:'🟠' },
+                'minipreço': { nome:'Minipreço', icon:'🟣' },
+                'mini preco': { nome:'Minipreço', icon:'🟣' },
+                'intermarché': { nome:'Intermarché', icon:'🟤' },
+                'intermarche': { nome:'Intermarché', icon:'🟤' },
+                'el corte inglés': { nome:'El Corte Inglés', icon:'🏬' },
+                'el corte ingles': { nome:'El Corte Inglés', icon:'🏬' },
+                'jumbo': { nome:'Jumbo (Auchan)', icon:'🔴' },
+                'pão de açúcar': { nome:'Pão de Açúcar', icon:'🟢' },
+                'spar': { nome:'Spar', icon:'🟩' },
+            };
+
+            // Horários típicos PT por cadeia e dia da semana
+            const dayIdx = new Date().getDay(); // 0=Dom
+            const horarios = {
+                'Continente':    ['10h-20h','9h-22h','9h-22h','9h-22h','9h-22h','9h-23h','9h-22h'],
+                'Pingo Doce':   ['9h-21h','8h-21h','8h-21h','8h-21h','8h-21h','8h-22h','8h-21h'],
+                'Lidl':          ['8h-21h','8h-22h','8h-22h','8h-22h','8h-22h','8h-22h','8h-21h'],
+                'Auchan':        ['9h-22h','9h-22h','9h-22h','9h-22h','9h-22h','9h-22h','9h-22h'],
+                'Mercadona':     ['9h-21h','9h-21h','9h-21h','9h-21h','9h-21h','9h-21h','9h-21h'],
+                'Minipreço':    ['9h-20h','8h-21h','8h-21h','8h-21h','8h-21h','8h-21h','9h-20h'],
+                'Intermarché':  ['9h-20h','8h-20h','8h-20h','8h-20h','8h-20h','8h-21h','9h-20h'],
+            };
+
+            const now = new Date();
+            const hNow = now.getHours() * 60 + now.getMinutes();
+
+            function parseHorario(h) {
+                // "9h-21h" → {open:540, close:1260}
+                const m = h.match(/(\d+)h[^-]*-(\d+)h/);
+                return m ? { open: parseInt(m[1])*60, close: parseInt(m[2])*60 } : null;
+            }
+
+            function distKm(lat1, lng1, lat2, lng2) {
+                const R = 6371;
+                const dLat = (lat2-lat1)*Math.PI/180;
+                const dLng = (lng2-lng1)*Math.PI/180;
+                const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+                return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            }
+
+            // Desduplicar por nome de cadeia — manter o mais próximo
+            const seen = {};
+            elements.forEach(el => {
+                const rawName = (el.tags && (el.tags.name || el.tags.brand || '')).toLowerCase();
+                const elLat = el.lat || (el.center && el.center.lat);
+                const elLng = el.lon || (el.center && el.center.lon);
+                if (!elLat || !elLng) return;
+                const dist = distKm(lat, lng, elLat, elLng);
+
+                let chain = null;
+                for (const [key, val] of Object.entries(chainMap)) {
+                    if (rawName.includes(key)) { chain = val; break; }
+                }
+                // incluir mesmo sem chain conhecida (supermercados locais)
+                const displayName = chain ? chain.nome : (el.tags && el.tags.name ? el.tags.name : 'Supermercado');
+                const icon = chain ? chain.icon : '🏪';
+                const key = displayName.toLowerCase();
+
+                if (!seen[key] || dist < seen[key].dist) {
+                    const horario = horarios[displayName] ? horarios[displayName][dayIdx] : '9h-20h';
+                    const parsed = parseHorario(horario);
+                    const aberto = parsed ? (hNow >= parsed.open && hNow < parsed.close) : true;
+                    const osmHours = el.tags && el.tags['opening_hours'];
+                    seen[key] = { nome: displayName, icon, dist, horario: osmHours || horario, aberto };
+                }
+            });
+
+            stores = Object.values(seen).sort((a,b) => a.dist - b.dist).slice(0, 10);
+        } catch(e) {
+            console.error('Overpass error:', e);
+        }
+
         btn.innerHTML = '🔄 Atualizar'; btn.disabled = false;
-        if (!res) return;
-        const data = parseJSON(res);
-        if (!data) return;
-        const icons = {Continente:'🔵','Pingo Doce':'🟢',Lidl:'🟡',Auchan:'🔴',Mercadona:'🟠'};
-        out.innerHTML = (data.lojas||[]).map(l =>
-            '<div class="store-row"><div style="font-size:26px;">' + (icons[l.nome]||'🏪') + '</div>' +
-            '<div><b>' + l.nome + '</b><br>' +
-            '<span class="' + (l.aberto_agora?'s-open':'s-closed') + '">' + (l.aberto_agora?'● Aberto':'● Fechado') + '</span>' +
-            ' <span style="font-size:12px;color:#666;">· ' + (l.horario||'') + '</span></div></div>'
-        ).join('');
-    }, () => { btn.innerHTML = '📍 Encontrar Supermercados'; btn.disabled = false; out.innerHTML = '<div class="card" style="color:var(--warn)">Permite acesso à localização.</div>'; });
+
+        if (!stores.length) {
+            out.innerHTML = '<div class="card" style="color:var(--warn);text-align:center;padding:16px;">Nenhum supermercado encontrado num raio de 3km.<br><small style="color:#aaa;">Tenta numa zona mais urbana.</small></div>';
+            return;
+        }
+
+        const days = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+        out.innerHTML = '<p style="font-size:11px;color:#aaa;margin-bottom:10px;padding:0 4px;">📍 ' + stores.length + ' supermercado(s) encontrado(s) · ' + days[new Date().getDay()] + '</p>' +
+            stores.map(s =>
+                '<div class="store-row">' +
+                '<div style="font-size:26px;flex-shrink:0;">' + s.icon + '</div>' +
+                '<div style="flex-grow:1;">' +
+                '<b style="font-size:14px;">' + s.nome + '</b>' +
+                '<span style="font-size:11px;color:#aaa;margin-left:6px;">~' + (s.dist < 1 ? (s.dist*1000).toFixed(0)+'m' : s.dist.toFixed(1)+'km') + '</span><br>' +
+                '<span class="' + (s.aberto?'s-open':'s-closed') + '">' + (s.aberto?'● Aberto agora':'● Fechado') + '</span>' +
+                ' <span style="font-size:12px;color:#666;">· ' + s.horario + '</span>' +
+                '</div></div>'
+            ).join('');
+
+    }, err => {
+        btn.innerHTML = '📍 Encontrar Supermercados'; btn.disabled = false;
+        const msg = err.code === 1 ? 'Permite acesso à localização nas definições do browser.' :
+                    err.code === 2 ? 'Posição não disponível. Tenta novamente.' :
+                    'Tempo esgotado. Tenta novamente.';
+        out.innerHTML = '<div class="card" style="color:var(--warn);padding:16px;">' + msg + '</div>';
+    }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
 }
 
 // ── CONFIG ────────────────────────────────────────────────────
