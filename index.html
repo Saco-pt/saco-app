@@ -98,6 +98,23 @@
         .store-row { display:flex; gap:12px; padding:12px; background:#fff; border-radius:14px; margin-bottom:10px; box-shadow:0 2px 8px rgba(0,0,0,.05); border:1px solid #eee; align-items:center; transition:background .15s; }
         .s-open { color:var(--s); font-weight:700; font-size:12px; }
         .s-closed { color:var(--err); font-weight:700; font-size:12px; }
+        /* HACKS */
+        .hack-card { border-radius:14px; padding:14px; margin-bottom:10px; border-left:4px solid var(--p); background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.04); }
+        .hack-card.hard { border-left-color:var(--s); }
+        .hack-card.medium { border-left-color:var(--warn); }
+        .hack-card.easy { border-left-color:var(--p); }
+        .hack-tag { display:inline-block; font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; margin-bottom:6px; background:#f0f0f0; color:#555; }
+        .hack-save { float:right; font-size:13px; font-weight:900; color:var(--s); }
+        .hack-title { font-size:14px; font-weight:700; margin-bottom:4px; clear:both; }
+        .hack-desc { font-size:12px; color:#666; line-height:1.5; }
+        .hack-tip { font-size:11px; color:var(--p); font-weight:600; margin-top:6px; }
+        /* HACKS */
+        .hack-card { border-radius:14px; padding:14px; margin-bottom:10px; border-left:4px solid var(--p); background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.04); }
+        .hack-tag { display:inline-block; font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; margin-bottom:6px; background:#f0f0f0; color:#555; text-transform:uppercase; }
+        .hack-save { float:right; font-size:13px; font-weight:900; color:var(--s); }
+        .hack-title { font-size:14px; font-weight:700; margin-bottom:4px; }
+        .hack-desc { font-size:12px; color:#666; line-height:1.5; }
+        .hack-tip { font-size:11px; color:var(--p); font-weight:600; margin-top:6px; }
     </style>
 </head>
 <body onload="boot()">
@@ -260,6 +277,58 @@
     </div>
 </div>
 
+<!-- HACKS -->
+<div id="v-hacks" class="v">
+
+    <!-- Filtro de categorias -->
+    <div class="filter-bar" style="margin-bottom:6px;">
+        <button class="filter-btn on" id="hf-all" onclick="filterHacks('all',this)">Todos</button>
+        <button class="filter-btn" onclick="filterHacks('planeamento',this)">📋 Planeamento</button>
+        <button class="filter-btn" onclick="filterHacks('lojas',this)">🏪 Lojas</button>
+        <button class="filter-btn" onclick="filterHacks('marcas',this)">🏷️ Marcas</button>
+        <button class="filter-btn" onclick="filterHacks('digital',this)">📱 Digital</button>
+        <button class="filter-btn" onclick="filterHacks('desperdicio',this)">♻️ Desperdício</button>
+    </div>
+
+    <div id="hacks-list"></div>
+
+    <!-- Calculadora de poupança mensal -->
+    <div class="card" style="margin-top:8px;">
+        <h3 style="margin-bottom:12px;">💰 Quanto podes poupar?</h3>
+        <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">Gasto mensal atual em supermercados</label>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+            <input type="number" id="hack-budget" placeholder="Ex: 400" style="margin-bottom:0;flex-grow:1;" oninput="calcSavings()">
+            <span style="font-size:16px;font-weight:700;flex-shrink:0;">€/mês</span>
+        </div>
+        <div id="hack-savings" style="display:none;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+                <div style="background:#f1f8f3;border-radius:12px;padding:12px;text-align:center;">
+                    <div style="font-size:11px;color:#888;">Poupança estimada</div>
+                    <div id="sav-month" style="font-size:22px;font-weight:900;color:var(--s);">0€</div>
+                    <div style="font-size:10px;color:#aaa;">por mês</div>
+                </div>
+                <div style="background:#e8f0fe;border-radius:12px;padding:12px;text-align:center;">
+                    <div style="font-size:11px;color:#888;">Poupança anual</div>
+                    <div id="sav-year" style="font-size:22px;font-weight:900;color:var(--p);">0€</div>
+                    <div style="font-size:10px;color:#aaa;">por ano</div>
+                </div>
+            </div>
+            <div id="sav-tips" style="font-size:12px;color:#666;background:#fffbf0;border-radius:10px;padding:10px;border-left:3px solid var(--warn);"></div>
+        </div>
+    </div>
+
+    <!-- Plano mensal IA -->
+    <div class="card">
+        <h3 style="margin-bottom:6px;">🤖 Plano de Compras Mensal IA</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">Gera um plano personalizado com base no teu orçamento e historial.</p>
+        <input type="number" id="hack-plan-budget" placeholder="Orçamento mensal (€)" style="margin-bottom:8px;">
+        <input type="text" id="hack-plan-people" placeholder="Nº de pessoas em casa" style="margin-bottom:12px;">
+        <button class="btn btn-p" id="btn-plan" onclick="genPlan()">✨ Gerar Plano Personalizado</button>
+        <div id="hack-plan-out" style="margin-top:12px;font-size:13px;line-height:1.6;"></div>
+    </div>
+
+</div>
+
 <!-- MODAL -->
 <div id="modal" onclick="closeModal()">
     <div class="modal-box" onclick="event.stopPropagation()">
@@ -284,6 +353,7 @@
         <button class="nav-btn" id="nb-inf" onclick="goTab('inf')"><span>📊</span>Inflação</button>
         <button class="nav-btn" id="nb-history" onclick="goTab('history')"><span>🧾</span>Arquivo</button>
         <button class="nav-btn" id="nb-gen" onclick="goTab('gen')"><span>🧠</span>Perfil</button>
+        <button class="nav-btn" id="nb-hacks" onclick="goTab('hacks')"><span>💡</span>Hacks</button>
         <button class="nav-btn" id="nb-cfg" onclick="goTab('cfg')"><span>⚙️</span>Config</button>
     </div>
 </nav>
@@ -304,7 +374,6 @@ function boot() {
     document.getElementById('cart-txt').value = localStorage.getItem('saco_cart') || '';
     renderHistory();
     renderTags();
-    renderChat();
 }
 
 // ── NAV ──────────────────────────────────────────────────────
@@ -321,6 +390,8 @@ function goTab(id) {
     document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
     document.getElementById('v-' + id).classList.add('active');
     document.getElementById('nb-' + id).classList.add('active');
+    if (id === 'chat') renderChat();
+    if (id === 'hacks') renderHacks();
 }
 
 // ── AI CALL ──────────────────────────────────────────────────
@@ -1001,6 +1072,168 @@ async function fetchModels(silent) {
     } catch(e) { statusEl.innerHTML = '<div class="model-err">❌ Erro de ligação.</div>'; }
     btn.disabled = false;
 }
+// ── HACKS & POUPANÇA ─────────────────────────────────────────
+const HACKS = [
+    {
+        cat:'planeamento', dif:'easy', save:'até 25%',
+        title:'Lista antes de sair de casa',
+        desc:'Quem compra sem lista gasta em média 23% mais. Usa a aba Lista desta app para planear antes de ir ao supermercado.',
+        tip:'💡 Faz a lista com estômago cheio — reduz compras por impulso em 40%.'
+    },
+    {
+        cat:'planeamento', dif:'easy', save:'até 30%',
+        title:'Compra mensal única + reposição semanal mínima',
+        desc:'Faz uma grande compra mensal de não-perecíveis (detergentes, conservas, massas, arroz) e completa semanalmente só frescos. Evita deslocações desnecessárias e compras por impulso.',
+        tip:'💡 Planeia as refeições da semana antes de fazer a lista semanal.'
+    },
+    {
+        cat:'planeamento', dif:'medium', save:'até 20%',
+        title:'Compra no fim do mês — evita início do mês',
+        desc:'Os supermercados lançam promoções no fim do mês para escoar stock. Compra entre os dias 25-31 para apanhar descontos de fim de ciclo.',
+        tip:'💡 Segunda-feira de manhã é quando entram promoções novas na maioria das cadeias PT.'
+    },
+    {
+        cat:'lojas', dif:'medium', save:'até 35%',
+        title:'Estratégia multi-loja inteligente',
+        desc:'Não compres tudo no mesmo sítio. Compra frescos e padaria no Pingo Doce, marca própria e congelados no Lidl/Auchan, e higiene/limpeza no Continente em promoção.',
+        tip:'💡 O Lidl tem os melhores preços em laticínios, ovos e carne congelada em Portugal.'
+    },
+    {
+        cat:'lojas', dif:'easy', save:'até 15%',
+        title:'Mercados municipais para frescos',
+        desc:'Frutas, legumes, peixe e carne nos mercados municipais são em média 30-40% mais baratos que supermercado e mais frescos. Vai no final da manhã para os melhores preços.',
+        tip:'💡 Nas feiras semanais os preços descem ainda mais na última hora antes de fechar.'
+    },
+    {
+        cat:'lojas', dif:'easy', save:'até 10%',
+        title:'Horário estratégico: fim do dia para frescos',
+        desc:'Pão, sushi, sandes e outros frescos são marcados com desconto 1-2h antes do fecho (normalmente após as 19h-20h). Alguns supermercados descontam até 50%.',
+        tip:'💡 Pergunta ao funcionário a que horas marcam as reduções — varia por loja.'
+    },
+    {
+        cat:'marcas', dif:'easy', save:'até 40%',
+        title:'Marca própria nos básicos',
+        desc:'Arroz, massa, açúcar, sal, farinha, óleo, leite UHT, iogurte natural — a marca própria do Pingo Doce, Continente ou Auchan tem qualidade equivalente à marca e custa 30-50% menos.',
+        tip:'💡 Excepções onde a marca vale a pena: café, azeite e queijo curado.'
+    },
+    {
+        cat:'marcas', dif:'easy', save:'até 50%',
+        title:'Produtos de limpeza e higiene genéricos',
+        desc:'Detergente da roupa, lixívia, lava-louça, papel higiénico e champô de marca própria são quimicamente idênticos às marcas premium. A poupança é brutal.',
+        tip:'💡 O detergente Pura (Pingo Doce) e o Aro (Auchan) são equivalentes a Ariel/Skip.'
+    },
+    {
+        cat:'digital', dif:'easy', save:'até 20%',
+        title:'Cartões de fidelização — usa todos',
+        desc:'Cartão Continente dá 5% em crédito + descontos exclusivos. Cartão Poupa Mais (Pingo Doce) dá pontos e vales. Cartão Auchan dá 1% em cartão. Usa todos em simultâneo.',
+        tip:'💡 O app do Continente tem cupões digitais semanais — activa-os antes de ir às compras.'
+    },
+    {
+        cat:'digital', dif:'medium', save:'até 15%',
+        title:'Apps de cashback: Zapp e Beblue',
+        desc:'O Zapp (Continente/Pingo Doce) e o Beblue dão cashback em dinheiro real nas compras. Junta com o cartão de fidelização para duplo desconto.',
+        tip:'💡 O MB Way no Pingo Doce dá frequentemente 10% de desconto em dias específicos.'
+    },
+    {
+        cat:'digital', dif:'easy', save:'até 25%',
+        title:'Compra online com first-order discount',
+        desc:'Continente Online e Pingo Doce entrega têm descontos de boas-vindas até 20€. Usa para a compra mensal grande — pagas a entrega mas recuperas no desconto.',
+        tip:'💡 Cria conta com email diferente (Gmail + alias) para re-usar promoções de novo cliente.'
+    },
+    {
+        cat:'desperdicio', dif:'medium', save:'até 20%',
+        title:'Congela tudo o que podes',
+        desc:'Pão, carne, peixe, fruta madura, queijo ralado, ervas aromáticas — tudo congela. Evita deitar fora comida que já pagaste. Um congelador cheio é a melhor poupança.',
+        tip:'💡 Compra carne em quantidade quando está em promoção e congela porcionada.'
+    },
+    {
+        cat:'desperdicio', dif:'easy', save:'até 15%',
+        title:'App Too Good To Go',
+        desc:'Restaurantes e supermercados vendem cestos de comida prestes a expirar a 2-5€ (valor real 10-20€). Excelente para completar a semana com frescos a preço mínimo.',
+        tip:'💡 Em Lisboa e Porto há centenas de lojas disponíveis — activa notificações para os teus favoritos.'
+    },
+    {
+        cat:'desperdicio', dif:'medium', save:'até 10%',
+        title:'Compra por peso — evita embalagens',
+        desc:'Frutos secos, cereais, leguminosas e especiarias a granel são até 60% mais baratos que embalados. O Celeiro e algumas secções do Auchan têm estas secções.',
+        tip:'💡 Traz os teus próprios sacos reutilizáveis para pesar — poupas no plástico e no preço.'
+    },
+];
+
+let hacksFilter = 'all';
+
+function initHacks() {
+    renderHacks();
+}
+
+function filterHacks(cat, btn) {
+    hacksFilter = cat;
+    document.querySelectorAll('#v-hacks .filter-btn').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    renderHacks();
+}
+
+function renderHacks() {
+    const list = document.getElementById('hacks-list');
+    const filtered = hacksFilter === 'all' ? HACKS : HACKS.filter(h => h.cat === hacksFilter);
+    const difColors = { easy:'#1a73e8', medium:'#f29900', hard:'#1e8e3e' };
+    const difLabel = { easy:'Fácil', medium:'Médio', hard:'Avançado' };
+    list.innerHTML = filtered.map(h =>
+        '<div class="hack-card">' +
+        '<span class="hack-tag" style="background:' + (difColors[h.dif]||'#888') + '22;color:' + (difColors[h.dif]||'#888') + ';">' + (difLabel[h.dif]||h.dif) + '</span>' +
+        '<span class="hack-save">' + h.save + '</span>' +
+        '<div class="hack-title">' + h.title + '</div>' +
+        '<div class="hack-desc">' + h.desc + '</div>' +
+        '<div class="hack-tip">' + h.tip + '</div>' +
+        '</div>'
+    ).join('');
+}
+
+function calcSavings() {
+    const budget = parseFloat(document.getElementById('hack-budget').value) || 0;
+    const el = document.getElementById('hack-savings');
+    if (budget < 10) { el.style.display = 'none'; return; }
+    el.style.display = 'block';
+    const pct = 0.27; // média real das estratégias combinadas
+    const monthly = Math.round(budget * pct);
+    const yearly = monthly * 12;
+    document.getElementById('sav-month').innerText = monthly + '€';
+    document.getElementById('sav-year').innerText = yearly + '€';
+    const tips = budget > 600
+        ? 'Com este orçamento, a estratégia multi-loja + marca própria é a que dá mais retorno imediato.'
+        : budget > 300
+        ? 'Foca primeiro nos cartões de fidelização e marca própria nos básicos — impacto imediato sem esforço.'
+        : 'Com orçamento reduzido, o Lidl para os básicos + mercado municipal para frescos é a melhor combinação.';
+    document.getElementById('sav-tips').innerText = tips;
+}
+
+async function genPlan() {
+    var budget = document.getElementById('hack-plan-budget').value.trim();
+    var people = document.getElementById('hack-plan-people').value.trim();
+    if (!budget) { alert('Introduz o orçamento mensal.'); return; }
+    var btn = document.getElementById('btn-plan');
+    var out = document.getElementById('hack-plan-out');
+    btn.innerHTML = '<div class="spin"></div> A gerar plano...'; btn.disabled = true;
+    out.innerHTML = '';
+    var hist = JSON.parse(localStorage.getItem('saco_h') || '[]');
+    var histItems = hist.slice(0,5).reduce(function(a,r){ return a.concat(r.itens); }, []).slice(0,20);
+    var prompt = 'Cria um plano de compras mensal para Portugal para ' + (people||'1') + ' pessoa(s) com orcamento de ' + budget + ' euros por mes. '
+        + (histItems.length ? 'O utilizador costuma comprar: ' + histItems.join(', ') + '. ' : '')
+        + 'Inclui: distribuicao do orcamento por categoria como frescos, secos, higiene e limpeza. '
+        + 'Lista de produtos recomendados por loja entre Lidl, Pingo Doce e Continente. '
+        + '5 dicas especificas para este orcamento em Portugal. '
+        + 'Melhor dia e hora para comprar cada categoria. '
+        + 'Responde em portugues de Portugal, de forma pratica e concisa.';
+    var res = await ai(prompt, null, true);
+    btn.innerHTML = '✨ Gerar Plano Personalizado'; btn.disabled = false;
+    if (res) {
+        var html = res.replace(/\n/g, '<br>');
+        out.innerHTML = html;
+    } else {
+        out.innerHTML = '<span style="color:var(--err);">Erro ao gerar plano. Verifica a API key.</span>';
+    }
+}
+
 </script>
 </body>
 </html>
