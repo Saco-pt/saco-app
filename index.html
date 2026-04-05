@@ -361,4 +361,444 @@ function handleFile(e) {
 
 // ── SEARCH PRICES ─────────────────────────────────────────────
 async function searchPrices() {
-    const q = document
+    const q = document.getElementById('q-in').value.trim(); if (!q) return;
+    const out = document.getElementById('out-home');
+    const btn = document.getElementById('btn-search');
+    btn.innerHTML = spin() + ' A pesquisar...'; btn.disabled = true;
+    const res = await ai(
+        'Pesquisa o preco atual de "' + q + '" nos supermercados de Portugal (Continente, Pingo Doce, Lidl, Auchan, Mercadona). ' +
+        'REGRAS: inclui APENAS lojas com preco real confirmado acima de 0. ' +
+        'Em artigo coloca o nome completo do produto. ' +
+        'Responde APENAS JSON: [{"loja":"Nome","artigo":"Nome completo","preco":0.00}]',
+        null, true);
+    btn.innerHTML = '🔍 Comparar Preços Hoje'; btn.disabled = false;
+    if (!res) { out.innerHTML = '<div class="card" style="color:var(--err)">Sem resposta. Verifica a API key.</div>'; return; }
+    const data = parseJSON(res);
+    if (!data || !Array.isArray(data)) { out.innerHTML = '<div class="card" style="color:var(--err)">Erro ao ler dados.</div>'; return; }
+    const valid = data.filter(i => i.preco > 0).sort((a,b) => a.preco - b.preco);
+    if (!valid.length) { out.innerHTML = '<div class="card" style="color:var(--warn)">Sem preços encontrados para <b>' + q + '</b>.</div>'; return; }
+    let h = '<div class="card"><h4 style="margin-bottom:12px;">Preços: ' + q + '</h4>';
+    valid.forEach((i, idx) => {
+        h += '<div class="res-row" style="flex-direction:column;align-items:flex-start;gap:2px;">';
+        h += '<div style="display:flex;justify-content:space-between;width:100%;align-items:center;">';
+        h += '<span style="font-weight:700;">' + (idx===0?'🏆 ':'') + i.loja + '</span>';
+        h += '<b style="color:' + (idx===0?'var(--s)':'var(--txt)') + ';white-space:nowrap;margin-left:8px;">' + Number(i.preco).toFixed(2) + '€</b>';
+        h += '</div>';
+        if (i.artigo) h += '<span style="font-size:11px;color:#888;">' + i.artigo + '</span>';
+        h += '</div>';
+    });
+    h += '<div style="font-size:11px;color:#aaa;margin-top:10px;">' + valid.length + ' loja(s) com preço disponível</div></div>';
+    out.innerHTML = h;
+}
+
+// ── COMPARE CART ──────────────────────────────────────────────
+async function compareCart() {
+    const list = document.getElementById('cart-txt').value.trim(); if (!list) return;
+    const out = document.getElementById('out-cart');
+    const btn = document.getElementById('btn-cart');
+    btn.innerHTML = spin() + ' Calculando...'; btn.disabled = true;
+    const items = list.split('\n').map(l => l.trim()).filter(Boolean);
+    const numbered = items.map((it,i) => (i+1)+'. '+it).join('\n');
+    const prompt = 'Lista de compras em Portugal:\n' + numbered + '\n\n' +
+        'Pesquisa os precos atuais nos supermercados: Continente, Pingo Doce, Lidl, Auchan. ' +
+        'Soma o total de cada loja. Responde APENAS JSON sem markdown: ' +
+        '{"comparativo":[{"loja":"Nome","total":0.00,"itens_em_falta":0}],"vencedor":"Nome","poupanca":0.00,"obs":"resumo"}';
+    const res = await ai(prompt, null, true);
+    btn.innerHTML = '🚀 Onde é mais barato?'; btn.disabled = false;
+    if (!res) { out.innerHTML = '<div class="card" style="color:var(--err)">Sem resposta da API.</div>'; return; }
+    const data = parseJSON(res);
+    if (!data || !data.comparativo) { out.innerHTML = '<div class="card" style="color:var(--err)">Erro ao processar.<br><small>' + res.substring(0,200) + '</small></div>'; return; }
+    const valid = data.comparativo.filter(c => c.total > 0).sort((a,b) => a.total - b.total);
+    if (!valid.length) { out.innerHTML = '<div class="card" style="color:var(--warn)">Sem totais válidos. Tenta itens mais genéricos.</div>'; return; }
+    const best = valid[0]; const worst = valid[valid.length-1];
+    const save = (worst.total - best.total).toFixed(2);
+    let h = '<div class="card"><h4 style="margin-bottom:4px;">🏆 Mais barato: ' + best.loja + '</h4>';
+    h += '<p style="font-size:12px;color:#666;margin-bottom:12px;">' + (data.obs||'') + '</p>';
+    if (parseFloat(save) > 0) h += '<div style="background:#f1f8f3;border-radius:10px;padding:10px;margin-bottom:12px;font-size:13px;color:var(--s);font-weight:700;">💰 Poupas até ' + save + '€ vs loja mais cara</div>';
+    valid.forEach((c, idx) => {
+        h += '<div class="comp-card ' + (idx===0?'winner':'') + '">';
+        h += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+        h += '<b>' + (idx===0?'🏆 ':'') + c.loja + '</b>';
+        h += '<b style="color:' + (idx===0?'var(--s)':'var(--txt)') + ';font-size:16px;">' + Number(c.total).toFixed(2) + '€</b>';
+        h += '</div>';
+        h += '<small style="color:' + (c.itens_em_falta>0?'var(--warn)':'#aaa') + ';">' + (c.itens_em_falta>0?'⚠️ '+c.itens_em_falta+' item(ns) em falta':'✅ Lista completa') + '</small>';
+        h += '</div>';
+    });
+    h += '<div style="font-size:11px;color:#aaa;margin-top:12px;text-align:center;">' + items.length + ' artigo(s) · ' + valid.length + ' lojas comparadas</div></div>';
+    out.innerHTML = h;
+}
+
+// ── BILL / FRIDGE ─────────────────────────────────────────────
+async function processBill(b64) {
+    document.getElementById('modal').style.display = 'block';
+    document.getElementById('m-title').innerText = 'A digitalizar recibo...';
+    document.getElementById('modal-body').innerHTML = '<div style="text-align:center;padding:20px;"><div class="spin" style="border-top-color:var(--p);width:30px;height:30px;"></div><br><small>A analisar...</small></div>';
+    document.getElementById('m-footer').style.display = 'none';
+    const res = await ai('Extrai TODOS os itens e o TOTAL deste recibo. Responde APENAS JSON: {"itens":["Nome"],"total":0.00}', b64, false);
+    if (!res) { closeModal(); return; }
+    const data = parseJSON(res);
+    if (!data) { closeModal(); return; }
+    document.getElementById('m-title').innerText = 'Confirmar Recibo';
+    document.getElementById('m-total').value = data.total || 0;
+    document.getElementById('modal-body').innerHTML = (data.itens||[]).map(it =>
+        '<input type="text" class="bill-item" value="' + (typeof it==='string'?it:(it.nome||'')) + '" style="margin-bottom:8px;">'
+    ).join('');
+    document.getElementById('m-footer').style.display = 'block';
+}
+
+async function processFridge(b64) {
+    document.getElementById('modal').style.display = 'block';
+    document.getElementById('m-title').innerText = 'A analisar despensa...';
+    document.getElementById('modal-body').innerHTML = '<div style="text-align:center;padding:20px;"><div class="spin" style="border-top-color:var(--p);width:30px;height:30px;"></div></div>';
+    const res = await ai('O que falta ou esta a acabar nesta despensa/frigorifico? Responde APENAS JSON: {"falta":["Item"]}', b64, false);
+    if (!res) { closeModal(); return; }
+    const data = parseJSON(res);
+    if (!data) { closeModal(); return; }
+    document.getElementById('m-title').innerText = 'Sugestões de Compra';
+    document.getElementById('modal-body').innerHTML = (data.falta||[]).map(item => {
+        const safe = item.replace(/\'/g, '').replace(/"/g, '');
+        return '<div class="res-row"><span>' + safe + '</span><button class="btn btn-p" onclick="addToCart(\'' + safe + '\')" style="width:auto;padding:6px 14px;font-size:12px;">+ Lista</button></div>';
+    }).join('');
+}
+
+function addToCart(item) {
+    const ta = document.getElementById('cart-txt');
+    ta.value = (ta.value.trim() ? ta.value.trim() + '\n' : '') + item + '\n';
+    saveCart(); closeModal(); goTab('cart');
+}
+
+function saveBill() {
+    const itens = Array.from(document.querySelectorAll('.bill-item')).map(i => i.value.trim()).filter(Boolean);
+    const total = parseFloat(document.getElementById('m-total').value || 0);
+    let h = JSON.parse(localStorage.getItem('saco_h') || '[]');
+    h.unshift({ id:Date.now(), total, itens, date:new Date().toLocaleDateString('pt-PT') });
+    localStorage.setItem('saco_h', JSON.stringify(h));
+    renderHistory(); renderTags(); closeModal();
+}
+
+function closeModal() {
+    document.getElementById('modal').style.display = 'none';
+    document.getElementById('m-footer').style.display = 'none';
+    document.getElementById('m-title').innerText = 'A processar...';
+    document.getElementById('modal-body').innerHTML = '';
+}
+
+// ── HISTORY ───────────────────────────────────────────────────
+function renderHistory() {
+    const h = JSON.parse(localStorage.getItem('saco_h') || '[]');
+    let total = 0;
+    const el = document.getElementById('out-history');
+    if (!h.length) { el.innerHTML = '<div class="card" style="text-align:center;color:#aaa;padding:30px;">Sem recibos arquivados.</div>'; }
+    else el.innerHTML = h.map(i => {
+        total += i.total;
+        return '<div class="card" style="display:flex;align-items:center;gap:10px;padding:12px;">' +
+            '<input type="checkbox" class="hck" data-id="' + i.id + '" data-val="' + i.total + '" onchange="updateSel()" style="width:auto;margin:0;flex-shrink:0;">' +
+            '<div style="flex-grow:1;"><b>' + i.date + '</b> — ' + i.total.toFixed(2) + '€' +
+            '<div style="font-size:11px;color:#aaa;margin-top:3px;">' + i.itens.slice(0,3).join(', ') + (i.itens.length>3?' +'+( i.itens.length-3):'') + '</div></div></div>';
+    }).join('');
+    document.getElementById('stat-total').innerText = total.toFixed(2) + '€';
+}
+
+function updateSel() {
+    let t = 0; document.querySelectorAll('.hck:checked').forEach(c => t += parseFloat(c.dataset.val));
+    document.getElementById('stat-sel').innerText = t.toFixed(2) + '€';
+}
+
+function deleteSelected() {
+    const ids = Array.from(document.querySelectorAll('.hck:checked')).map(c => c.dataset.id);
+    if (!ids.length) { alert('Seleciona pelo menos um recibo.'); return; }
+    if (!confirm('Apagar ' + ids.length + ' recibo(s)?')) return;
+    let h = JSON.parse(localStorage.getItem('saco_h') || '[]');
+    localStorage.setItem('saco_h', JSON.stringify(h.filter(i => !ids.includes(String(i.id)))));
+    renderHistory(); updateSel(); renderTags();
+}
+
+function exportToCart() {
+    const ids = Array.from(document.querySelectorAll('.hck:checked')).map(c => c.dataset.id);
+    if (!ids.length) { alert('Seleciona pelo menos um recibo.'); return; }
+    const h = JSON.parse(localStorage.getItem('saco_h') || '[]');
+    let its = [];
+    h.filter(i => ids.includes(String(i.id))).forEach(i => its = its.concat(i.itens));
+    const ta = document.getElementById('cart-txt');
+    ta.value = (ta.value.trim() ? ta.value.trim() + '\n' : '') + its.join('\n') + '\n';
+    saveCart(); goTab('cart');
+}
+
+function exportCSV() {
+    const h = JSON.parse(localStorage.getItem('saco_h') || '[]');
+    if (!h.length) { alert('Sem dados para exportar.'); return; }
+    const c = 'Data;Total;Itens\n' + h.map(i => i.date + ';' + i.total.toFixed(2) + ';' + i.itens.join('|')).join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([c], { type:'text/csv;charset=utf-8;' }));
+    a.download = 'saco_pt.csv'; a.click();
+}
+
+function saveCart() { localStorage.setItem('saco_cart', document.getElementById('cart-txt').value); }
+
+// ── TAGS / PROFILE ────────────────────────────────────────────
+function renderTags() {
+    const h = JSON.parse(localStorage.getItem('saco_h') || '[]');
+    let all = []; h.forEach(i => all = all.concat(i.itens));
+    const counts = {}; all.forEach(x => counts[x] = (counts[x]||0)+1);
+    const top = Object.keys(counts).sort((a,b) => counts[b]-counts[a]).slice(0,8);
+    document.getElementById('profile-tags').innerHTML = top.length
+        ? top.map(t => '<span class="tag">' + t + '</span>').join('')
+        : '<span style="font-size:12px;color:#aaa;">Sem dados. Arquiva recibos primeiro.</span>';
+}
+
+async function genInsights() {
+    const h = localStorage.getItem('saco_h') || '[]';
+    const btn = document.getElementById('btn-insight');
+    btn.innerHTML = spin() + ' Analisando...'; btn.disabled = true;
+    const res = await ai('Com base nestes gastos de supermercado em Portugal: ' + h + ', da 3 dicas de poupanca especificas e praticas. Responde em portugues.', null, true);
+    btn.innerHTML = 'Gerar Relatório IA'; btn.disabled = false;
+    if (res) document.getElementById('ai-insight').innerHTML = res.replace(/\n/g, '<br>');
+}
+
+// ── PROMOS ────────────────────────────────────────────────────
+async function loadPromos() {
+    const btn = document.getElementById('btn-promos');
+    const out = document.getElementById('out-promo');
+    btn.innerHTML = spin() + ' A pesquisar...'; btn.disabled = true; out.innerHTML = '';
+    const today = new Date().toLocaleDateString('pt-PT');
+    const prompt = 'Pesquisa as promocoes e folhetos ATUAIS dos supermercados portugueses: Continente, Pingo Doce, Lidl, Auchan, Mercadona. ' +
+        'Data de hoje: ' + today + '. Inclui promocoes ativas e que comecam nos proximos 7 dias. ' +
+        'Responde APENAS JSON: {"promos":[{"loja":"Nome","produto":"Nome completo","desconto":"-30%","preco_original":0.00,"preco_promo":0.00,"data_inicio":"dd/mm","data_fim":"dd/mm","estado":"ativa"}],"atualizado":"' + today + '"}';
+    const res = await ai(prompt, null, true);
+    btn.innerHTML = '🔍 Pesquisar Promoções Agora'; btn.disabled = false;
+    if (!res) { out.innerHTML = '<div class="card" style="color:var(--err)">Sem resposta. Verifica a API key.</div>'; return; }
+    const data = parseJSON(res);
+    if (!data || !data.promos) { out.innerHTML = '<div class="card" style="color:var(--err)">Erro ao processar promoções.</div>'; return; }
+    allPromos = data.promos;
+    document.getElementById('promo-ts').innerText = 'Atualizado: ' + (data.atualizado||today);
+    renderPromos();
+}
+
+function renderPromos() {
+    const out = document.getElementById('out-promo');
+    const q = document.getElementById('promo-q').value.toLowerCase();
+    let filtered = allPromos.filter(p => {
+        const mq = !q || p.produto.toLowerCase().includes(q) || p.loja.toLowerCase().includes(q);
+        const mf = promoFilter === 'todos' || p.estado === promoFilter || p.loja === promoFilter;
+        return mq && mf;
+    }).sort((a,b) => (a.estado==='ativa'?0:1)-(b.estado==='ativa'?0:1));
+    if (!filtered.length) { out.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa;">Sem promoções para este filtro.</div>'; return; }
+    out.innerHTML = filtered.map(p => {
+        const on = p.estado === 'ativa';
+        const hp = p.preco_original > 0 && p.preco_promo > 0;
+        const save = hp ? (p.preco_original - p.preco_promo).toFixed(2) : null;
+        return '<div class="promo-card">' +
+            '<span class="promo-badge ' + (on?'badge-on':'badge-soon') + '">' + (on?'🟢 Ativa':'🟡 Em Breve') + '</span>' +
+            (p.desconto ? '<span class="promo-discount">' + p.desconto + '</span>' : '') +
+            '<div class="promo-store">' + p.loja + '</div>' +
+            '<div class="promo-title">' + p.produto + '</div>' +
+            (hp ? '<div style="font-size:12px;color:#666;"><s style="color:#aaa;">' + Number(p.preco_original).toFixed(2) + '€</s> → <b style="color:var(--err);">' + Number(p.preco_promo).toFixed(2) + '€</b>' + (save?' <span style="color:var(--s);">(-'+save+'€)</span>':'') + '</div>' : '') +
+            (p.data_inicio||p.data_fim ? '<div class="promo-date">📅 ' + (p.data_inicio||'') + (p.data_fim?' → '+p.data_fim:'') + '</div>' : '') +
+            '</div>';
+    }).join('');
+}
+
+function setFilter(f, btn) {
+    promoFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    if (allPromos.length) renderPromos();
+}
+
+// ── SCAN ──────────────────────────────────────────────────────
+async function toggleCam() {
+    const video = document.getElementById('scan-video');
+    if (camStream) {
+        camStream.getTracks().forEach(t => t.stop()); camStream = null;
+        video.style.display = 'none';
+        document.getElementById('btn-cam').innerHTML = '📷 Ativar Câmara';
+        document.getElementById('btn-cap').disabled = true;
+        return;
+    }
+    try {
+        camStream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' } });
+        video.srcObject = camStream; video.style.display = 'block';
+        document.getElementById('btn-cam').innerHTML = '⏹ Parar Câmara';
+        document.getElementById('btn-cap').disabled = false;
+    } catch(e) { alert('Sem acesso à câmara. Usa o campo manual abaixo.'); }
+}
+
+async function captureFrame() {
+    const video = document.getElementById('scan-video');
+    const canvas = document.getElementById('scan-canvas');
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    const b64 = canvas.toDataURL('image/jpeg').split(',')[1];
+    const out = document.getElementById('out-scan');
+    out.innerHTML = '<div class="card" style="text-align:center;padding:16px;">' + spin().replace('border-top-color:#fff','border-top-color:var(--p)') + ' A identificar...</div>';
+    const res = await ai('Identifica o produto nesta imagem pelo codigo de barras ou embalagem. Responde APENAS JSON: {"ean":"codigo","produto":"Nome completo","marca":"marca","quantidade":"ex: 1kg"}', b64, false);
+    if (!res) { out.innerHTML = '<div class="card" style="color:var(--err)">Nao foi possivel identificar.</div>'; return; }
+    const d = parseJSON(res);
+    if (!d) { out.innerHTML = '<div class="card" style="color:var(--err)">Erro ao ler produto.</div>'; return; }
+    out.innerHTML = '<div style="padding:12px;background:#f1f8f3;border-radius:12px;border-left:4px solid var(--s);"><b>' + d.produto + '</b><br><small>' + (d.marca||'') + ' · ' + (d.quantidade||'') + (d.ean?' · EAN:'+d.ean:'') + '</small></div>';
+    document.getElementById('q-in').value = d.produto;
+    setTimeout(() => { goTab('home'); searchPrices(); }, 800);
+}
+
+async function lookupBarcode() {
+    const code = document.getElementById('barcode-in').value.trim(); if (!code) return;
+    const out = document.getElementById('out-scan');
+    out.innerHTML = '<div class="card" style="text-align:center;padding:16px;">' + spin().replace('border-top-color:#fff','border-top-color:var(--p)') + '</div>';
+    const res = await ai('O produto com EAN/codigo de barras ' + code + ' em Portugal chama-se como? Responde APENAS JSON: {"produto":"Nome completo","marca":"marca","quantidade":"gramagem"}', null, true);
+    if (!res) { out.innerHTML = '<div class="card" style="color:var(--err)">Sem resposta.</div>'; return; }
+    const d = parseJSON(res);
+    if (!d) { out.innerHTML = '<div class="card" style="color:var(--err)">Codigo nao encontrado.</div>'; return; }
+    out.innerHTML = '<div style="padding:12px;background:#f1f8f3;border-radius:12px;border-left:4px solid var(--s);"><b>' + d.produto + '</b><br><small>' + (d.marca||'') + ' · ' + (d.quantidade||'') + '</small></div>';
+    document.getElementById('q-in').value = d.produto;
+    setTimeout(() => { goTab('home'); searchPrices(); }, 600);
+}
+
+// ── CHAT ──────────────────────────────────────────────────────
+function quickChat(msg) { document.getElementById('chat-in').value = msg; sendChat(); }
+
+async function sendChat() {
+    const inp = document.getElementById('chat-in');
+    const msg = inp.value.trim(); if (!msg) return;
+    inp.value = '';
+    chatHistory.push({ r:'u', t:msg });
+    renderChat();
+    const wrap = document.getElementById('chat-msgs');
+    wrap.scrollTop = wrap.scrollHeight;
+    chatHistory.push({ r:'ai', t:'💭 A pensar...' });
+    renderChat();
+    const ctx = chatHistory.slice(-6).map(m => (m.r==='u'?'Utilizador: ':'Assistente: ') + m.t).join('\n');
+    const res = await ai('Es um assistente de compras especialista em supermercados portugueses. Responde sempre em portugues de Portugal, de forma concisa. Historico:\n' + ctx, null, true);
+    chatHistory[chatHistory.length-1] = { r:'ai', t: res || 'Desculpa, nao consegui responder.' };
+    renderChat();
+    wrap.scrollTop = wrap.scrollHeight;
+}
+
+function renderChat() {
+    const wrap = document.getElementById('chat-msgs');
+    if (!chatHistory.length) {
+        wrap.innerHTML = '<div style="text-align:center;color:#bbb;font-size:12px;padding:30px 0;">Pergunta qualquer coisa sobre precos,<br>receitas ou poupanca 👆</div>';
+        return;
+    }
+    wrap.innerHTML = chatHistory.map(m =>
+        '<div class="bubble ' + (m.r==='u'?'bubble-u':'bubble-ai') + '">' + m.t.replace(/\n/g,'<br>') + '</div>'
+    ).join('');
+}
+
+// ── INFLATION ─────────────────────────────────────────────────
+async function calcInflation() {
+    const h = JSON.parse(localStorage.getItem('saco_h') || '[]');
+    const btn = document.getElementById('btn-inf');
+    const out = document.getElementById('out-inf');
+    if (h.length < 2) { out.innerHTML = '<div class="card" style="color:var(--warn);text-align:center;padding:20px;">Precisas de pelo menos 2 recibos arquivados.</div>'; return; }
+    btn.innerHTML = spin() + ' A analisar...'; btn.disabled = true;
+    const totals = h.map(i => i.total);
+    const avg = (totals.reduce((a,b) => a+b, 0) / totals.length);
+    const latest = h[0].total; const oldest = h[h.length-1].total;
+    const variation = oldest > 0 ? (((latest-oldest)/oldest)*100).toFixed(1) : 0;
+    document.getElementById('inf-stats').innerHTML = [
+        ['Média por compra', avg.toFixed(2)+'€', '#1a73e8'],
+        ['Última compra', latest.toFixed(2)+'€', '#1e8e3e'],
+        ['Variação total', (variation>0?'+':'')+variation+'%', variation>0?'#d93025':'#1e8e3e'],
+        ['Nº de compras', h.length, '#673ab7']
+    ].map(s => '<div class="card" style="text-align:center;padding:12px;margin-bottom:0;"><small style="color:#888;">' + s[0] + '</small><br><span style="font-size:18px;font-weight:900;color:' + s[2] + ';">' + s[1] + '</span></div>').join('');
+    const counts = {}; let all = []; h.forEach(i => all = all.concat(i.itens));
+    all.forEach(x => counts[x]=(counts[x]||0)+1);
+    const topItems = Object.keys(counts).sort((a,b)=>counts[b]-counts[a]).slice(0,8);
+    const res = await ai('Analisa a evolucao de precos em Portugal para: ' + topItems.join(', ') + '. Compara preco atual vs ha 6 meses vs ha 1 ano. Responde APENAS JSON: {"itens":[{"produto":"nome","preco_atual":0.00,"variacao_pct":0.0}],"resumo":"1 frase sobre inflacao alimentar"}', null, true);
+    btn.innerHTML = '📈 Analisar Variação de Preços'; btn.disabled = false;
+    if (!res) { out.innerHTML = '<div class="card" style="color:var(--err)">Sem dados da API.</div>'; return; }
+    const data = parseJSON(res);
+    if (!data) { out.innerHTML = '<div class="card" style="color:var(--err)">Erro ao processar.</div>'; return; }
+    let html = '<div class="card"><h4 style="margin-bottom:6px;">Evolução dos teus produtos</h4><p style="font-size:12px;color:#666;margin-bottom:14px;">' + (data.resumo||'') + '</p>';
+    (data.itens||[]).forEach(it => {
+        const pct = Number(it.variacao_pct); const up = pct > 0;
+        const w = Math.min(Math.abs(pct)*2, 100);
+        html += '<div class="ibar-wrap"><div class="ibar-label"><span>' + it.produto + '</span><span style="color:' + (up?'var(--err)':'var(--s)') + ';font-weight:700;">' + (up?'+':'') + pct.toFixed(1) + '% · ' + Number(it.preco_atual).toFixed(2) + '€</span></div><div class="ibar-bg"><div class="ibar-fill ' + (up?'ibar-up':'ibar-dn') + '" style="width:' + w + '%;"></div></div></div>';
+    });
+    html += '</div>';
+    out.innerHTML = html;
+}
+
+// ── MAP ───────────────────────────────────────────────────────
+async function loadMap() {
+    const btn = document.getElementById('btn-map');
+    const out = document.getElementById('out-map');
+    const frame = document.getElementById('map-frame');
+    btn.innerHTML = spin() + ' A localizar...'; btn.disabled = true;
+    if (!navigator.geolocation) { btn.innerHTML = '📍 Encontrar Supermercados'; btn.disabled = false; out.innerHTML = '<div class="card" style="color:var(--err)">GPS nao disponivel.</div>'; return; }
+    navigator.geolocation.getCurrentPosition(async pos => {
+        const lat = pos.coords.latitude; const lng = pos.coords.longitude;
+        const bbox = (lng-.02)+'%2C'+(lat-.02)+'%2C'+(lng+.02)+'%2C'+(lat+.02);
+        frame.src = 'https://www.openstreetmap.org/export/embed.html?bbox=' + bbox + '&layer=mapnik&marker='+lat+'%2C'+lng;
+        frame.style.display = 'block';
+        const day = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][new Date().getDay()];
+        const res = await ai('Supermercados (Continente,Pingo Doce,Lidl,Auchan,Mercadona) tipicamente perto de ' + lat.toFixed(3)+','+lng.toFixed(3) + ' em Portugal. Horarios tipicos ao ' + day + '. Responde APENAS JSON: {"lojas":[{"nome":"Nome","horario":"09h-21h","aberto_agora":true}]}', null, true);
+        btn.innerHTML = '🔄 Atualizar'; btn.disabled = false;
+        if (!res) return;
+        const data = parseJSON(res);
+        if (!data) return;
+        const icons = {Continente:'🔵','Pingo Doce':'🟢',Lidl:'🟡',Auchan:'🔴',Mercadona:'🟠'};
+        out.innerHTML = (data.lojas||[]).map(l =>
+            '<div class="store-row"><div style="font-size:26px;">' + (icons[l.nome]||'🏪') + '</div>' +
+            '<div><b>' + l.nome + '</b><br>' +
+            '<span class="' + (l.aberto_agora?'s-open':'s-closed') + '">' + (l.aberto_agora?'● Aberto':'● Fechado') + '</span>' +
+            ' <span style="font-size:12px;color:#666;">· ' + (l.horario||'') + '</span></div></div>'
+        ).join('');
+    }, () => { btn.innerHTML = '📍 Encontrar Supermercados'; btn.disabled = false; out.innerHTML = '<div class="card" style="color:var(--warn)">Permite acesso à localização.</div>'; });
+}
+
+// ── CONFIG ────────────────────────────────────────────────────
+function saveConfig() {
+    const k = document.getElementById('key-in').value.trim();
+    const m = document.getElementById('model-sel').value;
+    if (!k) { alert('Introduz uma API Key válida.'); return; }
+    localStorage.setItem('saco_k', k);
+    if (m) localStorage.setItem('saco_m', m);
+    alert('✅ Configuração guardada!');
+}
+
+async function fetchModels(silent) {
+    const k = document.getElementById('key-in').value.trim() || localStorage.getItem('saco_k');
+    const statusEl = document.getElementById('model-status');
+    const selEl = document.getElementById('model-sel');
+    const countEl = document.getElementById('model-count');
+    const btn = document.getElementById('btn-models');
+    if (!k) { if (!silent) alert('Introduz a API Key primeiro.'); return; }
+    document.getElementById('key-in').value = k;
+    statusEl.innerHTML = '<span style="font-size:12px;color:#888;">🔄 A carregar modelos...</span>';
+    selEl.style.display = 'none'; countEl.style.display = 'none'; btn.disabled = true;
+    try {
+        const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + k + '&pageSize=100');
+        const d = await r.json();
+        if (d.error) { statusEl.innerHTML = '<div class="model-err">❌ ' + d.error.message + '</div>'; btn.disabled = false; return; }
+        const supported = (d.models||[]).filter(m => m.supportedGenerationMethods?.includes('generateContent'));
+        if (!supported.length) { statusEl.innerHTML = '<div class="model-err">Nenhum modelo compatível.</div>'; btn.disabled = false; return; }
+        const saved = localStorage.getItem('saco_m');
+        selEl.innerHTML = '';
+        const groups = {'Gemini 2':[],'Gemini 1.5':[],'Gemini 1.0':[],'Outros':[]};
+        supported.forEach(m => {
+            const n = m.name.split('/').pop();
+            if (n.includes('gemini-2')) groups['Gemini 2'].push(n);
+            else if (n.includes('gemini-1.5')) groups['Gemini 1.5'].push(n);
+            else if (n.includes('gemini-1.0')||n.includes('gemini-pro')) groups['Gemini 1.0'].push(n);
+            else groups['Outros'].push(n);
+        });
+        let total = 0;
+        Object.entries(groups).forEach(([gname, models]) => {
+            if (!models.length) return;
+            const og = document.createElement('optgroup'); og.label = gname;
+            models.forEach(name => { const opt = new Option(name.toUpperCase(), name); if (name===saved) opt.selected=true; og.appendChild(opt); total++; });
+            selEl.appendChild(og);
+        });
+        if (!saved || !selEl.value) {
+            ['gemini-2.0-flash','gemini-1.5-flash','gemini-1.5-pro'].some(p => { const o = selEl.querySelector('option[value="'+p+'"]'); if (o) { o.selected=true; return true; } });
+        }
+        statusEl.innerHTML = '';
+        selEl.style.display = 'block'; countEl.style.display = 'block';
+        countEl.innerText = '✅ ' + total + ' modelo(s) disponíveis';
+    } catch(e) { statusEl.innerHTML = '<div class="model-err">❌ Erro de ligação.</div>'; }
+    btn.disabled = false;
+}
+</script>
+</body>
+</html>
