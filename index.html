@@ -335,7 +335,10 @@ async function ai(prompt, b64, ground) {
         });
         const d = await r.json();
         if (d.error) { console.error('AI error:', d.error.message); return null; }
-        return d.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
+        // juntar todos os parts de texto (grounding pode gerar múltiplos)
+        const parts = d.candidates?.[0]?.content?.parts || [];
+        const text = parts.filter(p => p.text).map(p => p.text).join('\n').trim();
+        return text || null;
     } catch(e) { console.error('AI fetch fail:', e); return null; }
 }
 
@@ -668,18 +671,54 @@ async function captureFrame() {
 async function lookupBarcode() {
     const code = document.getElementById('barcode-in').value.trim(); if (!code) return;
     const out = document.getElementById('out-scan');
-    out.innerHTML = '<div class="card" style="text-align:center;padding:16px;">' + spin().replace('border-top-color:#fff','border-top-color:var(--p)') + '</div>';
-    const res = await ai(
-        'Pesquisa o produto com EAN ' + code + ' vendido em Portugal. ' +
-        'Diz o nome comercial completo, a marca e a quantidade/gramagem. ' +
-        'Responde APENAS JSON sem markdown: {"produto":"Nome completo","marca":"Marca","quantidade":"gramagem"}',
-        null, true);
-    if (!res) { out.innerHTML = '<div class="card" style="color:var(--err)">Sem resposta.</div>'; return; }
-    const d = parseJSON(res);
-    if (!d) { out.innerHTML = '<div class="card" style="color:var(--err)">Codigo nao encontrado.</div>'; return; }
-    out.innerHTML = '<div style="padding:12px;background:#f1f8f3;border-radius:12px;border-left:4px solid var(--s);"><b>' + d.produto + '</b><br><small>' + (d.marca||'') + ' · ' + (d.quantidade||'') + '</small></div>';
-    document.getElementById('q-in').value = d.produto;
-    setTimeout(() => { goTab('home'); searchPrices(); }, 600);
+    out.innerHTML = '<div class="card" style="text-align:center;padding:16px;"><div class="spin" style="border-top-color:var(--p);width:24px;height:24px;margin:0 auto 8px;"></div><small>A pesquisar EAN ' + code + '...</small></div>';
+
+    // PASSO 1: Open Food Facts — base de dados real de produtos por EAN (gratuita, sem key)
+    let produto = null, marca = null, quantidade = null;
+    try {
+        const r = await fetch('https://world.openfoodfacts.org/api/v0/product/' + code + '.json');
+        const d = await r.json();
+        if (d.status === 1 && d.product) {
+            const p = d.product;
+            // preferir nome PT, depois nome genérico
+            produto = p.product_name_pt || p.product_name || p.abbreviated_product_name || null;
+            marca = p.brands || null;
+            quantidade = p.quantity || p.net_weight_value || null;
+        }
+    } catch(e) { console.warn('OpenFoodFacts error:', e); }
+
+    // PASSO 2: se Open Food Facts não encontrou, tentar via IA com grounding
+    if (!produto) {
+        out.innerHTML = '<div class="card" style="text-align:center;padding:16px;"><div class="spin" style="border-top-color:var(--p);width:24px;height:24px;margin:0 auto 8px;"></div><small>Não encontrado na base de dados. A pesquisar via IA...</small></div>';
+        const res = await ai(
+            'Pesquisa o produto com codigo de barras EAN ' + code + ' vendido em Portugal. ' +
+            'Responde APENAS JSON: {"produto":"Nome comercial completo","marca":"Marca","quantidade":"gramagem ou volume"}',
+            null, true);
+        if (res) {
+            const d = parseJSON(res);
+            if (d && d.produto) { produto = d.produto; marca = d.marca; quantidade = d.quantidade; }
+            else if (res.length > 5) {
+                // IA respondeu mas não em JSON — mostrar resposta raw
+                out.innerHTML = '<div class="card"><p style="font-weight:700;margin-bottom:8px;">Resposta da IA:</p><p style="font-size:13px;">' + res.substring(0, 300) + '</p></div>';
+                return;
+            }
+        }
+    }
+
+    if (!produto) {
+        out.innerHTML = '<div class="card" style="color:var(--warn);text-align:center;padding:16px;">EAN <b>' + code + '</b> não encontrado.<br><small style="color:#aaa;">Verifica o código ou tira uma foto da embalagem.</small></div>';
+        return;
+    }
+
+    // Mostrar resultado e pesquisar preços
+    const searchName = (marca && !produto.toLowerCase().includes(marca.toLowerCase()) ? marca + ' ' : '') + produto + (quantidade ? ' ' + quantidade : '');
+    out.innerHTML = '<div style="padding:14px;background:#f1f8f3;border-radius:12px;border-left:4px solid var(--s);">' +
+        '<div style="font-size:11px;color:var(--s);font-weight:700;margin-bottom:4px;">✅ Produto identificado</div>' +
+        '<b style="font-size:15px;">' + produto + '</b><br>' +
+        '<small style="color:#888;">' + (marca||'') + (quantidade?' · '+quantidade:'') + ' · EAN: ' + code + '</small>' +
+        '<button class="btn btn-s" onclick="searchPrices()" style="margin-top:12px;padding:10px;">🔍 Ver Preços nos Supermercados</button>' +
+        '</div>';
+    document.getElementById('q-in').value = searchName.trim();
 }
 
 // ── CHAT ──────────────────────────────────────────────────────
