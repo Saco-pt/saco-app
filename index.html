@@ -93,7 +93,9 @@
 
         /* MAP */
         #map-frame { width:100%; height:320px; border-radius:16px; border:none; }
-        .store-row { display:flex; gap:12px; padding:12px; background:#fff; border-radius:14px; margin-bottom:10px; box-shadow:0 2px 8px rgba(0,0,0,.05); border:1px solid #eee; }
+        .store-link { text-decoration:none; color:inherit; display:block; }
+        .store-link:active .store-row { background:#f0f0f0; }
+        .store-row { display:flex; gap:12px; padding:12px; background:#fff; border-radius:14px; margin-bottom:10px; box-shadow:0 2px 8px rgba(0,0,0,.05); border:1px solid #eee; align-items:center; transition:background .15s; }
         .s-open { color:var(--s); font-weight:700; font-size:12px; }
         .s-closed { color:var(--err); font-weight:700; font-size:12px; }
     </style>
@@ -895,7 +897,7 @@ async function loadMap() {
                     const parsed = parseHorario(horario);
                     const aberto = parsed ? (hNow >= parsed.open && hNow < parsed.close) : true;
                     const osmHours = el.tags && el.tags['opening_hours'];
-                    seen[key] = { nome: displayName, icon, dist, horario: osmHours || horario, aberto };
+                    seen[key] = { nome: displayName, icon, dist, horario: osmHours || horario, aberto, lat: elLat, lng: elLng };
                 }
             });
 
@@ -913,16 +915,25 @@ async function loadMap() {
 
         const days = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
         out.innerHTML = '<p style="font-size:11px;color:#aaa;margin-bottom:10px;padding:0 4px;">📍 ' + stores.length + ' supermercado(s) encontrado(s) · ' + days[new Date().getDay()] + '</p>' +
-            stores.map(s =>
-                '<div class="store-row">' +
-                '<div style="font-size:26px;flex-shrink:0;">' + s.icon + '</div>' +
-                '<div style="flex-grow:1;">' +
-                '<b style="font-size:14px;">' + s.nome + '</b>' +
-                '<span style="font-size:11px;color:#aaa;margin-left:6px;">~' + (s.dist < 1 ? (s.dist*1000).toFixed(0)+'m' : s.dist.toFixed(1)+'km') + '</span><br>' +
-                '<span class="' + (s.aberto?'s-open':'s-closed') + '">' + (s.aberto?'● Aberto agora':'● Fechado') + '</span>' +
-                ' <span style="font-size:12px;color:#666;">· ' + s.horario + '</span>' +
-                '</div></div>'
-            ).join('');
+            stores.map(function(s) {
+                var mapsUrl = (s.lat && s.lng)
+                    ? 'https://www.google.com/maps/dir/?api=1&destination=' + s.lat + ',' + s.lng
+                    : 'https://www.google.com/maps/search/' + encodeURIComponent(s.nome + ' Portugal');
+                var dist = s.dist < 1 ? Math.round(s.dist * 1000) + 'm' : s.dist.toFixed(1) + 'km';
+                var stCls = s.aberto ? 's-open' : 's-closed';
+                var stTxt = s.aberto ? '● Aberto agora' : '● Fechado';
+                return '<a href="' + mapsUrl + '" target="_blank" rel="noopener" class="store-link">'
+                    + '<div class="store-row">'
+                    + '<div style="font-size:26px;flex-shrink:0;">' + s.icon + '</div>'
+                    + '<div style="flex-grow:1;">'
+                    + '<b style="font-size:14px;">' + s.nome + '</b>'
+                    + '<span style="font-size:11px;color:#aaa;margin-left:6px;">~' + dist + '</span><br>'
+                    + '<span class="' + stCls + '">' + stTxt + '</span>'
+                    + '<span style="font-size:12px;color:#666;"> · ' + s.horario + '</span>'
+                    + '</div>'
+                    + '<div style="font-size:20px;color:#ccc;align-self:center;flex-shrink:0;">›</div>'
+                    + '</div></a>';
+            }).join('');
 
     }, err => {
         btn.innerHTML = '📍 Encontrar Supermercados'; btn.disabled = false;
