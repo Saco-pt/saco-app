@@ -3,33 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt V90.0 - Live Intelligence</title>
+    <title>SACO.pt V91.0 - Multi-Engine</title>
     <style>
         :root { --primary: #2563eb; --success: #10b981; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; }
         body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding-bottom: 100px; color: var(--text); -webkit-tap-highlight-color: transparent; }
         .container { padding: 20px; max-width: 600px; margin: auto; }
-        
         .card { background: var(--card); padding: 20px; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); margin-bottom: 20px; border: 1px solid #edf2f7; }
-        .result-card { border: 2px solid var(--primary); animation: slideUp 0.4s ease-out; background: #f0f7ff; }
-        
-        .btn { background: var(--primary); color: white; border: none; padding: 20px; border-radius: 18px; width: 100%; font-size: 18px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; }
-        .btn-maps { background: #4285F4; margin-top: 15px; }
+        .btn { background: var(--primary); color: white; border: none; padding: 18px; border-radius: 16px; width: 100%; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); margin-top: 10px; }
-
-        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 90px; background: white; display: flex; align-items: center; border-top: 1px solid #e2e8f0; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
+        select, input { width: 100%; padding: 15px; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 16px; margin: 10px 0; box-sizing: border-box; background: white; }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 90px; background: white; display: flex; align-items: center; border-top: 1px solid #e2e8f0; z-index: 1000; }
         .nav-item { border: none; background: none; color: #64748b; display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: center; }
         .nav-item i { font-size: 28px; font-style: normal; margin-bottom: 4px; }
-        .nav-item span { font-size: 11px; font-weight: 700; text-transform: uppercase; }
         .nav-item.active { color: var(--primary); }
-
-        input { width: 100%; padding: 18px; border-radius: 14px; border: 2px solid #e2e8f0; font-size: 16px; margin: 15px 0; box-sizing: border-box; outline: none; }
-        input:focus { border-color: var(--primary); }
-        
-        #camera-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; flex-direction: column; align-items: center; justify-content: center; color: white; }
-        video { width: 85%; border-radius: 24px; border: 2px solid white; margin-bottom: 20px; }
-
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .loading-text { color: var(--primary); font-weight: 600; text-align: center; padding: 20px; animation: pulse 1.5s infinite; }
+        .status-loading { color: var(--primary); font-weight: bold; animation: pulse 1.5s infinite; text-align: center; padding: 10px; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     </style>
 </head>
@@ -44,29 +31,18 @@
     <button class="nav-item" onclick="ui.render('data', this)"><i>💾</i><span>Dados</span></button>
 </nav>
 
-<div id="camera-overlay">
-    <div id="pic-count" style="font-size: 40px; margin-bottom: 10px; font-weight: bold;">0</div>
-    <video id="video" autoplay playsinline></video>
-    <button class="btn" style="width: 80%;" onclick="scanner.takeSnapshot()">📸 Capturar Parte</button>
-    <button class="btn" style="width: 80%; margin-top:15px; background:var(--success);" onclick="scanner.finish()">✔️ Finalizar Talão</button>
-    <button class="btn-outline" style="color:white; border-color:white; margin-top:20px;" onclick="scanner.stop()">Cancelar</button>
-</div>
-
 <script>
-/** * DATABASE & STATE 
- */
+/** * DB & STATE */
 const app = {
     db: JSON.parse(localStorage.getItem('saco_db')) || {
         inventory: {}, 
         loyalty: { total_saved: 0 },
-        config: { api_key: '' }
+        config: { api_key: '', model: 'gemini-1.5-flash' }
     },
     save() { localStorage.setItem('saco_db', JSON.stringify(this.db)); }
 };
 
-/**
- * UI ENGINE
- */
+/** * UI ENGINE */
 const ui = {
     render(tab, el) {
         if(el) {
@@ -78,11 +54,10 @@ const ui = {
         if (tab === 'home') {
             view.innerHTML = `
                 <h2>O Meu Stock 🏠</h2>
-                <div class="card" style="background: linear-gradient(135deg, #2563eb, #1e40af); color: white; border:none;">
-                    <small style="opacity:0.9;">Poupança Total Registada</small>
-                    <div style="font-size: 34px; font-weight: 800;">${app.db.loyalty.total_saved.toFixed(2)}€</div>
+                <div class="card" style="background: var(--primary); color: white;">
+                    <small>Poupança Total</small>
+                    <div style="font-size: 32px; font-weight: bold;">${app.db.loyalty.total_saved.toFixed(2)}€</div>
                 </div>
-                <h3>Destaques</h3>
                 ${this.renderInventory()}
             `;
         }
@@ -91,159 +66,93 @@ const ui = {
             view.innerHTML = `
                 <h2>Procura Rápida 🔍</h2>
                 <div class="card">
-                    <p style="color:#64748b; font-size:14px; margin-top:0;">IA Gemini: Nome Comercial + Melhor Preço + GPS.</p>
-                    <input type="text" id="item-input" placeholder="Ex: Cerveja, Leite, Fraldas..." onkeypress="if(event.key==='Enter') logic.findNow()">
-                    <button class="btn" onclick="logic.findNow()">🛒 Pesquisar Artigo</button>
-                    <div id="search-result" style="margin-top:25px;"></div>
-                </div>
-            `;
-        }
-
-        if (tab === 'scan') {
-            view.innerHTML = `
-                <h2>Digitalizar Recibo 📸</h2>
-                <div class="card">
-                    <p>Captura o talão por partes. A IA atualizará o teu inventário automaticamente.</p>
-                    <button class="btn" onclick="scanner.start()">📷 Abrir Câmara</button>
+                    <input type="text" id="item-input" placeholder="Ex: Cerveja, Leite...">
+                    <button class="btn" onclick="logic.findNow()">Pesquisar com ${app.db.config.model.split('-').pop().toUpperCase()}</button>
+                    <div id="search-result" style="margin-top:20px;"></div>
                 </div>
             `;
         }
 
         if (tab === 'data') {
             view.innerHTML = `
-                <h2>Configurações & Dados 💾</h2>
-                <button class="btn btn-outline" onclick="logic.export()">📥 Exportar Backup (JSON)</button>
-                <button class="btn btn-outline" onclick="logic.import()">📤 Importar Ficheiro</button>
-                <div class="card" style="margin-top:25px;">
-                    <label><b>Google API Key (Gemini)</b></label>
-                    <input type="password" id="api-key" value="${app.db.config.api_key || ''}" placeholder="Insere a tua API Key">
-                    <button class="btn" onclick="logic.saveKey()">✅ Guardar Chave</button>
-                    <p style="font-size:11px; color:#64748b; margin-top:10px;">Precisas de uma chave do Google AI Studio para o Scanner e Procura funcionarem.</p>
+                <h2>Configurações ⚙️</h2>
+                <div class="card">
+                    <label><b>API Key (Google AI Studio)</b></label>
+                    <input type="password" id="api-key" value="${app.db.config.api_key}" placeholder="Cola a tua chave">
+                    
+                    <label><b>Selecionar Motor (Model)</b></label>
+                    <select id="model-select">
+                        <option value="gemini-1.5-flash" ${app.db.config.model === 'gemini-1.5-flash' ? 'selected' : ''}>Gemini 1.5 Flash (Rápido/Grátis)</option>
+                        <option value="gemini-1.5-pro" ${app.db.config.model === 'gemini-1.5-pro' ? 'selected' : ''}>Gemini 1.5 Pro (Mais Inteligente)</option>
+                        <option value="gemini-1.0-pro" ${app.db.config.model === 'gemini-1.0-pro' ? 'selected' : ''}>Gemini 1.0 Pro</option>
+                    </select>
+                    
+                    <button class="btn" onclick="logic.saveSettings()">✅ Guardar e Validar</button>
+                    <button class="btn btn-outline" onclick="logic.export()">📥 Backup JSON</button>
                 </div>
             `;
         }
     },
-
     renderInventory() {
         const items = Object.values(app.db.inventory);
-        if(!items.length) return `<div class="card" style="text-align:center; color:#94a3b8;">Ainda não tens artigos no inventário.</div>`;
-        return items.map(i => `<div class="card"><b>${i.nome}</b><br><small>${i.qtd} un | ${i.unit_price}€/un</small></div>`).join('');
+        return items.length ? items.map(i => `<div class="card"><b>${i.nome}</b><br><small>${i.qtd} un | ${i.unit_price}€</small></div>`).join('') : '<p style="text-align:center">Stock vazio.</p>';
     }
 };
 
-/**
- * LOGIC & AI INTEGRATION
- */
+/** * LOGIC ENGINE */
 const logic = {
-    saveKey() {
-        app.db.config.api_key = document.getElementById('api-key').value;
+    saveSettings() {
+        const key = document.getElementById('api-key').value;
+        const model = document.getElementById('model-select').value;
+        app.db.config.api_key = key;
+        app.db.config.model = model;
         app.save();
-        alert("Configurações atualizadas!");
+        alert(`Configurações Guardadas!\nMotor: ${model}`);
     },
 
     async findNow() {
         const query = document.getElementById('item-input').value;
         const resDiv = document.getElementById('search-result');
-        const apiKey = app.db.config.api_key;
+        const { api_key, model } = app.db.config;
 
-        if(!query) return;
-        if(!apiKey) return alert("Por favor, insere a tua API Key no menu 'Dados' primeiro!");
+        if(!query || !api_key) return alert("Verifica a chave e o nome do artigo!");
 
-        resDiv.innerHTML = `<div class="loading-text">🤖 O Gemini está a pesquisar folhetos reais em Portugal...</div>`;
+        resDiv.innerHTML = `<div class="status-loading">🤖 ${model} a pesquisar folhetos...</div>`;
 
         navigator.geolocation.getCurrentPosition(async (pos) => {
-            const { latitude, longitude } = pos.coords;
-
-            // Prompt estratégico para o Gemini
-            const prompt = `Atua como um assistente de compras experiente em Portugal. 
-            O utilizador procura por "${query}" perto das coordenadas ${latitude}, ${longitude}.
-            Instruções:
-            1. Identifica o nome comercial completo e correto do artigo (ex: MARCA + NOME + QTD).
-            2. Pesquisa o preço mais baixo atual em supermercados portugueses (Continente, Pingo Doce, Lidl, Auchan, Mercadona).
-            3. Devolve APENAS um JSON puro (sem markdown) no seguinte formato: {"nome": "Nome Completo", "loja": "Nome da Loja", "preco": "0.00€", "morada": "Morada aprox"}`;
+            const prompt = `Responde APENAS com JSON: {"nome": "Nome Completo", "loja": "Loja", "preco": "0.00€"}. 
+                            Procura o melhor preço para "${query}" perto de ${pos.coords.latitude}, ${pos.coords.longitude} em Portugal.`;
 
             try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${api_key}`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
-
+                
                 const data = await response.json();
-                const aiText = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
-                const aiResponse = JSON.parse(aiText);
-
-                // Criar o link dinâmico para o Google Maps
-                const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(aiResponse.loja + " " + aiResponse.nome)}`;
+                const cleanJson = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
+                const res = JSON.parse(cleanJson);
 
                 resDiv.innerHTML = `
-                    <div class="card result-card">
-                        <small style="color:var(--primary); font-weight:800;">ARTIGO ENCONTRADO:</small>
-                        <h4 style="margin:8px 0; font-size:18px; line-height:1.4;">${aiResponse.nome}</h4>
-                        <hr style="opacity:0.1; margin:15px 0;">
-                        <p style="margin:0;">📍 Melhor Preço Detetado em: <b>${aiResponse.loja}</b></p>
-                        <p style="font-size:26px; color:var(--success); font-weight:800; margin:12px 0;">${aiResponse.preco}</p>
-                        <button class="btn btn-maps" onclick="window.open('${mapsUrl}', '_blank')">
-                            📍 Ir para o Google Maps
-                        </button>
-                    </div>
-                `;
-            } catch (err) {
-                console.error(err);
-                resDiv.innerHTML = `<div class="card" style="border-color:red; color:red;">Erro ao contactar a IA. Verifica se a tua API Key é válida.</div>`;
+                    <div class="card" style="border: 2px solid var(--primary);">
+                        <h4>${res.nome}</h4>
+                        <p>📍 <b>${res.loja}</b></p>
+                        <h2 style="color:var(--success)">${res.preco}</h2>
+                        <button class="btn" style="background:#4285F4" onclick="window.open('https://www.google.com/maps/search/${encodeURIComponent(res.loja + ' ' + res.nome)}')">🗺️ Ver no Maps</button>
+                    </div>`;
+            } catch (e) {
+                resDiv.innerHTML = `<p style="color:red">Erro: Verifica a tua API Key ou o limite do motor ${model}.</p>`;
             }
         });
     },
 
     export() {
         const blob = new Blob([JSON.stringify(app.db)], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = `saco_db_${new Date().toISOString().split('T')[0]}.json`; a.click();
-    },
-
-    import() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.onchange = e => {
-            const reader = new FileReader();
-            reader.onload = ev => { app.db = JSON.parse(ev.target.result); app.save(); location.reload(); };
-            reader.readAsText(e.target.files[0]);
-        };
-        input.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'saco_db.json'; a.click();
     }
 };
 
-/**
- * SCANNER MODULE
- */
-const scanner = {
-    photos: [],
-    async start() {
-        this.photos = [];
-        document.getElementById('camera-overlay').style.display = 'flex';
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-        document.getElementById('video').srcObject = stream;
-    },
-    stop() {
-        const v = document.getElementById('video');
-        if(v.srcObject) v.srcObject.getTracks().forEach(track => track.stop());
-        document.getElementById('camera-overlay').style.display = 'none';
-    },
-    takeSnapshot() {
-        const v = document.getElementById('video');
-        const c = document.createElement('canvas');
-        c.width = v.videoWidth; c.height = v.videoHeight;
-        c.getContext('2d').drawImage(v, 0, 0);
-        this.photos.push(c.toDataURL('image/jpeg'));
-        document.getElementById('pic-count').innerText = this.photos.length;
-    },
-    finish() {
-        this.stop();
-        alert("Enviando " + this.photos.length + " fotos para a IA atualizar o stock...");
-    }
-};
-
-// Start
 ui.render('home');
 </script>
 </body>
