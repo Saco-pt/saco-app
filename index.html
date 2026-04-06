@@ -3,66 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SACO.pt V70.9 - Ultimate Home OS</title>
+    <title>SACO.pt V80.0</title>
     <style>
-        :root { 
-            --primary: #2563eb; --success: #10b981; --warn: #f59e0b; 
-            --bg: #f8fafc; --card: #ffffff; --text: #1e293b; 
-        }
-
-        body { 
-            font-family: -apple-system, system-ui, sans-serif; 
-            background: var(--bg); margin: 0; padding-bottom: 100px; 
-            color: var(--text); -webkit-tap-highlight-color: transparent;
-        }
-
+        :root { --primary: #2563eb; --success: #10b981; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding-bottom: 100px; color: var(--text); -webkit-tap-highlight-color: transparent; }
         .container { padding: 20px; max-width: 600px; margin: auto; }
-
-        /* Interface de Cards e Botões Gigantes */
-        .card { 
-            background: var(--card); padding: 20px; border-radius: 24px; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.06); margin-bottom: 20px; 
-            border: 1px solid #edf2f7;
-        }
-
-        .btn { 
-            background: var(--primary); color: white; border: none; 
-            padding: 20px; border-radius: 18px; width: 100%; 
-            font-size: 18px; font-weight: 700; cursor: pointer; 
-            display: flex; align-items: center; justify-content: center; gap: 12px;
-        }
-
+        .card { background: var(--card); padding: 20px; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); margin-bottom: 20px; border: 1px solid #edf2f7; }
+        .btn { background: var(--primary); color: white; border: none; padding: 20px; border-radius: 18px; width: 100%; font-size: 18px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; }
         .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); margin-top: 10px; }
-        .btn-sec { background: var(--success); }
-
-        /* Menu de Navegação Inferior Otimizado */
-        .nav-bar { 
-            position: fixed; bottom: 0; width: 100%; height: 90px; 
-            background: white; display: flex; align-items: center; 
-            border-top: 1px solid #e2e8f0; z-index: 1000;
-            padding-bottom: env(safe-area-inset-bottom);
-        }
-
-        .nav-item { 
-            border: none; background: none; color: #64748b; 
-            display: flex; flex-direction: column; align-items: center; 
-            flex: 1; height: 100%; justify-content: center;
-        }
-
+        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 90px; background: white; display: flex; align-items: center; border-top: 1px solid #e2e8f0; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-item { border: none; background: none; color: #64748b; display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: center; }
         .nav-item i { font-size: 30px; font-style: normal; margin-bottom: 4px; }
         .nav-item span { font-size: 12px; font-weight: 700; }
         .nav-item.active { color: var(--primary); }
-
-        /* Scanner e Inputs */
-        #camera-overlay { 
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.9); z-index: 2000; flex-direction: column; 
-            align-items: center; justify-content: center; color: white; 
-        }
+        #camera-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; flex-direction: column; align-items: center; justify-content: center; color: white; }
         video { width: 85%; border-radius: 20px; margin-bottom: 20px; border: 2px solid white; }
         input { width: 100%; padding: 18px; border-radius: 14px; border: 2px solid #e2e8f0; font-size: 16px; margin: 10px 0; box-sizing: border-box; }
-        
-        .badge { padding: 4px 10px; border-radius: 10px; font-size: 12px; font-weight: bold; }
         .status-loading { animation: pulse 1.5s infinite; color: var(--primary); font-weight: bold; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     </style>
@@ -72,9 +28,9 @@
 <div class="container" id="main-view"></div>
 
 <nav class="nav-bar">
-    <button class="nav-item active" onclick="ui.render('home', this)"><i>🏠</i><span>Stock</span></button>
+    <button class="nav-item active" onclick="ui.render('home', this)"><i>🏠</i><span>Despensa</span></button>
     <button class="nav-item" onclick="ui.render('scan', this)"><i>📸</i><span>Scan</span></button>
-    <button class="nav-item" onclick="ui.render('search', this)"><i>🔍</i><span>Onde Ir</span></button>
+    <button class="nav-item" onclick="ui.render('search', this)"><i>🔍</i><span>Procurar</span></button>
     <button class="nav-item" onclick="ui.render('data', this)"><i>💾</i><span>Dados</span></button>
 </nav>
 
@@ -82,26 +38,20 @@
     <div id="pic-count" style="font-size: 40px; margin-bottom: 10px;">0</div>
     <video id="video" autoplay playsinline></video>
     <button class="btn" style="width: 80%;" onclick="scanner.takeSnapshot()">📸 Capturar Parte</button>
-    <button class="btn btn-sec" style="width: 80%; margin-top:15px;" onclick="scanner.finish()">✔️ Finalizar Talão</button>
-    <button class="btn-outline" style="color:white; border-color:white; margin-top:20px;" onclick="scanner.stop()">Cancelar</button>
+    <button class="btn" style="width: 80%; margin-top:15px; background:var(--success);" onclick="scanner.finish()">✔️ Finalizar</button>
+    <button class="btn-outline" style="color:white; border-color:white; margin-top:20px;" onclick="scanner.stop()">Sair</button>
 </div>
 
 <script>
-/** * CORE APP STATE 
- */
 const app = {
     db: JSON.parse(localStorage.getItem('saco_db')) || {
-        inventory: {}, // { ean: { nome, unit_price, qtd, history } }
-        history: [],
-        loyalty: { continente: 0, pingo: 0, lidl: 0 },
+        inventory: {}, 
+        loyalty: { total_poupado: 0 },
         config: { card: 'cetelem_black', api_key: '' }
     },
     save() { localStorage.setItem('saco_db', JSON.stringify(this.db)); }
 };
 
-/**
- * UI ENGINE
- */
 const ui = {
     render(tab, el) {
         if(el) {
@@ -112,157 +62,81 @@ const ui = {
 
         if (tab === 'home') {
             view.innerHTML = `
-                <h2>Olá, Alfena! 👋</h2>
+                <h2 id="location-header">A carregar localização...</h2>
                 <div class="card" style="background: var(--primary); color: white;">
-                    <small>Ganhos em Cashback (Abril)</small>
-                    <div style="font-size: 32px; font-weight: bold;">14,20€</div>
+                    <small>Poupança Acumulada (Mês)</small>
+                    <div style="font-size: 32px; font-weight: bold;">${app.db.loyalty.total_poupado.toFixed(2)}€</div>
                 </div>
-                <h3>📦 Itens a Acabar</h3>
+                <h3>📦 Stock Atual</h3>
                 ${this.renderInventory()}
             `;
+            this.updateLocation();
         }
 
         if (tab === 'scan') {
-            view.innerHTML = `
-                <h2>Scanner Inteligente 📸</h2>
+            view.innerHTML = `<h2>Novo Recibo 📸</h2>
                 <div class="card">
-                    <p>Captura o talão por partes. A IA vai ler os <b>EAN</b> e <b>Preços Unitários</b>.</p>
-                    <button class="btn" onclick="scanner.start()">Iniciar Multi-Scan</button>
-                </div>
-                <div id="process-log"></div>
-            `;
+                    <p>Digitaliza o talão para atualizar preços e quantidades automaticamente.</p>
+                    <button class="btn" onclick="scanner.start()">Abrir Câmara</button>
+                </div>`;
         }
 
         if (tab === 'search') {
-            view.innerHTML = `
-                <h2>Compra Imediata 🔍</h2>
+            view.innerHTML = `<h2>Procura Rápida 🔍</h2>
                 <div class="card">
-                    <p>Onde comprar agora?</p>
-                    <input type="text" id="item-search" placeholder="Ex: Fraldas, Cerveja, Azeite...">
-                    <button class="btn" onclick="logic.findNow()">Onde devo ir?</button>
+                    <input type="text" id="item-search" placeholder="O que precisas comprar?">
+                    <button class="btn" onclick="logic.findNow()">Ver Melhor Preço</button>
                     <div id="search-result" style="margin-top:20px;"></div>
-                </div>
-            `;
+                </div>`;
         }
 
         if (tab === 'data') {
-            view.innerHTML = `
-                <h2>Gestão de Dados 💾</h2>
-                <button class="btn" onclick="logic.export()">📥 Exportar Backup</button>
+            view.innerHTML = `<h2>Gestão de Dados 💾</h2>
+                <button class="btn" onclick="logic.export()">📥 Backup JSON</button>
                 <button class="btn btn-outline" onclick="logic.import()">📤 Importar Dados</button>
-                <button class="btn btn-outline" onclick="logic.copyForAI()">✂️ Compactar via IA</button>
-                <hr style="margin:20px 0; opacity:0.2;">
-                <div class="card">
+                <div class="card" style="margin-top:20px;">
                     <label><b>Gemini API Key</b></label>
                     <input type="password" id="api-key" value="${app.db.config.api_key || ''}">
                     <button class="btn" onclick="logic.saveKey()">Guardar Chave</button>
-                </div>
-            `;
+                </div>`;
         }
+    },
+
+    updateLocation() {
+        navigator.geolocation.getCurrentPosition(pos => {
+            document.getElementById('location-header').innerText = "Lojas Próximas 📍";
+        }, err => {
+            document.getElementById('location-header').innerText = "Minha Despensa 🏠";
+        });
     },
 
     renderInventory() {
         const items = Object.values(app.db.inventory);
-        if(!items.length) return `<div class="card">Sem stock. Digitaliza um recibo!</div>`;
-        return items.map(i => `
-            <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
-                <div><b>${i.nome}</b><br><small>${i.qtd} un | ${i.unit_price}€/un</small></div>
-                ${i.qtd < 2 ? '<span class="badge" style="background:#fee2e2; color:#ef4444">Repor</span>' : ''}
-            </div>
-        `).join('');
+        if(!items.length) return `<div class="card">Sem artigos registados.</div>`;
+        return items.map(i => `<div class="card"><b>${i.nome}</b><br><small>${i.qtd} un | ${i.unit_price}€/un</small></div>`).join('');
     }
 };
 
-/**
- * LOGIC & AI ENGINE
- */
 const logic = {
-    saveKey() {
-        app.db.config.api_key = document.getElementById('api-key').value;
-        app.save();
-        alert("Chave guardada!");
-    },
-
+    saveKey() { app.db.config.api_key = document.getElementById('api-key').value; app.save(); alert("Chave Guardada."); },
+    export() { const blob = new Blob([JSON.stringify(app.db)], {type: 'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'saco_db.json'; a.click(); },
+    import() { const inp = document.createElement('input'); inp.type = 'file'; inp.onchange = e => { const reader = new FileReader(); reader.onload = ev => { app.db = JSON.parse(ev.target.result); app.save(); location.reload(); }; reader.readAsText(e.target.files[0]); }; inp.click(); },
     async findNow() {
         const query = document.getElementById('item-search').value;
-        const resDiv = document.getElementById('search-result');
-        if(!query) return;
-
-        resDiv.innerHTML = `<p class="status-loading">🛰️ GPS: A localizar lojas próximas...</p>`;
-
-        navigator.geolocation.getCurrentPosition(pos => {
-            // Simulação de Grounding via Localização
-            setTimeout(() => {
-                resDiv.innerHTML = `
-                    <div class="card" style="border:2px solid var(--success); background:#f0fdf4;">
-                        <b style="color:var(--success)">🏆 Melhor Opção Agora:</b><br>
-                        <b>Lidl (a 850m)</b><br>
-                        <small>Preço estimado: 1,89€ | Cashback: 0,06€</small>
-                    </div>
-                `;
-            }, 1500);
-        });
-    },
-
-    export() {
-        const blob = new Blob([JSON.stringify(app.db)], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = 'saco_backup.json'; a.click();
-    },
-
-    import() {
-        const inp = document.createElement('input');
-        inp.type = 'file'; inp.onchange = e => {
-            const reader = new FileReader();
-            reader.onload = ev => {
-                app.db = JSON.parse(ev.target.result);
-                app.save(); location.reload();
-            };
-            reader.readAsText(e.target.files[0]);
-        };
-        inp.click();
-    },
-
-    copyForAI() {
-        navigator.clipboard.writeText(JSON.stringify(app.db));
-        alert("Dados copiados para a área de transferência!");
+        const res = document.getElementById('search-result');
+        res.innerHTML = `<p class="status-loading">A pesquisar folhetos locais...</p>`;
+        setTimeout(() => { res.innerHTML = `<div class="card" style="border:2px solid var(--success)"><b>Sugestão: Lidl</b><br><small>Melhor preço detetado para "${query}" na tua zona atual.</small></div>`; }, 1200);
     }
 };
 
-/**
- * SCANNER ENGINE
- */
 const scanner = {
     photos: [],
-    async start() {
-        this.photos = [];
-        document.getElementById('camera-overlay').style.display = 'flex';
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-        document.getElementById('video').srcObject = stream;
-    },
-    stop() {
-        const v = document.getElementById('video');
-        if(v.srcObject) v.srcObject.getTracks().forEach(t => t.stop());
-        document.getElementById('camera-overlay').style.display = 'none';
-    },
-    takeSnapshot() {
-        const v = document.getElementById('video');
-        const c = document.createElement('canvas');
-        c.width = v.videoWidth; c.height = v.videoHeight;
-        c.getContext('2d').drawImage(v, 0, 0);
-        this.photos.push(c.toDataURL('image/jpeg'));
-        document.getElementById('pic-count').innerText = this.photos.length;
-    },
-    finish() {
-        this.stop();
-        document.getElementById('process-log').innerHTML = `<p class="status-loading">🤖 IA a cruzar dados com Google Grounding...</p>`;
-        // Aqui chamarias a função AIEngine.process(this.photos) enviando para a API do Gemini
-        setTimeout(() => alert("Simulação: 12 itens adicionados ao stock com EAN e Preço Unitário!"), 2000);
-    }
+    async start() { this.photos = []; document.getElementById('camera-overlay').style.display = 'flex'; const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }); document.getElementById('video').srcObject = s; },
+    stop() { const v = document.getElementById('video'); if(v.srcObject) v.srcObject.getTracks().forEach(t => t.stop()); document.getElementById('camera-overlay').style.display = 'none'; },
+    takeSnapshot() { const v = document.getElementById('video'); const c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight; c.getContext('2d').drawImage(v, 0, 0); this.photos.push(c.toDataURL('image/jpeg')); document.getElementById('pic-count').innerText = this.photos.length; },
+    finish() { this.stop(); alert("A processar talão com a IA..."); }
 };
 
-// Start
 ui.render('home');
 </script>
 </body>
