@@ -435,7 +435,7 @@ textarea{resize:vertical;min-height:70px}
     <div class="g2" style="margin-bottom:14px">
       <div class="fg">
         <label>Gemini API Key (grátis em aistudio.google.com)</label>
-        <input type="password" id="cfg-gemini" placeholder="AIza...">
+        <input type="password" id="cfg-gemini" placeholder="AIza..." oninput="onGeminiKeyInput()">
         <div style="font-size:.68rem;color:var(--muted);margin-top:4px">Gratuita · Sem cartão · <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--g1)">Obter key →</a></div>
       </div>
       <div class="fg">
@@ -444,6 +444,34 @@ textarea{resize:vertical;min-height:70px}
         <div style="font-size:.68rem;color:var(--muted);margin-top:4px">100 req/dia grátis · <a href="https://dashboard.api-football.com/register" target="_blank" style="color:var(--g1)">Registar →</a></div>
       </div>
     </div>
+
+    <!-- GEMINI MODEL SELECTOR -->
+    <div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem">🤖 Motor Gemini</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-o btn-sm" onclick="fetchGeminiModels()" id="btn-fetch-models">
+            <span id="fetch-models-spin" style="display:none" class="spin"></span>
+            🔄 Actualizar Lista
+          </button>
+          <span id="model-count" style="font-size:.68rem;color:var(--muted)"></span>
+        </div>
+      </div>
+
+      <!-- Model grid -->
+      <div id="model-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px">
+        <!-- rendered by JS -->
+      </div>
+
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+        <div style="font-size:.68rem;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.6px">Modelo seleccionado</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <code style="background:rgba(34,211,238,.07);border:1px solid rgba(34,211,238,.15);border-radius:6px;padding:5px 10px;font-family:'JetBrains Mono',monospace;font-size:.82rem;color:var(--g1);flex:1" id="selected-model-display">gemini-2.5-flash</code>
+          <span id="model-tier-badge" class="badge badge-info">Flash</span>
+        </div>
+      </div>
+    </div>
+
     <button class="btn btn-g" onclick="saveConfig()">💾 Guardar Configuração</button>
 
     <div class="divider"></div>
@@ -484,8 +512,20 @@ const DB = {
   fixtures: JSON.parse(localStorage.getItem('sai_fixtures')||'[]'),
   betslip: [],
   strategy: 'single',
-  cfg: JSON.parse(localStorage.getItem('sai_cfg')||'{"gemini":"","football":"","favLeagues":["94","39","140"]}')
+  cfg: JSON.parse(localStorage.getItem('sai_cfg')||'{"gemini":"","football":"","favLeagues":["94","39","140"],"geminiModel":"gemini-2.5-flash"}')
 };
+
+// ═══════ GEMINI MODELS CATALOGUE ═══════
+const GEMINI_MODELS_STATIC = [
+  { id:'gemini-2.5-pro',           label:'Gemini 2.5 Pro',           tier:'Pro',   free:false, desc:'Mais poderoso. Raciocínio complexo, 1M tokens.' },
+  { id:'gemini-2.5-flash',         label:'Gemini 2.5 Flash',         tier:'Flash', free:true,  desc:'Rápido e inteligente. Recomendado. ⭐' },
+  { id:'gemini-2.5-flash-lite',    label:'Gemini 2.5 Flash-Lite',    tier:'Lite',  free:true,  desc:'Ultra-rápido e barato. Ideal para análise em massa.' },
+  { id:'gemini-3.1-pro-preview',   label:'Gemini 3.1 Pro Preview',   tier:'Pro',   free:false, desc:'Mais recente flagship. Agentic + raciocínio.' },
+  { id:'gemini-3.1-flash-preview', label:'Gemini 3.1 Flash Preview', tier:'Flash', free:false, desc:'Flash de nova geração. Alta performance.' },
+  { id:'gemini-3.1-flash-lite-preview', label:'Gemini 3.1 Flash-Lite Preview', tier:'Lite', free:false, desc:'Lite de nova geração. Baixa latência.' },
+  { id:'gemini-2.0-flash',         label:'Gemini 2.0 Flash',         tier:'Flash', free:true,  desc:'Legacy. Grátis mas deprecado a Jun 2026.' },
+  { id:'gemini-2.0-flash-lite',    label:'Gemini 2.0 Flash-Lite',    tier:'Lite',  free:true,  desc:'Legacy lite. Shutdown Jun 2026.' },
+];
 
 const save = () => {
   localStorage.setItem('sai_bets', JSON.stringify(DB.bets));
@@ -499,7 +539,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('fix-date').value = today;
   document.getElementById('cfg-gemini').value = DB.cfg.gemini||'';
   document.getElementById('cfg-football').value = DB.cfg.football||'';
+  if(!DB.cfg.geminiModel) DB.cfg.geminiModel = 'gemini-2.5-flash';
   renderFavLeagues();
+  renderModelGrid(GEMINI_MODELS_STATIC);
   updateHeader();
 });
 
@@ -666,7 +708,8 @@ Responde APENAS com JSON válido (sem markdown):
 }`;
 
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${gemKey}`,{
+    const model = DB.cfg.geminiModel || 'gemini-2.5-flash';
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${gemKey}`,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
@@ -922,7 +965,8 @@ Responde APENAS em JSON:
 }`;
 
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${gemKey}`,{
+    const model2 = DB.cfg.geminiModel || 'gemini-2.5-flash';
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model2}:generateContent?key=${gemKey}`,{
       method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.2,responseMimeType:'application/json'}})
     });
@@ -1129,8 +1173,122 @@ function updateHeader() {
 function saveConfig() {
   DB.cfg.gemini = document.getElementById('cfg-gemini').value.trim();
   DB.cfg.football = document.getElementById('cfg-football').value.trim();
+  // model is saved immediately on selection via selectModel()
   save();
-  showToast('Configuração guardada!','ok');
+  showToast('Configuração guardada! Motor: ' + (DB.cfg.geminiModel||'gemini-2.5-flash'),'ok');
+}
+
+function onGeminiKeyInput() {
+  // Auto-clear fetched models if key changes
+  document.getElementById('model-count').textContent = '';
+}
+
+// Render the model card grid
+function renderModelGrid(models) {
+  const grid = document.getElementById('model-grid');
+  if(!grid) return;
+  const selected = DB.cfg.geminiModel || 'gemini-2.5-flash';
+  const tierColor = { Pro:'var(--g2)', Flash:'var(--g1)', Lite:'var(--muted2)' };
+  const tierBg    = { Pro:'rgba(99,102,241,.12)', Flash:'rgba(34,211,238,.08)', Lite:'rgba(120,136,168,.08)' };
+
+  grid.innerHTML = models.map(m => {
+    const isSel = m.id === selected;
+    return `<div onclick="selectModel('${m.id}')"
+      style="cursor:pointer;border-radius:10px;padding:12px;border:2px solid ${isSel?'var(--g1)':'var(--border)'};background:${isSel?'rgba(34,211,238,.06)':'var(--bg)'};transition:all .15s"
+      id="mcard-${m.id.replace(/\./g,'-')}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:.82rem;line-height:1.2">${m.label}</span>
+        <div style="display:flex;gap:4px;flex-shrink:0;margin-left:6px">
+          <span style="font-size:.6rem;font-weight:700;padding:2px 6px;border-radius:10px;background:${tierBg[m.tier]||tierBg.Lite};color:${tierColor[m.tier]||tierColor.Lite}">${m.tier}</span>
+          ${m.free?`<span style="font-size:.6rem;font-weight:700;padding:2px 6px;border-radius:10px;background:rgba(16,185,129,.1);color:var(--g4)">Grátis</span>`:`<span style="font-size:.6rem;padding:2px 6px;border-radius:10px;background:rgba(245,158,11,.1);color:var(--g3)">Pago</span>`}
+        </div>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted);margin-bottom:5px">${m.id}</div>
+      <div style="font-size:.72rem;color:var(--muted2)">${m.desc}</div>
+      ${isSel?`<div style="font-size:.62rem;color:var(--g1);margin-top:6px;font-weight:600">✓ Seleccionado</div>`:''}
+    </div>`;
+  }).join('');
+
+  // Update display
+  updateModelDisplay(selected, models);
+}
+
+function selectModel(id) {
+  DB.cfg.geminiModel = id;
+  save();
+  const models = window._loadedModels || GEMINI_MODELS_STATIC;
+  renderModelGrid(models);
+  showToast('Motor: ' + id,'ok');
+}
+
+function updateModelDisplay(id, models) {
+  const el = document.getElementById('selected-model-display');
+  const badge = document.getElementById('model-tier-badge');
+  if(el) el.textContent = id;
+  const m = models.find(x=>x.id===id);
+  if(badge && m) {
+    badge.textContent = m.tier;
+    badge.className = 'badge ' + (m.tier==='Pro'?'badge-pending':m.tier==='Flash'?'badge-info':'badge-draw');
+  }
+}
+
+// Fetch live model list from Gemini API
+async function fetchGeminiModels() {
+  const key = document.getElementById('cfg-gemini').value.trim() || DB.cfg.gemini;
+  if(!key) { showToast('Introduz a Gemini API Key primeiro','err'); return; }
+
+  const btn = document.getElementById('btn-fetch-models');
+  const spin = document.getElementById('fetch-models-spin');
+  btn.disabled=true; spin.style.display='inline-block';
+
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}&pageSize=50`);
+    const data = await res.json();
+    if(data.error) throw new Error(data.error.message);
+
+    const raw = (data.models||[]).filter(m=>
+      m.name && m.supportedGenerationMethods?.includes('generateContent') &&
+      m.name.includes('gemini') &&
+      !m.name.includes('embedding') &&
+      !m.name.includes('image') &&
+      !m.name.includes('tts') &&
+      !m.name.includes('audio') &&
+      !m.name.includes('live')
+    );
+
+    const dynamic = raw.map(m=>{
+      const id = m.name.replace('models/','');
+      const label = m.displayName || id;
+      const isPro = id.includes('pro');
+      const isLite = id.includes('lite');
+      const tier = isPro?'Pro':isLite?'Lite':'Flash';
+      const isFree = id.includes('2.0')||id.includes('2.5-flash')||id.includes('flash-lite');
+      // merge description from static if available
+      const stat = GEMINI_MODELS_STATIC.find(s=>s.id===id);
+      return { id, label, tier, free:isFree, desc: stat?.desc || (m.description||'') };
+    });
+
+    // Dedupe: start with dynamic, fill missing from static
+    const dynamicIds = new Set(dynamic.map(m=>m.id));
+    const merged = [...dynamic, ...GEMINI_MODELS_STATIC.filter(s=>!dynamicIds.has(s.id))];
+    // Sort: Pro first, then Flash, then Lite; newer versions first
+    merged.sort((a,b)=>{
+      const tierOrder = {Pro:0,Flash:1,Lite:2};
+      if(tierOrder[a.tier]!==tierOrder[b.tier]) return tierOrder[a.tier]-tierOrder[b.tier];
+      return b.id.localeCompare(a.id);
+    });
+
+    window._loadedModels = merged;
+    renderModelGrid(merged);
+    document.getElementById('model-count').textContent = `${merged.length} modelos`;
+    showToast(`${merged.length} modelos carregados da API!`,'ok');
+  } catch(e) {
+    showToast('Erro: '+e.message,'err');
+    // Fall back to static
+    renderModelGrid(GEMINI_MODELS_STATIC);
+  } finally {
+    btn.disabled=false; spin.style.display='none';
+  }
 }
 
 const ALL_LEAGUES = [
