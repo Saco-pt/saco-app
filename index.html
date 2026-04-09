@@ -1038,42 +1038,151 @@ function saveBet() {
 }
 
 // ═══════ BETS LIST ═══════
+function selResultColor(r) {
+  return r==='win'?'var(--win)':r==='lose'?'var(--lose)':r==='void'?'var(--muted2)':'var(--muted)';
+}
+function selResultIcon(r) {
+  return r==='win'?'✅':r==='lose'?'❌':r==='void'?'⬜':'⏳';
+}
+
+// Auto-resolve overall bet result when all selections are filled
+function autoResolveBet(b) {
+  if(!b.selections || !b.selections.length) return;
+  const allDone = b.selections.every(s => s.result && s.result !== 'pending');
+  if(!allDone) { b.result = 'pending'; return; }
+
+  const hasLose = b.selections.some(s => s.result === 'lose');
+  const allWin  = b.selections.every(s => s.result === 'win' || s.result === 'void');
+  const hasVoid = b.selections.some(s => s.result === 'void');
+
+  if(b.strategy === 'single') {
+    // single: result mirrors the one selection
+    const s = b.selections[0];
+    b.result = s.result === 'void' ? 'cashout' : s.result;
+    return;
+  }
+
+  if(b.strategy === 'multi') {
+    // acumulador: all must win (voids reduce odd but don't lose)
+    if(hasLose) b.result = 'lose';
+    else if(allWin && !hasVoid) b.result = 'win';
+    else b.result = 'cashout'; // partial void
+    return;
+  }
+
+  if(b.strategy === 'system') {
+    // sistema: check min wins required
+    const minWins = parseInt(b.systemN || 2);
+    const wins = b.selections.filter(s => s.result === 'win').length;
+    if(hasLose && wins < minWins) b.result = 'lose';
+    else if(wins >= minWins) b.result = 'win';
+    else b.result = 'cashout';
+    return;
+  }
+
+  b.result = hasLose ? 'lose' : 'win';
+}
+
 function renderBets() {
   const filter = document.getElementById('bets-filter').value;
   let bets = DB.bets;
   if(filter!=='all') bets = bets.filter(b=>b.result===filter);
   const el = document.getElementById('bets-container');
   if(!bets.length) { el.innerHTML='<div class="empty"><div class="empty-icon">📋</div>Nenhuma aposta</div>'; return; }
-  el.innerHTML = bets.map(b=>`
-    <div style="background:var(--s1);border:1px solid var(--border);border-left:3px solid ${b.result==='win'?'var(--win)':b.result==='lose'?'var(--lose)':'var(--pending)'};border-radius:12px;padding:16px;margin-bottom:10px">
+
+  el.innerHTML = bets.map(b => {
+    const isMulti = b.selections && b.selections.length > 1;
+    const borderColor = b.result==='win'?'var(--win)':b.result==='lose'?'var(--lose)':b.result==='pending'?'var(--pending)':'var(--g3)';
+    const resolvedCount = (b.selections||[]).filter(s=>s.result&&s.result!=='pending').length;
+    const totalSel = (b.selections||[]).length;
+    const allResolved = resolvedCount === totalSel;
+    const progressPct = totalSel ? Math.round(resolvedCount/totalSel*100) : 0;
+
+    return `<div style="background:var(--s1);border:1px solid var(--border);border-left:3px solid ${borderColor};border-radius:12px;padding:16px;margin-bottom:12px" id="betcard-${b.id}">
+
+      <!-- Header -->
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
-        <div>
-          <span class="badge ${b.result==='win'?'badge-win':b.result==='lose'?'badge-lose':b.result==='pending'?'badge-pending':'badge-draw'}">${b.result==='win'?'✅ Ganha':b.result==='lose'?'❌ Perdida':b.result==='pending'?'⏳ Pendente':'💰 Parcial'}</span>
-          <span style="font-size:.7rem;color:var(--muted);margin-left:8px">${formatDate(b.date)} · ${b.strategy?.toUpperCase()}</span>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+          <span class="badge ${b.result==='win'?'badge-win':b.result==='lose'?'badge-lose':b.result==='pending'?'badge-pending':'badge-draw'}">
+            ${b.result==='win'?'✅ Ganha':b.result==='lose'?'❌ Perdida':b.result==='pending'?'⏳ Pendente':'💰 Parcial'}
+          </span>
+          <span style="font-size:.68rem;color:var(--muted)">${formatDate(b.date)}</span>
+          <span style="font-size:.68rem;color:var(--muted);background:var(--s3);padding:2px 7px;border-radius:8px">${(b.strategy||'—').toUpperCase()}</span>
+          ${isMulti&&b.result==='pending'?`<span style="font-size:.65rem;color:var(--muted2)">${resolvedCount}/${totalSel} jogos resolvidos</span>`:''}
         </div>
-        <div style="text-align:right">
-          <div style="font-family:'JetBrains Mono',monospace;font-size:1rem;color:var(--g3)">@${b.totalOdd}</div>
-          <div style="font-size:.72rem;color:var(--muted)">€${b.stake} → €${b.potentialPayout}</div>
+        <div style="text-align:right;flex-shrink:0;margin-left:8px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:.95rem;color:var(--g3)">@${b.totalOdd}</div>
+          <div style="font-size:.68rem;color:var(--muted)">€${b.stake} → <span style="color:var(--g4)">€${b.potentialPayout}</span></div>
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px">
-        ${b.selections.map(s=>`
-          <div style="display:flex;justify-content:space-between;font-size:.78rem;padding:5px 8px;background:var(--s2);border-radius:6px">
-            <span>${s.label} · <span style="color:var(--muted2)">${s.market}: ${s.pick}</span></span>
-            <span style="font-family:'JetBrains Mono',monospace;color:var(--g3)">${s.odd}</span>
-          </div>
-        `).join('')}
+
+      ${isMulti&&b.result==='pending'?`
+      <div style="height:3px;background:var(--s3);border-radius:3px;margin-bottom:10px;overflow:hidden">
+        <div style="height:100%;width:${progressPct}%;background:linear-gradient(90deg,var(--g2),var(--g1));border-radius:3px;transition:width .4s"></div>
+      </div>`:''}
+
+      <!-- Selections — each with its own result picker -->
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">
+        ${(b.selections||[]).map((s,si) => {
+          const sRes = s.result || 'pending';
+          const sDone = sRes !== 'pending';
+          const sColor = selResultColor(sRes);
+          return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--s2);border-radius:8px;border:1px solid ${sDone?(sRes==='win'?'rgba(16,185,129,.2)':sRes==='lose'?'rgba(244,63,94,.2)':'var(--border)'):'var(--border)'}">
+            <span style="font-size:1rem;line-height:1;flex-shrink:0">${selResultIcon(sRes)}</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:.78rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.label}</div>
+              <div style="font-size:.68rem;color:var(--muted2)">${s.market}: <span style="color:var(--text)">${s.pick}</span> · <span style="font-family:'JetBrains Mono',monospace;color:var(--g3)">@${s.odd}</span></div>
+            </div>
+            ${b.result==='pending'||!allResolved ? `
+            <select onchange="setSelectionResult(${b.id},${si},this.value)"
+              style="background:var(--bg);border:1px solid ${sDone?sColor:'var(--border2)'};border-radius:6px;padding:4px 6px;font-size:.72rem;color:${sDone?sColor:'var(--muted2)'};cursor:pointer;flex-shrink:0;outline:none">
+              <option value="pending" ${sRes==='pending'?'selected':''}>⏳ Pendente</option>
+              <option value="win"     ${sRes==='win'?'selected':''}>✅ Ganhou</option>
+              <option value="lose"    ${sRes==='lose'?'selected':''}>❌ Perdeu</option>
+              <option value="void"    ${sRes==='void'?'selected':''}>⬜ Nulo/Void</option>
+            </select>` :
+            `<span style="font-size:.75rem;color:${sColor};font-weight:600">${selResultIcon(sRes)} ${sRes==='win'?'Ganhou':sRes==='lose'?'Perdeu':'Nulo'}</span>`}
+          </div>`;
+        }).join('')}
       </div>
-      ${b.result==='pending'?`
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-green btn-sm" onclick="setBetResult(${b.id},'win')">✅ Ganhei</button>
-          <button class="btn btn-r btn-sm" onclick="setBetResult(${b.id},'lose')">❌ Perdi</button>
+
+      <!-- Global actions — only if all selections resolved OR single bet -->
+      ${b.result==='pending' ? `
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          ${allResolved ? `
+            <span style="font-size:.72rem;color:var(--g1)">✓ Todos os jogos resolvidos — confirma o resultado final:</span>
+          ` : (totalSel===1 ? '' : `<span style="font-size:.72rem;color:var(--muted2)">Resolve cada jogo acima para atualizar automaticamente</span>`)}
+          ${allResolved ? `
+            <button class="btn btn-green btn-sm" onclick="setBetResult(${b.id},'win')">✅ Confirmar Ganha</button>
+            <button class="btn btn-r btn-sm" onclick="setBetResult(${b.id},'lose')">❌ Confirmar Perdida</button>
+          ` : ''}
           <button class="btn btn-amber btn-sm" onclick="setBetResult(${b.id},'cashout')">💰 Cashout</button>
           <button class="btn btn-o btn-xs" onclick="deleteBet(${b.id})" style="margin-left:auto">🗑</button>
         </div>` :
-        `<button class="btn btn-r btn-xs" onclick="deleteBet(${b.id})" style="float:right">🗑 Remover</button>`}
-    </div>
-  `).join('');
+        `<div style="display:flex;justify-content:flex-end">
+          <button class="btn btn-r btn-xs" onclick="deleteBet(${b.id})">🗑 Remover</button>
+        </div>`}
+    </div>`;
+  }).join('');
+}
+
+function setSelectionResult(betId, selIdx, result) {
+  const b = DB.bets.find(x=>x.id===betId);
+  if(!b) return;
+  if(!b.selections[selIdx].result) b.selections[selIdx].result = 'pending';
+  b.selections[selIdx].result = result;
+
+  // Auto-resolve the whole bet when all selections are done
+  autoResolveBet(b);
+  save();
+  renderBets();
+  updateHeader();
+
+  // Feedback
+  const allDone = b.selections.every(s=>s.result && s.result!=='pending');
+  if(allDone && b.result!=='pending') {
+    showToast(b.result==='win'?'🎉 Aposta ganha automaticamente!':b.result==='lose'?'Aposta marcada como perdida':'💰 Resultado parcial registado', b.result==='win'?'ok':'info');
+  }
 }
 
 function setBetResult(id, result) {
