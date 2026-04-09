@@ -23,1433 +23,615 @@
   --muted2: #7888a8;
   --win: #10b981;
   --lose: #f43f5e;
-  --draw: #f59e0b;
-  --pending: #6366f1;
+  --draw: #64748b;
+  --accent: #6366f1;
 }
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:'Figtree',sans-serif;min-height:100vh;overflow-x:hidden}
-body::before{content:'';position:fixed;top:0;left:0;right:0;height:400px;background:radial-gradient(ellipse 60% 30% at 30% 0%,rgba(34,211,238,.06),transparent),radial-gradient(ellipse 40% 20% at 80% 0%,rgba(99,102,241,.05),transparent);pointer-events:none}
 
-/* HEADER */
-.header{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px;border-bottom:1px solid var(--border);background:rgba(6,8,16,.9);backdrop-filter:blur(16px);position:sticky;top:0;z-index:200}
-.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;background:linear-gradient(135deg,var(--g1),var(--g2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-0.5px}
-.logo sup{font-size:.55rem;letter-spacing:1px;opacity:.7}
-.hstats{display:flex;gap:20px}
-.hstat{text-align:center}
-.hstat-v{font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:600;color:var(--g1)}
-.hstat-l{font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
-
-/* NAV */
-.nav{display:flex;padding:0 24px;border-bottom:1px solid var(--border);background:var(--s1);gap:2px;overflow-x:auto}
-.nav::-webkit-scrollbar{display:none}
-.navbtn{padding:12px 18px;background:none;border:none;color:var(--muted2);font-family:'Figtree',sans-serif;font-size:.8rem;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s;text-transform:uppercase;letter-spacing:.8px}
-.navbtn:hover{color:var(--text)}
-.navbtn.on{color:var(--g1);border-bottom-color:var(--g1)}
-
-/* LAYOUT */
-main{padding:24px;max-width:1200px;margin:0 auto}
-.page{display:none}
-.page.on{display:block}
-
-/* CARDS */
-.card{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px}
-.card+.card{margin-top:14px}
-.card-title{font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);margin-bottom:16px;display:flex;align-items:center;gap:8px}
-
-/* GRID */
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
-.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-
-/* FORM ELEMENTS */
-label{display:block;font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}
-input,select,textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 13px;color:var(--text);font-family:'Figtree',sans-serif;font-size:.88rem;outline:none;transition:border-color .2s}
-input:focus,select:focus,textarea:focus{border-color:var(--g1)}
-select option{background:var(--s2)}
-textarea{resize:vertical;min-height:70px}
-.fg{display:flex;flex-direction:column;gap:5px}
-
-/* BUTTONS */
-.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border:none;border-radius:8px;font-family:'Figtree',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
-.btn-g{background:linear-gradient(135deg,var(--g1),var(--g2));color:#060810}
-.btn-g:hover{opacity:.9;transform:translateY(-1px)}
-.btn-g:disabled{opacity:.35;cursor:not-allowed;transform:none}
-.btn-o{background:transparent;border:1px solid var(--border2);color:var(--text)}
-.btn-o:hover{border-color:var(--g1);color:var(--g1)}
-.btn-r{background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.2);color:var(--red)}
-.btn-sm{padding:5px 10px;font-size:.72rem}
-.btn-xs{padding:3px 8px;font-size:.68rem}
-.btn-amber{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25);color:var(--g3)}
-.btn-green{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.25);color:var(--g4)}
-
-/* BADGES */
-.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.63rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
-.badge-pending{background:rgba(99,102,241,.15);color:var(--pending)}
-.badge-win{background:rgba(16,185,129,.15);color:var(--win)}
-.badge-lose{background:rgba(244,63,94,.15);color:var(--lose)}
-.badge-draw{background:rgba(245,158,11,.15);color:var(--draw)}
-.badge-info{background:rgba(34,211,238,.1);color:var(--g1)}
-
-/* MATCH FIXTURE CARD */
-.fixture{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;transition:all .2s;position:relative}
-.fixture:hover{border-color:var(--border2)}
-.fixture.selected{border-color:var(--g1);background:rgba(34,211,238,.04)}
-.fixture-teams{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.fixture-team{flex:1;font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700}
-.fixture-team.away{text-align:right}
-.fixture-vs{color:var(--muted);font-size:.75rem;font-weight:600}
-.fixture-meta{display:flex;justify-content:space-between;align-items:center;font-size:.72rem;color:var(--muted2)}
-.fixture-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
-.fixture-pred{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--g1);background:rgba(34,211,238,.08);padding:3px 8px;border-radius:5px;display:inline-flex;align-items:center;gap:5px}
-.analyzing-overlay{position:absolute;inset:0;background:rgba(6,8,16,.8);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:var(--g1)}
-
-/* BET SLIP */
-.betslip{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:18px;position:sticky;top:70px}
-.betslip-item{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;position:relative}
-.betslip-remove{position:absolute;top:8px;right:8px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem}
-.betslip-remove:hover{color:var(--red)}
-.odd-input{width:70px;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--g3);font-family:'JetBrains Mono',monospace;font-size:.85rem;text-align:center;outline:none}
-.odd-input:focus{border-color:var(--g3)}
-.stake-input{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:9px 13px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:1rem;text-align:center;outline:none}
-.stake-input:focus{border-color:var(--g1)}
-.payout-box{background:rgba(34,211,238,.05);border:1px solid rgba(34,211,238,.15);border-radius:10px;padding:14px;text-align:center;margin-top:12px}
-.payout-val{font-family:'JetBrains Mono',monospace;font-size:1.6rem;font-weight:600;color:var(--g1)}
-.payout-label{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-top:2px}
-
-/* STAT CARDS */
-.scard{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center}
-.scard-big{font-family:'Syne',sans-serif;font-size:2.4rem;font-weight:800;line-height:1}
-.scard-label{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-top:4px}
-
-/* HIT RATE BAR */
-.hitbar{height:8px;background:var(--s3);border-radius:8px;overflow:hidden;margin:10px 0}
-.hitbar-fill{height:100%;background:linear-gradient(90deg,var(--g2),var(--g1));border-radius:8px;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
-
-/* HISTORY TABLE */
-.htable{width:100%;border-collapse:collapse;font-size:.82rem}
-.htable th{text-align:left;padding:10px 12px;font-size:.62rem;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);border-bottom:1px solid var(--border)}
-.htable td{padding:11px 12px;border-bottom:1px solid rgba(31,40,64,.5);vertical-align:middle}
-.htable tr:hover td{background:rgba(255,255,255,.015)}
-
-/* ANALYSIS RESULT */
-.aresult{background:linear-gradient(135deg,rgba(34,211,238,.04),rgba(99,102,241,.04));border:1px solid rgba(34,211,238,.18);border-radius:12px;padding:18px;margin-top:14px;display:none}
-.aresult.on{display:block;animation:fadeIn .3s ease}
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.prob-row{display:flex;align-items:stretch;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px}
-.prob-cell{flex:1;padding:14px 10px;text-align:center;border-right:1px solid var(--border)}
-.prob-cell:last-child{border-right:none}
-.prob-cell.winner{background:rgba(34,211,238,.06)}
-.prob-pct{font-family:'JetBrains Mono',monospace;font-size:1.5rem;font-weight:600;color:var(--text)}
-.prob-pct.w{color:var(--g1)}
-.prob-lbl{font-size:.65rem;color:var(--muted);margin-top:3px}
-.winner-tag{display:inline-block;background:var(--g1);color:#060810;font-size:.58rem;font-weight:800;padding:1px 6px;border-radius:10px;margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
-.key-factors{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-.kf-tag{background:rgba(99,102,241,.1);color:#a5b4fc;font-size:.72rem;padding:3px 9px;border-radius:5px}
-
-/* LOADER */
-.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(34,211,238,.2);border-top-color:var(--g1);border-radius:50%;animation:spin .6s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* TOAST */
-.toast{position:fixed;bottom:20px;right:20px;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:.83rem;transform:translateY(60px);opacity:0;transition:all .25s;z-index:9999}
-.toast.on{transform:translateY(0);opacity:1}
-.toast.ok{border-color:var(--g4);color:var(--g4)}
-.toast.err{border-color:var(--red);color:var(--red)}
-.toast.info{border-color:var(--g1);color:var(--g1)}
-
-/* EMPTY */
-.empty{text-align:center;padding:48px 16px;color:var(--muted)}
-.empty-icon{font-size:2.5rem;opacity:.3;margin-bottom:10px}
-
-/* DIVIDER */
-.divider{height:1px;background:var(--border);margin:16px 0}
-
-/* LEAGUE SECTION */
-.league-section{margin-bottom:20px}
-.league-header{display:flex;align-items:center;gap:10px;padding:8px 0;margin-bottom:10px;border-bottom:1px solid var(--border)}
-.league-name{font-family:'Syne',sans-serif;font-size:.85rem;font-weight:700;color:var(--muted2)}
-
-/* FILTER BAR */
-.filterbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
-.filter-chip{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--muted2);font-size:.75rem;cursor:pointer;transition:all .15s}
-.filter-chip.on{background:rgba(34,211,238,.1);border-color:var(--g1);color:var(--g1)}
-
-/* DAILY SUMMARY */
-.day-block{background:var(--s1);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;overflow:hidden}
-.day-header{padding:12px 16px;background:var(--s2);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-.day-date{font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem}
-.day-stats{display:flex;gap:14px;font-size:.75rem}
-.day-stat span{color:var(--muted2)} 
-
-/* PROGRESS RING */
-.ring-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center}
-.ring-label{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-top:6px}
-
-/* RESPONSIVE */
-@media(max-width:768px){
-  main{padding:14px}
-  .g2,.g3,.g4{grid-template-columns:1fr 1fr}
-  .hstats{gap:12px}
-  .header{padding:0 14px}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'Figtree', sans-serif;
+  line-height: 1.5;
+  overflow-x: hidden;
 }
-@media(max-width:480px){
-  .g2,.g3,.g4{grid-template-columns:1fr}
+
+/* Typography */
+h1, h2, h3, .syne { font-family: 'Syne', sans-serif; font-weight: 700; }
+.mono { font-family: 'JetBrains Mono', monospace; font-size: 0.9em; }
+
+/* Layout */
+.container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 30px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  padding: 20px;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 4px; height: 100%;
+  background: linear-gradient(to bottom, var(--g1), var(--g2));
+}
+
+.stat-val { font-size: 1.8rem; font-weight: 800; display: block; margin-top: 5px; }
+.stat-label { color: var(--muted2); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
+
+/* Tabs */
+.tabs { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+.tab-btn {
+  background: transparent; border: none; color: var(--muted2);
+  padding: 10px 20px; cursor: pointer; font-family: 'Syne', sans-serif;
+  font-weight: 600; border-radius: 8px; transition: 0.2s;
+}
+.tab-btn.active { background: var(--s2); color: var(--g1); box-shadow: 0 0 15px rgba(34, 211, 238, 0.1); }
+
+/* Main Sections */
+.view { display: none; }
+.view.active { display: block; }
+
+/* Grid of Fixtures */
+.fixtures-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.fixture-card {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  transition: transform 0.3s, border-color 0.3s;
+}
+.fixture-card:hover { transform: translateY(-5px); border-color: var(--accent); }
+
+.fixture-header { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--muted2); margin-bottom: 15px; }
+.teams { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.team { display: flex; align-items: center; gap: 12px; font-size: 1.1rem; font-weight: 600; }
+.team img { width: 28px; height: 28px; object-fit: contain; }
+
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* Buttons */
+.btn {
+  padding: 12px; border-radius: 10px; border: none; cursor: pointer;
+  font-weight: 600; font-family: 'Figtree'; transition: 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-primary { background: linear-gradient(135deg, var(--g1), var(--g2)); color: #000; }
+.btn-outline { background: transparent; border: 1px solid var(--border2); color: var(--text); }
+.btn-outline:hover { background: var(--s3); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Analysis Panel */
+.analysis-panel {
+  background: var(--s2); border-radius: 12px; padding: 15px; margin-top: 15px;
+  font-size: 0.9rem; border-left: 3px solid var(--g1); display: none;
+}
+
+/* Bets List */
+.bets-list { display: flex; flex-direction: column; gap: 12px; }
+.bet-item {
+  background: var(--s1); border: 1px solid var(--border); padding: 15px;
+  border-radius: 12px; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 50px;
+  align-items: center; gap: 15px;
+}
+.status-badge { padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; text-align: center; }
+.status-win { background: rgba(16, 185, 129, 0.2); color: var(--win); border: 1px solid var(--win); }
+.status-lose { background: rgba(244, 63, 94, 0.2); color: var(--lose); border: 1px solid var(--lose); }
+.status-pending { background: rgba(100, 116, 139, 0.2); color: var(--muted2); border: 1px solid var(--muted); }
+
+/* Config */
+.config-group { margin-bottom: 20px; }
+label { display: block; color: var(--muted2); margin-bottom: 8px; font-size: 0.9rem; }
+input, select, textarea {
+  width: 100%; padding: 12px; background: var(--s2); border: 1px solid var(--border2);
+  border-radius: 8px; color: #fff; font-family: inherit;
+}
+
+/* Toast */
+#toast {
+  position: fixed; bottom: 30px; right: 30px; padding: 15px 25px;
+  border-radius: 10px; background: var(--s3); border: 1px solid var(--accent);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5); transform: translateY(150%);
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 9999;
+}
+#toast.show { transform: translateY(0); }
+
+/* Filters */
+.filters-bar { margin-bottom: 25px; display: flex; gap: 15px; flex-wrap: wrap; }
+.filter-chip { 
+  background: var(--s2); border: 1px solid var(--border2); padding: 6px 15px; 
+  border-radius: 20px; cursor: pointer; font-size: 0.85rem; color: var(--muted2);
+}
+.filter-chip.on { border-color: var(--g1); color: var(--g1); background: rgba(34, 211, 238, 0.05); }
+
+@media (max-width: 768px) {
+  .bet-item { grid-template-columns: 1fr 1fr; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
 }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="logo">ScoutAI <sup>PRO</sup></div>
-  <div class="hstats">
-    <div class="hstat"><div class="hstat-v" id="h-total">0</div><div class="hstat-l">Jogos</div></div>
-    <div class="hstat"><div class="hstat-v" id="h-hits">0</div><div class="hstat-l">Hits</div></div>
-    <div class="hstat"><div class="hstat-v" id="h-rate" style="color:var(--g3)">—</div><div class="hstat-l">Taxa</div></div>
-  </div>
-</div>
+<div id="toast"></div>
 
-<div class="nav">
-  <button class="navbtn on" onclick="goTo('fixtures')">📅 Jogos do Dia</button>
-  <button class="navbtn" onclick="goTo('builder')">🎯 Construtor</button>
-  <button class="navbtn" onclick="goTo('bets')">💰 As Minhas Apostas</button>
-  <button class="navbtn" onclick="goTo('summary')">📊 Resumo Diário</button>
-  <button class="navbtn" onclick="goTo('config')">⚙️ Config</button>
-</div>
-
-<main>
-
-<!-- ═══════════════════════════════════════════ FIXTURES ═══ -->
-<div class="page on" id="page-fixtures">
-  <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:flex-end">
-    <div class="fg" style="flex:1;min-width:160px">
-      <label>Data</label>
-      <input type="date" id="fix-date" oninput="loadFixtures()">
-    </div>
-    <div class="fg" style="flex:1;min-width:160px">
-      <label>Liga</label>
-      <select id="fix-league" onchange="filterFixtures()">
-        <option value="">Todas as ligas</option>
-        <option value="94">Primeira Liga 🇵🇹</option>
-        <option value="140">La Liga 🇪🇸</option>
-        <option value="39">Premier League 🏴󠁧󠁢󠁥󠁮󠁧󠁿</option>
-        <option value="135">Serie A 🇮🇹</option>
-        <option value="78">Bundesliga 🇩🇪</option>
-        <option value="61">Ligue 1 🇫🇷</option>
-        <option value="2">Champions League 🏆</option>
-        <option value="3">Europa League</option>
-        <option value="848">Conference League</option>
-      </select>
-    </div>
-    <button class="btn btn-g" onclick="loadFixtures()"><div class="spin" id="fix-spin" style="display:none"></div>⬇ Carregar Jogos</button>
-    <button class="btn btn-amber btn-sm" onclick="analyzeAllVisible()" id="btn-analyzeAll">🤖 Analisar Todos</button>
-  </div>
-
-  <div class="filterbar" id="fix-filters"></div>
-
-  <div id="fixtures-container">
-    <div class="empty"><div class="empty-icon">⚽</div>Carrega os jogos do dia para começar</div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════ BUILDER ═══ -->
-<div class="page" id="page-builder">
-  <div style="display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start">
+<div class="container">
+  <header>
     <div>
-      <div class="card">
-        <div class="card-title">🎯 Construtor de Apostas</div>
-        <div style="font-size:.82rem;color:var(--muted2);margin-bottom:14px">
-          Adiciona jogos ao boletim da aba "Jogos do Dia" ou manualmente abaixo.
-        </div>
-
-        <!-- Manual add -->
-        <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-          <div style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px">➕ Adicionar Manualmente</div>
-          <div class="g2" style="margin-bottom:10px">
-            <div class="fg"><label>Casa</label><input type="text" id="man-home" placeholder="Equipa Casa"></div>
-            <div class="fg"><label>Fora</label><input type="text" id="man-away" placeholder="Equipa Fora"></div>
-          </div>
-          <div class="g3" style="margin-bottom:10px">
-            <div class="fg">
-              <label>Mercado</label>
-              <select id="man-market">
-                <option value="1X2">1X2</option>
-                <option value="Over 2.5">Over 2.5</option>
-                <option value="Under 2.5">Under 2.5</option>
-                <option value="BTTS Sim">BTTS Sim</option>
-                <option value="BTTS Não">BTTS Não</option>
-                <option value="Dupla Hipótese 1X">Dupla Hip. 1X</option>
-                <option value="Dupla Hipótese X2">Dupla Hip. X2</option>
-                <option value="Handicap">Handicap</option>
-              </select>
-            </div>
-            <div class="fg">
-              <label>Seleção</label>
-              <select id="man-pick">
-                <option value="Casa">Casa (1)</option>
-                <option value="Empate">Empate (X)</option>
-                <option value="Fora">Fora (2)</option>
-                <option value="Sim">Sim</option>
-                <option value="Não">Não</option>
-              </select>
-            </div>
-            <div class="fg"><label>Odd</label><input type="number" id="man-odd" placeholder="1.85" step="0.01" min="1.01"></div>
-          </div>
-          <button class="btn btn-o btn-sm" onclick="addManualToBetslip()">➕ Adicionar ao Boletim</button>
-        </div>
-
-        <!-- Strategy selector -->
-        <div class="card-title" style="margin-top:4px">💡 Estratégia de Aposta</div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
-          <div class="strategy-card" id="strat-single" onclick="setStrat('single')" style="background:var(--s2);border:2px solid var(--g1);border-radius:10px;padding:12px;cursor:pointer;text-align:center">
-            <div style="font-size:1.2rem">1️⃣</div>
-            <div style="font-family:'Syne',sans-serif;font-size:.8rem;font-weight:700;margin-top:4px">Simples</div>
-            <div style="font-size:.68rem;color:var(--muted);margin-top:2px">Uma selecção</div>
-          </div>
-          <div class="strategy-card" id="strat-multi" onclick="setStrat('multi')" style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;text-align:center">
-            <div style="font-size:1.2rem">🎲</div>
-            <div style="font-family:'Syne',sans-serif;font-size:.8rem;font-weight:700;margin-top:4px">Múltipla</div>
-            <div style="font-size:.68rem;color:var(--muted);margin-top:2px">Acumulador</div>
-          </div>
-          <div class="strategy-card" id="strat-system" onclick="setStrat('system')" style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;text-align:center">
-            <div style="font-size:1.2rem">🔁</div>
-            <div style="font-family:'Syne',sans-serif;font-size:.8rem;font-weight:700;margin-top:4px">Sistema</div>
-            <div style="font-size:.68rem;color:var(--muted);margin-top:2px">2/3, 3/4...</div>
-          </div>
-        </div>
-
-        <div id="strategy-advice" style="background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.2);border-radius:8px;padding:12px;font-size:.8rem;color:#a5b4fc;line-height:1.6;margin-bottom:14px">
-          📌 <strong>Aposta Simples:</strong> Mais seguro, taxa de acerto mais fácil de manter. Ideal para odds &gt; 1.60.
-        </div>
-
-        <div id="system-config" style="display:none;margin-bottom:14px">
-          <div class="fg">
-            <label>Nº mínimo de acertos para ganhar</label>
-            <select id="system-n">
-              <option value="2">2 de N</option>
-              <option value="3">3 de N</option>
-              <option value="4">4 de N</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- AI Recommend -->
-      <div class="card" style="margin-top:14px">
-        <div class="card-title">🤖 Sugestão de Combinação IA</div>
-        <div style="font-size:.8rem;color:var(--muted2);margin-bottom:12px">A IA analisa os jogos com previsão e sugere a melhor combinação para hoje</div>
-        <button class="btn btn-g" onclick="aiSuggestBet()" id="btn-aiSuggest">✨ Gerar Sugestão Inteligente</button>
-        <div id="ai-suggestion" style="margin-top:14px;display:none"></div>
-      </div>
+      <h1 class="syne" style="font-size: 1.5rem; background: linear-gradient(to right, #fff, var(--muted2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">SCOUTAI PRO</h1>
+      <p style="font-size: 0.75rem; color: var(--muted2); margin-top: 2px;">Sistema de Inteligência Preditiva</p>
     </div>
+    <div style="text-align: right">
+      <div id="header-balance" class="syne" style="font-size: 1.2rem; color: var(--g4);">0,00€</div>
+      <div id="header-roi" style="font-size: 0.7rem; color: var(--muted2);">ROI: 0%</div>
+    </div>
+  </header>
 
-    <!-- BETSLIP -->
-    <div class="betslip" id="betslip-panel">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1rem">🎫 Boletim</div>
-        <div style="display:flex;gap:6px">
-          <span id="betslip-count" style="font-family:'JetBrains Mono',monospace;font-size:.8rem;background:rgba(34,211,238,.1);color:var(--g1);padding:2px 8px;border-radius:10px">0 sel.</span>
-          <button class="btn btn-r btn-xs" onclick="clearBetslip()">Limpar</button>
-        </div>
-      </div>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-label">Banca Atual</span>
+      <span id="stat-bank" class="stat-val mono">0,00€</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Lucro Total</span>
+      <span id="stat-profit" class="stat-val mono">0,00€</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Win Rate</span>
+      <span id="stat-wr" class="stat-val mono">0%</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Apostas Ativas</span>
+      <span id="stat-active" class="stat-val mono">0</span>
+    </div>
+  </div>
 
-      <div id="betslip-items">
-        <div style="text-align:center;padding:30px 0;color:var(--muted);font-size:.82rem">Boletim vazio<br><span style="font-size:.72rem">Adiciona jogos para apostar</span></div>
-      </div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchView('fixtures')">Próximos Jogos</button>
+    <button class="tab-btn" onclick="switchView('bets')">Minhas Apostas</button>
+    <button class="tab-btn" onclick="switchView('config')">Configurações</button>
+  </div>
 
-      <div class="divider"></div>
-
-      <div id="betslip-summary" style="display:none">
-        <div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:8px">
-          <span style="color:var(--muted)">Odd Total</span>
-          <span id="bs-total-odd" style="font-family:'JetBrains Mono',monospace;color:var(--g3);font-weight:600">1.00</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:12px">
-          <span style="color:var(--muted)">Confiança IA</span>
-          <span id="bs-confidence" style="font-family:'JetBrains Mono',monospace;color:var(--g1)">—</span>
-        </div>
-        <div class="fg" style="margin-bottom:10px">
-          <label>Valor Apostado (€)</label>
-          <input type="number" class="stake-input" id="stake" value="5" min="0.5" step="0.5" oninput="calcPayout()">
-        </div>
-        <div class="payout-box">
-          <div class="payout-val" id="payout-val">€0.00</div>
-          <div class="payout-label">Ganho Potencial</div>
-          <div style="font-size:.7rem;color:var(--muted);margin-top:4px">Lucro: <span id="profit-val" style="color:var(--g4)">€0.00</span></div>
-        </div>
-        <button class="btn btn-g" style="width:100%;margin-top:12px;justify-content:center" onclick="saveBet()">💾 Registar Aposta</button>
+  <div id="view-fixtures" class="view active">
+    <div class="filters-bar">
+      <div id="fav-leagues" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+      <button class="btn btn-outline" style="padding: 6px 15px;" onclick="loadFixtures()">🔄 Atualizar Jogos</button>
+      <button class="btn btn-primary" style="padding: 6px 15px;" onclick="analyzeAllVisible()">⚡ Análise em Lote</button>
+    </div>
+    <div id="fixtures-container" class="fixtures-grid">
+      <div style="grid-column: 1/-1; text-align: center; padding: 50px; color: var(--muted2);">
+        Configure a sua API Key para começar.
       </div>
     </div>
   </div>
+
+  <div id="view-bets" class="view">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 class="syne">Gestão de Banca</h2>
+        <button class="btn btn-outline" onclick="refreshBetsStatus()" style="padding: 6px 12px; font-size: 0.8rem;">
+            🔄 Refrescar Estados e Resultados
+        </button>
+    </div>
+    <div class="bets-list" id="bets-container">
+      </div>
+  </div>
+
+  <div id="view-config" class="view">
+    <div style="max-width: 600px;">
+      <h2 class="syne" style="margin-bottom: 20px;">Definições do Sistema</h2>
+      
+      <div class="config-group">
+        <label>Google Gemini API Key</label>
+        <input type="password" id="cfg-gemini" placeholder="AI Analysis Key...">
+      </div>
+
+      <div class="config-group">
+        <label>API-Football Key (RapidAPI)</label>
+        <input type="password" id="cfg-apif" placeholder="Football Data Key...">
+      </div>
+
+      <div class="config-group">
+        <label>Banca Inicial (€)</label>
+        <input type="number" id="cfg-bank" step="10" value="100">
+      </div>
+
+      <div class="config-group">
+        <label>Modelo de IA Preferencial</label>
+        <select id="cfg-model">
+          <option value="gemini-1.5-flash">Gemini 1.5 Flash (Rápido)</option>
+          <option value="gemini-1.5-pro">Gemini 1.5 Pro (Preciso)</option>
+        </select>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 30px;">
+        <button class="btn btn-primary" style="flex: 1" onclick="saveConfig()">Guardar Configurações</button>
+        <button class="btn btn-outline" onclick="exportData()">Exportar JSON</button>
+        <button class="btn btn-outline" style="color: var(--red); border-color: var(--red);" onclick="clearAllData()">Limpar Tudo</button>
+      </div>
+    </div>
+  </div>
+
 </div>
-
-<!-- ═══════════════════════════════════════════ BETS ═══ -->
-<div class="page" id="page-bets">
-  <div style="display:flex;gap:10px;margin-bottom:16px;align-items:center;flex-wrap:wrap">
-    <div class="card-title" style="margin:0;flex:1">💰 As Minhas Apostas</div>
-    <select id="bets-filter" onchange="renderBets()" style="width:auto;padding:7px 12px;font-size:.8rem">
-      <option value="all">Todas</option>
-      <option value="pending">Pendentes</option>
-      <option value="win">Ganhas ✅</option>
-      <option value="lose">Perdidas ❌</option>
-    </select>
-  </div>
-  <div id="bets-container">
-    <div class="empty"><div class="empty-icon">📋</div>Nenhuma aposta registada</div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════ SUMMARY ═══ -->
-<div class="page" id="page-summary">
-  <div class="g4" style="margin-bottom:18px">
-    <div class="scard"><div class="scard-big" style="color:var(--g1)" id="s-total">0</div><div class="scard-label">Total Apostas</div></div>
-    <div class="scard"><div class="scard-big" style="color:var(--g4)" id="s-wins">0</div><div class="scard-label">Ganhas ✅</div></div>
-    <div class="scard"><div class="scard-big" style="color:var(--red)" id="s-loses">0</div><div class="scard-label">Perdidas ❌</div></div>
-    <div class="scard"><div class="scard-big" style="color:var(--g3)" id="s-profit">€0</div><div class="scard-label">Lucro/Perda</div></div>
-  </div>
-
-  <div class="card" style="margin-bottom:18px">
-    <div style="display:flex;justify-content:space-between;align-items:flex-end">
-      <div>
-        <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Taxa de Acerto Global</div>
-        <div style="font-family:'Syne',sans-serif;font-size:3rem;font-weight:800;color:var(--g1);line-height:1" id="s-rate">—</div>
-      </div>
-      <div style="text-align:right">
-        <div id="s-streak" style="font-size:.82rem;color:var(--muted2)"></div>
-        <div style="font-size:.72rem;color:var(--muted);margin-top:4px" id="s-roi"></div>
-      </div>
-    </div>
-    <div class="hitbar"><div class="hitbar-fill" id="s-bar" style="width:0%"></div></div>
-    <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--muted)"><span>0%</span><span>50%</span><span>100%</span></div>
-  </div>
-
-  <div class="card-title">📅 Por Dia</div>
-  <div id="daily-blocks">
-    <div class="empty"><div class="empty-icon">📊</div>Sem histórico ainda</div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════ CONFIG ═══ -->
-<div class="page" id="page-config">
-  <div class="card">
-    <div class="card-title">🔑 APIs & Configuração</div>
-    <div class="g2" style="margin-bottom:14px">
-      <div class="fg">
-        <label>Gemini API Key (grátis em aistudio.google.com)</label>
-        <input type="password" id="cfg-gemini" placeholder="AIza..." oninput="onGeminiKeyInput()">
-        <div style="font-size:.68rem;color:var(--muted);margin-top:4px">Gratuita · Sem cartão · <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--g1)">Obter key →</a></div>
-      </div>
-      <div class="fg">
-        <label>API-Football Key (grátis em api-sports.io — 100 req/dia)</label>
-        <input type="password" id="cfg-football" placeholder="xxxxx...">
-        <div style="font-size:.68rem;color:var(--muted);margin-top:4px">100 req/dia grátis · <a href="https://dashboard.api-football.com/register" target="_blank" style="color:var(--g1)">Registar →</a></div>
-      </div>
-    </div>
-
-    <!-- GEMINI MODEL SELECTOR -->
-    <div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem">🤖 Motor Gemini</div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <button class="btn btn-o btn-sm" onclick="fetchGeminiModels()" id="btn-fetch-models">
-            <span id="fetch-models-spin" style="display:none" class="spin"></span>
-            🔄 Actualizar Lista
-          </button>
-          <span id="model-count" style="font-size:.68rem;color:var(--muted)"></span>
-        </div>
-      </div>
-
-      <!-- Model grid -->
-      <div id="model-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px">
-        <!-- rendered by JS -->
-      </div>
-
-      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
-        <div style="font-size:.68rem;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.6px">Modelo seleccionado</div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <code style="background:rgba(34,211,238,.07);border:1px solid rgba(34,211,238,.15);border-radius:6px;padding:5px 10px;font-family:'JetBrains Mono',monospace;font-size:.82rem;color:var(--g1);flex:1" id="selected-model-display">gemini-2.5-flash</code>
-          <span id="model-tier-badge" class="badge badge-info">Flash</span>
-        </div>
-      </div>
-    </div>
-
-    <button class="btn btn-g" onclick="saveConfig()">💾 Guardar Configuração</button>
-
-    <div class="divider"></div>
-    <div class="card-title">🏆 Ligas Favoritas</div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px" id="fav-leagues">
-      <!-- rendered by JS -->
-    </div>
-
-    <div class="divider"></div>
-    <div class="card-title">⚠️ Dados</div>
-    <div style="display:flex;gap:10px">
-      <button class="btn btn-o btn-sm" onclick="exportData()">📤 Exportar JSON</button>
-      <button class="btn btn-r btn-sm" onclick="clearAllData()">🗑 Apagar Tudo</button>
-    </div>
-  </div>
-
-  <div class="card" style="margin-top:14px">
-    <div class="card-title">ℹ️ Como Funciona</div>
-    <div style="font-size:.83rem;color:var(--muted2);line-height:1.8">
-      <strong style="color:var(--text)">1. Carregar Jogos</strong> — A API-Football fornece os jogos programados para o dia selecionado.<br>
-      <strong style="color:var(--text)">2. Analisar com IA</strong> — O Gemini analisa cada jogo e dá probabilidades, confiança e fatores chave.<br>
-      <strong style="color:var(--text)">3. Construir Boletim</strong> — Adiciona jogos ao boletim, escolhe a estratégia (simples/múltipla/sistema) e calcula o ganho potencial.<br>
-      <strong style="color:var(--text)">4. Registar & Acompanhar</strong> — Regista apostas, marca resultados e acompanha a tua taxa de acerto diária.<br>
-      <br>
-      <strong style="color:var(--g3)">⚠️ Aviso:</strong> Esta ferramenta é apenas de análise e entretenimento. Joga com responsabilidade.
-    </div>
-  </div>
-</div>
-
-</main>
-
-<div class="toast" id="toast"></div>
 
 <script>
-// ═══════ STATE ═══════
-const DB = {
-  bets: JSON.parse(localStorage.getItem('sai_bets')||'[]'),
-  fixtures: JSON.parse(localStorage.getItem('sai_fixtures')||'[]'),
-  betslip: [],
-  strategy: 'single',
-  cfg: JSON.parse(localStorage.getItem('sai_cfg')||'{"gemini":"","football":"","favLeagues":["94","39","140"],"geminiModel":"gemini-2.5-flash"}')
+/* SCOUTAI PRO - CORE LOGIC
+*/
+
+let DB = {
+  cfg: {
+    gemini: '',
+    apif: '',
+    bank: 100,
+    model: 'gemini-1.5-flash',
+    favLeagues: [94, 140, 39, 61, 78] // PT, ES, EN, FR, DE
+  },
+  bets: [],
+  fixtures: []
 };
 
-// ═══════ GEMINI MODELS CATALOGUE ═══════
-const GEMINI_MODELS_STATIC = [
-  { id:'gemini-2.5-pro',           label:'Gemini 2.5 Pro',           tier:'Pro',   free:false, desc:'Mais poderoso. Raciocínio complexo, 1M tokens.' },
-  { id:'gemini-2.5-flash',         label:'Gemini 2.5 Flash',         tier:'Flash', free:true,  desc:'Rápido e inteligente. Recomendado. ⭐' },
-  { id:'gemini-2.5-flash-lite',    label:'Gemini 2.5 Flash-Lite',    tier:'Lite',  free:true,  desc:'Ultra-rápido e barato. Ideal para análise em massa.' },
-  { id:'gemini-3.1-pro-preview',   label:'Gemini 3.1 Pro Preview',   tier:'Pro',   free:false, desc:'Mais recente flagship. Agentic + raciocínio.' },
-  { id:'gemini-3.1-flash-preview', label:'Gemini 3.1 Flash Preview', tier:'Flash', free:false, desc:'Flash de nova geração. Alta performance.' },
-  { id:'gemini-3.1-flash-lite-preview', label:'Gemini 3.1 Flash-Lite Preview', tier:'Lite', free:false, desc:'Lite de nova geração. Baixa latência.' },
-  { id:'gemini-2.0-flash',         label:'Gemini 2.0 Flash',         tier:'Flash', free:true,  desc:'Legacy. Grátis mas deprecado a Jun 2026.' },
-  { id:'gemini-2.0-flash-lite',    label:'Gemini 2.0 Flash-Lite',    tier:'Lite',  free:true,  desc:'Legacy lite. Shutdown Jun 2026.' },
-];
-
-const save = () => {
-  localStorage.setItem('sai_bets', JSON.stringify(DB.bets));
-  localStorage.setItem('sai_fixtures', JSON.stringify(DB.fixtures));
-  localStorage.setItem('sai_cfg', JSON.stringify(DB.cfg));
-};
-
-// ═══════ INIT ═══════
-document.addEventListener('DOMContentLoaded', () => {
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('fix-date').value = today;
-  document.getElementById('cfg-gemini').value = DB.cfg.gemini||'';
-  document.getElementById('cfg-football').value = DB.cfg.football||'';
-  if(!DB.cfg.geminiModel) DB.cfg.geminiModel = 'gemini-2.5-flash';
+// --- Iniciar App ---
+window.onload = () => {
+  loadData();
   renderFavLeagues();
-  renderModelGrid(GEMINI_MODELS_STATIC);
   updateHeader();
-});
+  if(DB.cfg.apif) loadFixtures();
+};
 
-// ═══════ NAV ═══════
-function goTo(id) {
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
-  document.querySelectorAll('.navbtn').forEach(b=>b.classList.remove('on'));
-  document.getElementById('page-'+id).classList.add('on');
-  event.target.classList.add('on');
-  if(id==='bets') renderBets();
-  if(id==='summary') renderSummary();
-  if(id==='builder') renderBetslipPanel();
+function loadData() {
+  const saved = localStorage.getItem('sai_pro_v1');
+  if(saved) {
+    const parsed = JSON.parse(saved);
+    DB = { ...DB, ...parsed };
+    // UI Sync
+    document.getElementById('cfg-gemini').value = DB.cfg.gemini || '';
+    document.getElementById('cfg-apif').value = DB.cfg.apif || '';
+    document.getElementById('cfg-bank').value = DB.cfg.bank || 100;
+    document.getElementById('cfg-model').value = DB.cfg.model || 'gemini-1.5-flash';
+  }
 }
 
-// ═══════ FIXTURES ═══════
-async function loadFixtures() {
-  const date = document.getElementById('fix-date').value;
-  const key = DB.cfg.football;
-  if(!key) { showToast('Configura a API-Football Key em ⚙️ Config','err'); return; }
+function save() {
+  localStorage.setItem('sai_pro_v1', JSON.stringify(DB));
+}
 
-  const spin = document.getElementById('fix-spin');
-  spin.style.display='inline-block';
-  document.getElementById('fixtures-container').innerHTML='<div class="empty"><div class="spin" style="width:28px;height:28px;border-width:3px"></div></div>';
+function saveConfig() {
+  DB.cfg.gemini = document.getElementById('cfg-gemini').value;
+  DB.cfg.apif = document.getElementById('cfg-apif').value;
+  DB.cfg.bank = parseFloat(document.getElementById('cfg-bank').value);
+  DB.cfg.model = document.getElementById('cfg-model').value;
+  save();
+  updateHeader();
+  showToast('Definições guardadas!', 'ok');
+}
+
+function switchView(view) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  
+  const idx = ['fixtures','bets','config'].indexOf(view);
+  document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+
+  if(view === 'bets') renderBets();
+}
+
+// --- API Football ---
+async function loadFixtures() {
+  if(!DB.cfg.apif) return showToast('Configura a API Football primeiro', 'info');
+  
+  const container = document.getElementById('fixtures-container');
+  container.innerHTML = '<div style="grid-column:1/-1; text-align:center;">A carregar jogos de hoje...</div>';
 
   try {
-    const res = await fetch(`https://v3.football.api-sports.io/fixtures?date=${date}`, {
-      headers: { 'x-apisports-key': key }
+    const today = new Date().toISOString().split('T')[0];
+    const res = await fetch(`https://v3.football.api-sports.io/fixtures?date=${today}`, {
+      headers: {
+        'x-apisports-key': DB.cfg.apif,
+        'x-rapidapi-host': 'v3.football.api-sports.io'
+      }
     });
     const data = await res.json();
-    if(data.errors && Object.keys(data.errors).length) throw new Error(JSON.stringify(data.errors));
+    
+    // Filtrar apenas ligas favoritas ou status NS (Not Started)
+    DB.fixtures = data.response.filter(f => 
+      DB.cfg.favLeagues.includes(f.league.id) || f.fixture.status.short === 'NS'
+    ).slice(0, 40);
 
-    DB.fixtures = data.response || [];
     renderFixtures();
-    showToast(`${DB.fixtures.length} jogos carregados!`,'ok');
-  } catch(e) {
-    document.getElementById('fixtures-container').innerHTML=`<div class="empty"><div class="empty-icon">❌</div>Erro: ${e.message}<br><small>Verifica a API Key em ⚙️ Config</small></div>`;
-    showToast('Erro ao carregar jogos','err');
-  } finally { spin.style.display='none'; }
+  } catch (err) {
+    showToast('Erro ao carregar jogos', 'error');
+  }
 }
-
-function filterFixtures() { renderFixtures(); }
 
 function renderFixtures() {
-  const leagueFilter = document.getElementById('fix-league').value;
-  let fixtures = DB.fixtures;
-  if(leagueFilter) fixtures = fixtures.filter(f=>String(f.league?.id)===leagueFilter);
-
-  // Build league groups
-  const groups = {};
-  fixtures.forEach(f => {
-    const lid = f.league?.id;
-    const lname = f.league?.name || 'Outros';
-    if(!groups[lid]) groups[lid]={name:lname,flag:f.league?.flag||f.league?.logo,fixtures:[]};
-    groups[lid].fixtures.push(f);
-  });
-
-  // Build filter chips
-  const allLeagues = [...new Set(DB.fixtures.map(f=>f.league?.id))];
-  const filtersEl = document.getElementById('fix-filters');
-  if(DB.fixtures.length && !leagueFilter) {
-    filtersEl.innerHTML = `<span class="filter-chip on">Todas (${DB.fixtures.length})</span>` +
-      allLeagues.slice(0,10).map(id=>{
-        const fix = DB.fixtures.find(f=>f.league?.id===id);
-        return `<span class="filter-chip" onclick="quickFilter(${id})">${fix?.league?.name||id} (${DB.fixtures.filter(f=>f.league?.id===id).length})</span>`;
-      }).join('');
-  }
-
-  if(!fixtures.length) {
-    document.getElementById('fixtures-container').innerHTML='<div class="empty"><div class="empty-icon">📭</div>Nenhum jogo para esta seleção</div>';
+  const container = document.getElementById('fixtures-container');
+  if(DB.fixtures.length === 0) {
+    container.innerHTML = 'Nenhum jogo encontrado.';
     return;
   }
 
-  let html = '';
-  Object.values(groups).forEach(g => {
-    html += `<div class="league-section">
-      <div class="league-header">
-        ${g.flag?`<img src="${g.flag}" style="height:16px">`:''}<span class="league-name">${g.name}</span>
-        <span style="font-size:.68rem;color:var(--muted);margin-left:auto">${g.fixtures.length} jogos</span>
+  container.innerHTML = DB.fixtures.map(f => `
+    <div class="fixture-card" id="f-${f.fixture.id}">
+      <div class="fixture-header">
+        <span>${f.league.name}</span>
+        <span class="mono">${new Date(f.fixture.date).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px">
-        ${g.fixtures.map(f=>fixtureCard(f)).join('')}
+      <div class="teams">
+        <div class="team"><img src="${f.teams.home.logo}"> ${f.teams.home.name}</div>
+        <div class="team"><img src="${f.teams.away.logo}"> ${f.teams.away.name}</div>
       </div>
-    </div>`;
-  });
-  document.getElementById('fixtures-container').innerHTML = html;
-}
-
-function quickFilter(lid) {
-  document.getElementById('fix-league').value = lid;
-  filterFixtures();
-}
-
-function fixtureCard(f) {
-  const fid = f.fixture?.id;
-  const home = f.teams?.home?.name || '?';
-  const away = f.teams?.away?.name || '?';
-  const time = f.fixture?.date ? new Date(f.fixture.date).toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}) : '--:--';
-  const status = f.fixture?.status?.short;
-  const goalsH = f.goals?.home;
-  const goalsA = f.goals?.away;
-  const score = (status==='FT'||status==='AET'||status==='PEN') ? `${goalsH}-${goalsA}` : '';
-  const pred = f._prediction;
-
-  return `<div class="fixture ${pred?'selected':''}" id="fix-${fid}">
-    <div class="fixture-teams">
-      <div class="fixture-team">${home}</div>
-      <div class="fixture-vs">${score||time}</div>
-      <div class="fixture-team away">${away}</div>
-    </div>
-    <div class="fixture-meta">
-      <span>${status==='NS'?'Agendado':status==='FT'?'Terminado':'Em jogo'}</span>
-      <span style="color:var(--muted)">${f.league?.round||''}</span>
-    </div>
-    ${pred ? `<div class="fixture-pred">🤖 ${pred.winnerName} · ${pred.confidence}% conf · Risco: ${pred.riskLevel}</div>` : ''}
-    <div class="fixture-actions">
-      <button class="btn btn-o btn-xs" onclick="analyzeFixture(${fid})">🤖 Analisar</button>
-      <button class="btn btn-amber btn-xs" onclick="addFixtureToBetslip(${fid},'1X2','Casa',0)">+ Casa</button>
-      <button class="btn btn-sm btn-o btn-xs" onclick="addFixtureToBetslip(${fid},'1X2','Empate',0)">+ X</button>
-      <button class="btn btn-green btn-xs" onclick="addFixtureToBetslip(${fid},'1X2','Fora',0)">+ Fora</button>
-      ${pred?`<button class="btn btn-g btn-xs" onclick="addFixtureToBetslip(${fid},'IA',pred_${fid}_pick,pred_${fid}_odd)">⚡ Add IA</button>`:''}
-    </div>
-    <div id="abox-${fid}" class="aresult"></div>
-  </div>`;
-}
-
-// ═══════ ANALYZE FIXTURE ═══════
-async function analyzeFixture(fid, silent=false) {
-  const gemKey = DB.cfg.gemini;
-  if(!gemKey && !silent) { showToast('Configura a Gemini API Key em ⚙️ Config','err'); return null; }
-
-  const f = DB.fixtures.find(x=>x.fixture?.id===fid);
-  if(!f) return null;
-
-  const home = f.teams?.home?.name;
-  const away = f.teams?.away?.name;
-  const league = f.league?.name;
-  const card = document.getElementById(`fix-${fid}`);
-  const abox = document.getElementById(`abox-${fid}`);
-
-  if(card) {
-    let overlay = card.querySelector('.analyzing-overlay');
-    if(!overlay){ overlay=document.createElement('div'); overlay.className='analyzing-overlay'; overlay.innerHTML='<div class="spin"></div>&nbsp;A analisar...'; card.appendChild(overlay); }
-  }
-
-  const prompt = `És um analista de futebol especializado. Analisa este jogo:
-
-JOGO: ${home} vs ${away}
-Liga: ${league}
-
-Responde APENAS com JSON válido (sem markdown):
-{
-  "winner": "home"|"away"|"draw",
-  "winnerName": "string",
-  "homeProb": 0-100,
-  "drawProb": 0-100,
-  "awayProb": 0-100,
-  "confidence": 0-100,
-  "analysis": "3 frases em português",
-  "keyFactors": ["fator1","fator2","fator3"],
-  "riskLevel": "Baixo"|"Médio"|"Alto",
-  "suggestedMarket": "1X2"|"Over 2.5"|"Under 2.5"|"BTTS Sim",
-  "suggestedPick": "string",
-  "suggestedOdd": número estimado entre 1.20 e 5.00
-}`;
-
-  try {
-    const model = DB.cfg.geminiModel || 'gemini-2.5-flash';
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${gemKey}`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        contents:[{parts:[{text:prompt}]}],
-        generationConfig:{temperature:0.25,responseMimeType:'application/json'}
-      })
-    });
-    const data = await res.json();
-    if(data.error) throw new Error(data.error.message);
-    const json = JSON.parse(data.candidates[0].content.parts[0].text.replace(/```json|```/g,'').trim());
-
-    // Store prediction in fixture
-    f._prediction = json;
-    f._prediction.home = home;
-    f._prediction.away = away;
-
-    // Render analysis box
-    if(abox) {
-      abox.innerHTML = `
-        <div class="prob-row">
-          <div class="prob-cell ${json.winner==='home'?'winner':''}">
-            <div style="font-size:.72rem;color:var(--muted);margin-bottom:4px">${home}</div>
-            <div class="prob-pct ${json.winner==='home'?'w':''}">${json.homeProb}%</div>
-            ${json.winner==='home'?'<div class="winner-tag">IA Pick</div>':''}
-          </div>
-          <div class="prob-cell ${json.winner==='draw'?'winner':''}">
-            <div style="font-size:.72rem;color:var(--muted);margin-bottom:4px">Empate</div>
-            <div class="prob-pct ${json.winner==='draw'?'w':''}">${json.drawProb}%</div>
-            ${json.winner==='draw'?'<div class="winner-tag">IA Pick</div>':''}
-          </div>
-          <div class="prob-cell ${json.winner==='away'?'winner':''}">
-            <div style="font-size:.72rem;color:var(--muted);margin-bottom:4px">${away}</div>
-            <div class="prob-pct ${json.winner==='away'?'w':''}">${json.awayProb}%</div>
-            ${json.winner==='away'?'<div class="winner-tag">IA Pick</div>':''}
-          </div>
-        </div>
-        <div style="font-size:.8rem;color:var(--muted2);line-height:1.6;margin-bottom:8px">${json.analysis}</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
-          <span style="font-size:.72rem;color:var(--muted)">Mercado sugerido:</span>
-          <span class="badge badge-info">${json.suggestedMarket}: ${json.suggestedPick}</span>
-          <span style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--g3)">~${json.suggestedOdd}</span>
-          <span class="badge ${json.riskLevel==='Baixo'?'badge-win':json.riskLevel==='Médio'?'badge-draw':'badge-lose'}">Risco ${json.riskLevel}</span>
-        </div>
-        <div class="key-factors">${json.keyFactors.map(k=>`<span class="kf-tag">${k}</span>`).join('')}</div>
-        <button class="btn btn-g btn-xs" style="margin-top:10px" onclick="addPredictionToBetslip(${fid})">⚡ Adicionar Pick IA ao Boletim</button>`;
-      abox.classList.add('on');
-    }
-
-    // Update fixture card header
-    const fixEl = document.getElementById(`fix-${fid}`);
-    if(fixEl) {
-      let predDiv = fixEl.querySelector('.fixture-pred');
-      if(!predDiv){ predDiv=document.createElement('div'); predDiv.className='fixture-pred'; fixEl.insertBefore(predDiv,fixEl.querySelector('.fixture-actions')); }
-      predDiv.textContent=`🤖 ${json.winnerName} · ${json.confidence}% conf · Risco: ${json.riskLevel}`;
-    }
-
-    return json;
-  } catch(e) {
-    if(!silent) showToast('Erro Gemini: '+e.message,'err');
-    return null;
-  } finally {
-    if(card) { const ov = card.querySelector('.analyzing-overlay'); if(ov) ov.remove(); }
-  }
-}
-
-async function analyzeAllVisible() {
-  const gemKey = DB.cfg.gemini;
-  if(!gemKey) { showToast('Configura a Gemini API Key em ⚙️ Config','err'); return; }
-
-  const btn = document.getElementById('btn-analyzeAll');
-  btn.disabled=true; btn.innerHTML='<div class="spin"></div> A analisar...';
-
-  const leagueFilter = document.getElementById('fix-league').value;
-  let visible = DB.fixtures;
-  if(leagueFilter) visible = visible.filter(f=>String(f.league?.id)===leagueFilter);
-  visible = visible.filter(f=>f.fixture?.status?.short==='NS').slice(0,15); // max 15
-
-  let done=0;
-  for(const f of visible) {
-    await analyzeFixture(f.fixture.id, true);
-    done++;
-    btn.innerHTML=`<div class="spin"></div> ${done}/${visible.length}`;
-    await new Promise(r=>setTimeout(r,1200)); // rate limit
-  }
-
-  btn.disabled=false; btn.innerHTML='🤖 Analisar Todos';
-  showToast(`${done} jogos analisados!`,'ok');
-}
-
-// ═══════ BETSLIP ═══════
-function addFixtureToBetslip(fid, market, pick, odd) {
-  const f = DB.fixtures.find(x=>x.fixture?.id===fid);
-  if(!f) return;
-  const home = f.teams?.home?.name;
-  const away = f.teams?.away?.name;
-
-  // If odd is 0, use default by market
-  const defaultOdds = {'Casa':1.80,'Empate':3.20,'Fora':2.20,'Sim':1.70,'Não':1.90};
-  const finalOdd = odd || defaultOdds[pick] || 1.80;
-
-  addToBetslip({ id: fid+'_'+market+'_'+pick, label: `${home} vs ${away}`, market, pick, odd: finalOdd, confidence: f._prediction?.confidence||null });
-}
-
-function addPredictionToBetslip(fid) {
-  const f = DB.fixtures.find(x=>x.fixture?.id===fid);
-  if(!f || !f._prediction) return;
-  const p = f._prediction;
-  addFixtureToBetslip(fid, p.suggestedMarket, p.suggestedPick, p.suggestedOdd);
-}
-
-function addManualToBetslip() {
-  const home = document.getElementById('man-home').value.trim();
-  const away = document.getElementById('man-away').value.trim();
-  const market = document.getElementById('man-market').value;
-  const pick = document.getElementById('man-pick').value;
-  const odd = parseFloat(document.getElementById('man-odd').value) || 1.80;
-  if(!home||!away) { showToast('Preenche as equipas','err'); return; }
-  addToBetslip({ id: `man_${Date.now()}`, label:`${home} vs ${away}`, market, pick, odd, confidence:null });
-}
-
-function addToBetslip(item) {
-  if(DB.betslip.find(b=>b.id===item.id)) { showToast('Já está no boletim','info'); return; }
-  if(DB.strategy==='single' && DB.betslip.length>=1) { showToast('Simples: máx 1 selecção. Muda para Múltipla.','info'); return; }
-  DB.betslip.push(item);
-  renderBetslipPanel();
-  showToast(`${item.label} adicionado!`,'ok');
-  goToBuilderSilent();
-}
-
-function goToBuilderSilent() {
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
-  document.querySelectorAll('.navbtn').forEach(b=>b.classList.remove('on'));
-  document.getElementById('page-builder').classList.add('on');
-  document.querySelectorAll('.navbtn')[1].classList.add('on');
-}
-
-function removeFromBetslip(id) {
-  DB.betslip = DB.betslip.filter(b=>b.id!==id);
-  renderBetslipPanel();
-}
-
-function clearBetslip() { DB.betslip=[]; renderBetslipPanel(); }
-
-function renderBetslipPanel() {
-  const items = document.getElementById('betslip-items');
-  const summary = document.getElementById('betslip-summary');
-  const count = document.getElementById('betslip-count');
-  count.textContent = DB.betslip.length+' sel.';
-
-  if(!DB.betslip.length) {
-    items.innerHTML='<div style="text-align:center;padding:30px 0;color:var(--muted);font-size:.82rem">Boletim vazio<br><span style="font-size:.72rem">Adiciona jogos para apostar</span></div>';
-    summary.style.display='none';
-    return;
-  }
-
-  items.innerHTML = DB.betslip.map(b=>`
-    <div class="betslip-item">
-      <button class="betslip-remove" onclick="removeFromBetslip('${b.id}')">✕</button>
-      <div style="font-size:.78rem;font-weight:600;margin-bottom:4px;padding-right:18px">${b.label}</div>
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <div>
-          <span class="badge badge-info" style="font-size:.62rem">${b.market}</span>
-          <span style="font-size:.78rem;color:var(--text);margin-left:6px;font-weight:600">${b.pick}</span>
-        </div>
-        <input class="odd-input" type="number" value="${b.odd}" min="1.01" step="0.01"
-          onchange="updateOdd('${b.id}',this.value)" onclick="this.select()">
+      <div class="actions">
+        <button class="btn btn-primary" onclick="analyzeFixture('${f.fixture.id}')">⚡ Analisar</button>
+        <button class="btn btn-outline" onclick="openBetModal('${f.fixture.id}')">➕ Apostar</button>
       </div>
-      ${b.confidence?`<div style="font-size:.65rem;color:var(--muted);margin-top:4px">IA conf: <span style="color:var(--g1)">${b.confidence}%</span></div>`:''}
+      <div id="analysis-${f.fixture.id}" class="analysis-panel"></div>
     </div>
   `).join('');
-
-  summary.style.display='block';
-  calcPayout();
 }
 
-function updateOdd(id, val) {
-  const b = DB.betslip.find(x=>x.id===id);
-  if(b) { b.odd=parseFloat(val)||1.80; calcPayout(); }
-}
+// --- IA Analysis (Gemini) ---
+async function analyzeFixture(id) {
+  if(!DB.cfg.gemini) return showToast('Falta API Key Gemini', 'error');
+  
+  const fixture = DB.fixtures.find(x => x.fixture.id == id);
+  const panel = document.getElementById(`analysis-${id}`);
+  panel.style.display = 'block';
+  panel.innerHTML = '<span class="mono">🤖 IA a analisar...</span>';
 
-function calcPayout() {
-  const totalOdd = DB.betslip.reduce((acc,b)=>acc*(parseFloat(b.odd)||1.80),1);
-  const stake = parseFloat(document.getElementById('stake')?.value)||5;
-  const payout = (totalOdd * stake).toFixed(2);
-  const profit = (payout - stake).toFixed(2);
-  const avgConf = DB.betslip.filter(b=>b.confidence).length ?
-    Math.round(DB.betslip.filter(b=>b.confidence).reduce((a,b)=>a+b.confidence,0)/DB.betslip.filter(b=>b.confidence).length) : null;
-
-  const totalOddEl = document.getElementById('bs-total-odd');
-  const payoutEl = document.getElementById('payout-val');
-  const profitEl = document.getElementById('profit-val');
-  const confEl = document.getElementById('bs-confidence');
-
-  if(totalOddEl) totalOddEl.textContent = totalOdd.toFixed(2);
-  if(payoutEl) payoutEl.textContent = '€'+payout;
-  if(profitEl) profitEl.textContent = '€'+profit;
-  if(confEl) confEl.textContent = avgConf ? avgConf+'%' : '—';
-}
-
-// ═══════ STRATEGY ═══════
-function setStrat(s) {
-  DB.strategy = s;
-  ['single','multi','system'].forEach(id=>{
-    const el = document.getElementById('strat-'+id);
-    el.style.border = id===s ? '2px solid var(--g1)' : '1px solid var(--border)';
-  });
-  const advice = {
-    single: '📌 <strong>Aposta Simples:</strong> Mais seguro, taxa de acerto mais fácil de manter. Ideal para odds > 1.60. Melhor ROI a longo prazo se taxa &gt; 55%.',
-    multi: '📌 <strong>Múltipla:</strong> Odds combinadas multiplicam o ganho potencial mas também o risco. Recomendado máx 3-4 jogos com confiança &gt; 70% cada.',
-    system: '📌 <strong>Sistema:</strong> Protege parcialmente de erros. 2/3 significa que ganhas se acertares em pelo menos 2 dos 3. Custo mais alto, risco reduzido.'
-  };
-  document.getElementById('strategy-advice').innerHTML = advice[s];
-  document.getElementById('system-config').style.display = s==='system' ? 'block' : 'none';
-  if(s==='single' && DB.betslip.length>1) { DB.betslip=[DB.betslip[0]]; renderBetslipPanel(); showToast('Mantido apenas o 1º jogo para aposta simples','info'); }
-}
-
-// ═══════ AI SUGGESTION ═══════
-async function aiSuggestBet() {
-  const gemKey = DB.cfg.gemini;
-  if(!gemKey) { showToast('Configura a Gemini API Key','err'); return; }
-
-  const analyzed = DB.fixtures.filter(f=>f._prediction);
-  if(analyzed.length<2) { showToast('Analisa pelo menos 2 jogos primeiro!','info'); return; }
-
-  const btn = document.getElementById('btn-aiSuggest');
-  btn.disabled=true; btn.innerHTML='<div class="spin"></div> A calcular...';
-
-  const gameList = analyzed.map(f=>({
-    jogo: `${f.teams?.home?.name} vs ${f.teams?.away?.name}`,
-    liga: f.league?.name,
-    pred: f._prediction
-  }));
-
-  const prompt = `Tens os seguintes jogos já analisados com probabilidades:
-${JSON.stringify(gameList,null,2)}
-
-Escolhe a melhor combinação de apostas para hoje, considerando:
-- Confiança alta (>65%)
-- Risco equilibrado
-- Boa relação odd/probabilidade
-- Máx 4 jogos numa múltipla
-
-Responde APENAS em JSON:
-{
-  "strategy": "simples"|"multipla"|"sistema",
-  "justification": "explicação em português 2-3 frases",
-  "picks": [
-    {"jogo":"string","market":"string","pick":"string","odd":number,"reason":"string"}
-  ],
-  "totalOdd": number,
-  "expectedValue": "string",
-  "riskRating": "Baixo"|"Médio"|"Alto"
-}`;
+  const prompt = `Analisa este jogo de futebol: ${fixture.teams.home.name} vs ${fixture.teams.away.name}. 
+  Liga: ${fixture.league.name}. 
+  Responde em PT-PT de forma ultra-concisa com: 1. Probabilidade 1X2, 2. Sugestão de mercado, 3. Odds estimadas. Máximo 50 palavras.`;
 
   try {
-    const model2 = DB.cfg.geminiModel || 'gemini-2.5-flash';
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model2}:generateContent?key=${gemKey}`,{
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.2,responseMimeType:'application/json'}})
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${DB.cfg.model}:generateContent?key=${DB.cfg.gemini}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
     });
     const data = await res.json();
-    const json = JSON.parse(data.candidates[0].content.parts[0].text.replace(/```json|```/g,'').trim());
-
-    const el = document.getElementById('ai-suggestion');
-    el.style.display='block';
-    el.innerHTML = `
-      <div style="background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.2);border-radius:10px;padding:14px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-          <span style="font-family:'Syne',sans-serif;font-weight:700">🧠 Sugestão IA: <span style="color:var(--g1)">${json.strategy.toUpperCase()}</span></span>
-          <span class="badge ${json.riskRating==='Baixo'?'badge-win':json.riskRating==='Médio'?'badge-draw':'badge-lose'}">Risco ${json.riskRating}</span>
-        </div>
-        <p style="font-size:.8rem;color:var(--muted2);margin-bottom:12px">${json.justification}</p>
-        ${json.picks.map(p=>`
-          <div style="background:var(--s3);border-radius:8px;padding:10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:10px">
-            <div>
-              <div style="font-size:.8rem;font-weight:600">${p.jogo}</div>
-              <div style="font-size:.72rem;color:var(--muted2)">${p.market}: <span style="color:var(--text)">${p.pick}</span> — ${p.reason}</div>
-            </div>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:.9rem;color:var(--g3);white-space:nowrap">${p.odd}</span>
-          </div>
-        `).join('')}
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-          <span style="font-size:.78rem;color:var(--muted)">Odd Total: <span style="font-family:'JetBrains Mono',monospace;color:var(--g3)">${json.totalOdd}</span></span>
-          <button class="btn btn-g btn-sm" onclick="loadSuggestionToBetslip(${JSON.stringify(json).replace(/"/g,'&quot;')})">📥 Carregar no Boletim</button>
-        </div>
-      </div>`;
-  } catch(e) {
-    showToast('Erro: '+e.message,'err');
-  } finally {
-    btn.disabled=false; btn.innerHTML='✨ Gerar Sugestão Inteligente';
+    const text = data.candidates[0].content.parts[0].text;
+    panel.innerHTML = `<div class="mono" style="color: var(--g1); font-size: 0.8rem;">${text.replace(/\n/g, '<br>')}</div>`;
+  } catch (e) {
+    panel.innerHTML = 'Erro na análise.';
   }
 }
 
-function loadSuggestionToBetslip(json) {
-  DB.betslip=[];
-  setStrat(json.strategy==='simples'?'single':json.strategy==='multipla'?'multi':'system');
-  json.picks.forEach((p,i)=>{
-    DB.betslip.push({id:'sug_'+i,label:p.jogo,market:p.market,pick:p.pick,odd:p.odd,confidence:null});
-  });
-  renderBetslipPanel();
-  showToast('Sugestão carregada no boletim!','ok');
+// ⚡ ANÁLISE EM LOTE (MELHORADA COM DELAY)
+async function analyzeAllVisible() {
+    const buttons = Array.from(document.querySelectorAll('.fixture-card button[onclick*="analyzeFixture"]'));
+    if (buttons.length === 0) return;
+    
+    if (!confirm(`Analisar ${buttons.length} jogos em lote? (Respeitando limites da API)`)) return;
+
+    showToast(`A processar ${buttons.length} análises...`, 'info');
+
+    for (const btn of buttons) {
+        const fixtureId = btn.getAttribute('onclick').match(/'(\d+)'/)[1];
+        btn.disabled = true;
+        btn.innerText = "⏳...";
+
+        try {
+            await analyzeFixture(fixtureId);
+            btn.innerText = "✅ OK";
+        } catch (e) {
+            btn.innerText = "❌";
+        }
+
+        // Delay de 2 segundos entre pedidos para evitar Rate Limit no Gemini
+        await new Promise(r => setTimeout(r, 2000));
+    }
+    showToast("Análise em lote concluída!", "ok");
 }
 
-// ═══════ SAVE BET ═══════
-function saveBet() {
-  if(!DB.betslip.length) { showToast('Boletim vazio','err'); return; }
-  const stake = parseFloat(document.getElementById('stake').value)||5;
-  const totalOdd = DB.betslip.reduce((a,b)=>a*(b.odd||1.80),1);
-  const bet = {
+// --- Apostas & Banca ---
+function openBetModal(id) {
+  const stake = prompt("Valor da aposta (€):", "10");
+  if(!stake || isNaN(stake)) return;
+  
+  const pick = prompt("Mercado (1, X, 2, Over 2.5, etc):", "1");
+  if(!pick) return;
+
+  const odd = prompt("Odd:", "1.85");
+  if(!odd || isNaN(odd)) return;
+
+  const f = DB.fixtures.find(x => x.fixture.id == id);
+
+  const newBet = {
     id: Date.now(),
-    date: document.getElementById('fix-date').value || new Date().toISOString().split('T')[0],
-    strategy: DB.strategy,
-    selections: JSON.parse(JSON.stringify(DB.betslip)),
-    totalOdd: parseFloat(totalOdd.toFixed(2)),
-    stake,
-    potentialPayout: parseFloat((totalOdd*stake).toFixed(2)),
-    result: 'pending',
-    createdAt: new Date().toISOString()
+    fixtureId: id,
+    home: f.teams.home.name,
+    away: f.teams.away.name,
+    pick: pick,
+    odd: parseFloat(odd),
+    stake: parseFloat(stake),
+    status: 'pending',
+    score: '?-?',
+    date: new Date().toISOString()
   };
-  DB.bets.unshift(bet);
+
+  DB.bets.unshift(newBet);
   save();
-  DB.betslip=[];
-  renderBetslipPanel();
   updateHeader();
-  showToast('Aposta registada!','ok');
+  showToast('Aposta registada!', 'ok');
 }
 
-// ═══════ BETS LIST ═══════
-function selResultColor(r) {
-  return r==='win'?'var(--win)':r==='lose'?'var(--lose)':r==='void'?'var(--muted2)':'var(--muted)';
-}
-function selResultIcon(r) {
-  return r==='win'?'✅':r==='lose'?'❌':r==='void'?'⬜':'⏳';
-}
+// 🔄 REFRESCAR ESTADO JOGOS AUTOMATICAMENTE
+async function refreshBetsStatus() {
+    if (!DB.bets || DB.bets.length === 0) return showToast("Sem apostas", "info");
 
-// Auto-resolve overall bet result when all selections are filled
-function autoResolveBet(b) {
-  if(!b.selections || !b.selections.length) return;
-  const allDone = b.selections.every(s => s.result && s.result !== 'pending');
-  if(!allDone) { b.result = 'pending'; return; }
+    const pending = DB.bets.filter(b => b.status === 'pending');
+    if (pending.length === 0) return showToast("Tudo atualizado", "ok");
 
-  const hasLose = b.selections.some(s => s.result === 'lose');
-  const allWin  = b.selections.every(s => s.result === 'win' || s.result === 'void');
-  const hasVoid = b.selections.some(s => s.result === 'void');
+    showToast("Sincronizando resultados...", "info");
 
-  if(b.strategy === 'single') {
-    // single: result mirrors the one selection
-    const s = b.selections[0];
-    b.result = s.result === 'void' ? 'cashout' : s.result;
-    return;
-  }
+    for (let bet of pending) {
+        try {
+            const res = await fetch(`https://v3.football.api-sports.io/fixtures?id=${bet.fixtureId}`, {
+                headers: { 'x-apisports-key': DB.cfg.apif, 'x-rapidapi-host': 'v3.football.api-sports.io' }
+            });
+            const data = await res.json();
+            const f = data.response[0];
 
-  if(b.strategy === 'multi') {
-    // acumulador: all must win (voids reduce odd but don't lose)
-    if(hasLose) b.result = 'lose';
-    else if(allWin && !hasVoid) b.result = 'win';
-    else b.result = 'cashout'; // partial void
-    return;
-  }
+            if (f) {
+                const status = f.fixture.status.short;
+                const homeG = f.goals.home ?? 0;
+                const awayG = f.goals.away ?? 0;
+                bet.score = `${homeG}-${awayG}`;
 
-  if(b.strategy === 'system') {
-    // sistema: check min wins required
-    const minWins = parseInt(b.systemN || 2);
-    const wins = b.selections.filter(s => s.result === 'win').length;
-    if(hasLose && wins < minWins) b.result = 'lose';
-    else if(wins >= minWins) b.result = 'win';
-    else b.result = 'cashout';
-    return;
-  }
+                // Se o jogo acabou (FT)
+                if (status === 'FT') {
+                    let win = false;
+                    const result = homeG > awayG ? '1' : (homeG < awayG ? '2' : 'X');
+                    
+                    // Lógica Básica 1X2
+                    if (bet.pick === result) win = true;
+                    // Lógica Básica Over 2.5
+                    if (bet.pick.toLowerCase().includes('over 2.5') && (homeG + awayG > 2.5)) win = true;
 
-  b.result = hasLose ? 'lose' : 'win';
+                    bet.status = win ? 'win' : 'lose';
+                } else if (['1H','2H','HT'].includes(status)) {
+                    bet.score = `Live ${homeG}-${awayG}`;
+                }
+            }
+        } catch (e) { console.error(e); }
+        await new Promise(r => setTimeout(r, 600)); // Delay API-Football
+    }
+
+    save();
+    renderBets();
+    updateHeader();
+    showToast("Resultados atualizados!", "ok");
 }
 
 function renderBets() {
-  const filter = document.getElementById('bets-filter').value;
-  let bets = DB.bets;
-  if(filter!=='all') bets = bets.filter(b=>b.result===filter);
-  const el = document.getElementById('bets-container');
-  if(!bets.length) { el.innerHTML='<div class="empty"><div class="empty-icon">📋</div>Nenhuma aposta</div>'; return; }
-
-  el.innerHTML = bets.map(b => {
-    const isMulti = b.selections && b.selections.length > 1;
-    const borderColor = b.result==='win'?'var(--win)':b.result==='lose'?'var(--lose)':b.result==='pending'?'var(--pending)':'var(--g3)';
-    const resolvedCount = (b.selections||[]).filter(s=>s.result&&s.result!=='pending').length;
-    const totalSel = (b.selections||[]).length;
-    const allResolved = resolvedCount === totalSel;
-    const progressPct = totalSel ? Math.round(resolvedCount/totalSel*100) : 0;
-
-    return `<div style="background:var(--s1);border:1px solid var(--border);border-left:3px solid ${borderColor};border-radius:12px;padding:16px;margin-bottom:12px" id="betcard-${b.id}">
-
-      <!-- Header -->
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
-        <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
-          <span class="badge ${b.result==='win'?'badge-win':b.result==='lose'?'badge-lose':b.result==='pending'?'badge-pending':'badge-draw'}">
-            ${b.result==='win'?'✅ Ganha':b.result==='lose'?'❌ Perdida':b.result==='pending'?'⏳ Pendente':'💰 Parcial'}
-          </span>
-          <span style="font-size:.68rem;color:var(--muted)">${formatDate(b.date)}</span>
-          <span style="font-size:.68rem;color:var(--muted);background:var(--s3);padding:2px 7px;border-radius:8px">${(b.strategy||'—').toUpperCase()}</span>
-          ${isMulti&&b.result==='pending'?`<span style="font-size:.65rem;color:var(--muted2)">${resolvedCount}/${totalSel} jogos resolvidos</span>`:''}
-        </div>
-        <div style="text-align:right;flex-shrink:0;margin-left:8px">
-          <div style="font-family:'JetBrains Mono',monospace;font-size:.95rem;color:var(--g3)">@${b.totalOdd}</div>
-          <div style="font-size:.68rem;color:var(--muted)">€${b.stake} → <span style="color:var(--g4)">€${b.potentialPayout}</span></div>
-        </div>
-      </div>
-
-      ${isMulti&&b.result==='pending'?`
-      <div style="height:3px;background:var(--s3);border-radius:3px;margin-bottom:10px;overflow:hidden">
-        <div style="height:100%;width:${progressPct}%;background:linear-gradient(90deg,var(--g2),var(--g1));border-radius:3px;transition:width .4s"></div>
-      </div>`:''}
-
-      <!-- Selections — each with its own result picker -->
-      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">
-        ${(b.selections||[]).map((s,si) => {
-          const sRes = s.result || 'pending';
-          const sDone = sRes !== 'pending';
-          const sColor = selResultColor(sRes);
-          return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--s2);border-radius:8px;border:1px solid ${sDone?(sRes==='win'?'rgba(16,185,129,.2)':sRes==='lose'?'rgba(244,63,94,.2)':'var(--border)'):'var(--border)'}">
-            <span style="font-size:1rem;line-height:1;flex-shrink:0">${selResultIcon(sRes)}</span>
-            <div style="flex:1;min-width:0">
-              <div style="font-size:.78rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.label}</div>
-              <div style="font-size:.68rem;color:var(--muted2)">${s.market}: <span style="color:var(--text)">${s.pick}</span> · <span style="font-family:'JetBrains Mono',monospace;color:var(--g3)">@${s.odd}</span></div>
-            </div>
-            ${b.result==='pending'||!allResolved ? `
-            <select onchange="setSelectionResult(${b.id},${si},this.value)"
-              style="background:var(--bg);border:1px solid ${sDone?sColor:'var(--border2)'};border-radius:6px;padding:4px 6px;font-size:.72rem;color:${sDone?sColor:'var(--muted2)'};cursor:pointer;flex-shrink:0;outline:none">
-              <option value="pending" ${sRes==='pending'?'selected':''}>⏳ Pendente</option>
-              <option value="win"     ${sRes==='win'?'selected':''}>✅ Ganhou</option>
-              <option value="lose"    ${sRes==='lose'?'selected':''}>❌ Perdeu</option>
-              <option value="void"    ${sRes==='void'?'selected':''}>⬜ Nulo/Void</option>
-            </select>` :
-            `<span style="font-size:.75rem;color:${sColor};font-weight:600">${selResultIcon(sRes)} ${sRes==='win'?'Ganhou':sRes==='lose'?'Perdeu':'Nulo'}</span>`}
-          </div>`;
-        }).join('')}
-      </div>
-
-      <!-- Global actions — only if all selections resolved OR single bet -->
-      ${b.result==='pending' ? `
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          ${allResolved ? `
-            <span style="font-size:.72rem;color:var(--g1)">✓ Todos os jogos resolvidos — confirma o resultado final:</span>
-          ` : (totalSel===1 ? '' : `<span style="font-size:.72rem;color:var(--muted2)">Resolve cada jogo acima para atualizar automaticamente</span>`)}
-          ${allResolved ? `
-            <button class="btn btn-green btn-sm" onclick="setBetResult(${b.id},'win')">✅ Confirmar Ganha</button>
-            <button class="btn btn-r btn-sm" onclick="setBetResult(${b.id},'lose')">❌ Confirmar Perdida</button>
-          ` : ''}
-          <button class="btn btn-amber btn-sm" onclick="setBetResult(${b.id},'cashout')">💰 Cashout</button>
-          <button class="btn btn-o btn-xs" onclick="deleteBet(${b.id})" style="margin-left:auto">🗑</button>
-        </div>` :
-        `<div style="display:flex;justify-content:flex-end">
-          <button class="btn btn-r btn-xs" onclick="deleteBet(${b.id})">🗑 Remover</button>
-        </div>`}
-    </div>`;
-  }).join('');
-}
-
-function setSelectionResult(betId, selIdx, result) {
-  const b = DB.bets.find(x=>x.id===betId);
-  if(!b) return;
-  if(!b.selections[selIdx].result) b.selections[selIdx].result = 'pending';
-  b.selections[selIdx].result = result;
-
-  // Auto-resolve the whole bet when all selections are done
-  autoResolveBet(b);
-  save();
-  renderBets();
-  updateHeader();
-
-  // Feedback
-  const allDone = b.selections.every(s=>s.result && s.result!=='pending');
-  if(allDone && b.result!=='pending') {
-    showToast(b.result==='win'?'🎉 Aposta ganha automaticamente!':b.result==='lose'?'Aposta marcada como perdida':'💰 Resultado parcial registado', b.result==='win'?'ok':'info');
+  const container = document.getElementById('bets-container');
+  if(DB.bets.length === 0) {
+    container.innerHTML = '<p style="text-align:center; color:var(--muted2)">Nenhuma aposta registada.</p>';
+    return;
   }
-}
 
-function setBetResult(id, result) {
-  const b = DB.bets.find(x=>x.id===id);
-  if(b) { b.result=result; save(); renderBets(); updateHeader(); showToast('Resultado registado!','ok'); }
-}
-
-function deleteBet(id) {
-  DB.bets = DB.bets.filter(b=>b.id!==id);
-  save(); renderBets(); updateHeader();
-}
-
-// ═══════ SUMMARY ═══════
-function renderSummary() {
-  const resolved = DB.bets.filter(b=>b.result!=='pending');
-  const wins = DB.bets.filter(b=>b.result==='win');
-  const loses = DB.bets.filter(b=>b.result==='lose');
-  const rate = resolved.length ? Math.round(wins.length/resolved.length*100) : null;
-
-  let profit = 0;
-  wins.forEach(b=>profit+=b.potentialPayout-b.stake);
-  loses.forEach(b=>profit-=b.stake);
-
-  document.getElementById('s-total').textContent = DB.bets.length;
-  document.getElementById('s-wins').textContent = wins.length;
-  document.getElementById('s-loses').textContent = loses.length;
-  document.getElementById('s-profit').textContent = (profit>=0?'+':'')+'€'+profit.toFixed(2);
-  document.getElementById('s-profit').style.color = profit>=0?'var(--win)':'var(--red)';
-  document.getElementById('s-rate').textContent = rate!==null ? rate+'%' : '—';
-  setTimeout(()=>{ document.getElementById('s-bar').style.width=(rate||0)+'%'; },100);
-
-  // ROI
-  const totalStaked = DB.bets.reduce((a,b)=>a+b.stake,0);
-  const roi = totalStaked ? ((profit/totalStaked)*100).toFixed(1) : null;
-  document.getElementById('s-roi').textContent = roi ? 'ROI: '+(roi>=0?'+':'')+roi+'%' : '';
-
-  // Streak
-  let streak=0,stype='';
-  for(const b of DB.bets){ if(b.result==='pending') continue; if(!stype) stype=b.result; if(b.result===stype) streak++; else break; }
-  const strEl = document.getElementById('s-streak');
-  strEl.innerHTML = streak>1 ? `${stype==='win'?'🔥':'❄️'} Série: <strong style="color:${stype==='win'?'var(--win)':'var(--red)'}">${streak} ${stype==='win'?'ganhas':'perdidas'}</strong>` : '';
-
-  // Daily blocks
-  const byDay = {};
-  DB.bets.forEach(b=>{
-    if(!byDay[b.date]) byDay[b.date]={bets:[],wins:0,loses:0,profit:0,stake:0};
-    byDay[b.date].bets.push(b);
-    if(b.result==='win'){byDay[b.date].wins++;byDay[b.date].profit+=b.potentialPayout-b.stake;}
-    if(b.result==='lose'){byDay[b.date].loses++;byDay[b.date].profit-=b.stake;}
-    byDay[b.date].stake+=b.stake;
-  });
-
-  const dailyEl = document.getElementById('daily-blocks');
-  const days = Object.keys(byDay).sort((a,b)=>b.localeCompare(a));
-  if(!days.length){ dailyEl.innerHTML='<div class="empty"><div class="empty-icon">📊</div>Sem histórico ainda</div>'; return; }
-
-  dailyEl.innerHTML = days.map(day=>{
-    const d = byDay[day];
-    const resolved = d.wins+d.loses;
-    const pct = resolved ? Math.round(d.wins/resolved*100) : null;
-    return `<div class="day-block">
-      <div class="day-header">
-        <div class="day-date">${formatDate(day)}</div>
-        <div class="day-stats">
-          <span><span>${d.bets.length}</span> apostas</span>
-          <span style="color:var(--win)">✅ ${d.wins}</span>
-          <span style="color:var(--red)">❌ ${d.loses}</span>
-          ${pct!==null?`<span style="color:var(--g1)">${pct}% hit</span>`:''}
-          <span style="color:${d.profit>=0?'var(--win)':'var(--red)'}">${d.profit>=0?'+':''}€${d.profit.toFixed(2)}</span>
-        </div>
+  container.innerHTML = DB.bets.map(b => `
+    <div class="bet-item">
+      <div>
+        <div style="font-weight:600; font-size:0.9rem;">${b.home} vs ${b.away}</div>
+        <div style="font-size:0.7rem; color:var(--muted2)">${new Date(b.date).toLocaleDateString()}</div>
       </div>
-      <div style="padding:10px 16px">
-        ${d.bets.map(b=>`
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(31,40,64,.4);font-size:.78rem">
-            <div>
-              <span class="badge ${b.result==='win'?'badge-win':b.result==='lose'?'badge-lose':'badge-pending'}" style="margin-right:6px">${b.result==='win'?'✅':b.result==='lose'?'❌':'⏳'}</span>
-              ${b.selections.map(s=>s.label).join(' + ')}
-            </div>
-            <span style="font-family:'JetBrains Mono',monospace;color:var(--g3)">@${b.totalOdd}</span>
-          </div>
-        `).join('')}
+      <div class="mono">Pick: <span style="color:var(--g1)">${b.pick}</span> @${b.odd}</div>
+      <div class="mono">${b.stake.toFixed(2)}€</div>
+      <div class="mono" style="text-align:center">
+        <span class="status-badge status-${b.status}">${b.status === 'pending' ? b.score : b.status}</span>
       </div>
-    </div>`;
-  }).join('');
-}
-
-// ═══════ HEADER ═══════
-function updateHeader() {
-  const resolved = DB.bets.filter(b=>b.result!=='pending');
-  const wins = DB.bets.filter(b=>b.result==='win');
-  document.getElementById('h-total').textContent = DB.bets.length;
-  document.getElementById('h-hits').textContent = wins.length;
-  document.getElementById('h-rate').textContent = resolved.length ? Math.round(wins.length/resolved.length*100)+'%' : '—';
-}
-
-// ═══════ CONFIG ═══════
-function saveConfig() {
-  DB.cfg.gemini = document.getElementById('cfg-gemini').value.trim();
-  DB.cfg.football = document.getElementById('cfg-football').value.trim();
-  // model is saved immediately on selection via selectModel()
-  save();
-  showToast('Configuração guardada! Motor: ' + (DB.cfg.geminiModel||'gemini-2.5-flash'),'ok');
-}
-
-function onGeminiKeyInput() {
-  // Auto-clear fetched models if key changes
-  document.getElementById('model-count').textContent = '';
-}
-
-// Render the model card grid
-function renderModelGrid(models) {
-  const grid = document.getElementById('model-grid');
-  if(!grid) return;
-  const selected = DB.cfg.geminiModel || 'gemini-2.5-flash';
-  const tierColor = { Pro:'var(--g2)', Flash:'var(--g1)', Lite:'var(--muted2)' };
-  const tierBg    = { Pro:'rgba(99,102,241,.12)', Flash:'rgba(34,211,238,.08)', Lite:'rgba(120,136,168,.08)' };
-
-  grid.innerHTML = models.map(m => {
-    const isSel = m.id === selected;
-    return `<div onclick="selectModel('${m.id}')"
-      style="cursor:pointer;border-radius:10px;padding:12px;border:2px solid ${isSel?'var(--g1)':'var(--border)'};background:${isSel?'rgba(34,211,238,.06)':'var(--bg)'};transition:all .15s"
-      id="mcard-${m.id.replace(/\./g,'-')}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
-        <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:.82rem;line-height:1.2">${m.label}</span>
-        <div style="display:flex;gap:4px;flex-shrink:0;margin-left:6px">
-          <span style="font-size:.6rem;font-weight:700;padding:2px 6px;border-radius:10px;background:${tierBg[m.tier]||tierBg.Lite};color:${tierColor[m.tier]||tierColor.Lite}">${m.tier}</span>
-          ${m.free?`<span style="font-size:.6rem;font-weight:700;padding:2px 6px;border-radius:10px;background:rgba(16,185,129,.1);color:var(--g4)">Grátis</span>`:`<span style="font-size:.6rem;padding:2px 6px;border-radius:10px;background:rgba(245,158,11,.1);color:var(--g3)">Pago</span>`}
-        </div>
-      </div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted);margin-bottom:5px">${m.id}</div>
-      <div style="font-size:.72rem;color:var(--muted2)">${m.desc}</div>
-      ${isSel?`<div style="font-size:.62rem;color:var(--g1);margin-top:6px;font-weight:600">✓ Seleccionado</div>`:''}
-    </div>`;
-  }).join('');
-
-  // Update display
-  updateModelDisplay(selected, models);
-}
-
-function selectModel(id) {
-  DB.cfg.geminiModel = id;
-  save();
-  const models = window._loadedModels || GEMINI_MODELS_STATIC;
-  renderModelGrid(models);
-  showToast('Motor: ' + id,'ok');
-}
-
-function updateModelDisplay(id, models) {
-  const el = document.getElementById('selected-model-display');
-  const badge = document.getElementById('model-tier-badge');
-  if(el) el.textContent = id;
-  const m = models.find(x=>x.id===id);
-  if(badge && m) {
-    badge.textContent = m.tier;
-    badge.className = 'badge ' + (m.tier==='Pro'?'badge-pending':m.tier==='Flash'?'badge-info':'badge-draw');
-  }
-}
-
-// Fetch live model list from Gemini API
-async function fetchGeminiModels() {
-  const key = document.getElementById('cfg-gemini').value.trim() || DB.cfg.gemini;
-  if(!key) { showToast('Introduz a Gemini API Key primeiro','err'); return; }
-
-  const btn = document.getElementById('btn-fetch-models');
-  const spin = document.getElementById('fetch-models-spin');
-  btn.disabled=true; spin.style.display='inline-block';
-
-  try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}&pageSize=50`);
-    const data = await res.json();
-    if(data.error) throw new Error(data.error.message);
-
-    const raw = (data.models||[]).filter(m=>
-      m.name && m.supportedGenerationMethods?.includes('generateContent') &&
-      m.name.includes('gemini') &&
-      !m.name.includes('embedding') &&
-      !m.name.includes('image') &&
-      !m.name.includes('tts') &&
-      !m.name.includes('audio') &&
-      !m.name.includes('live')
-    );
-
-    const dynamic = raw.map(m=>{
-      const id = m.name.replace('models/','');
-      const label = m.displayName || id;
-      const isPro = id.includes('pro');
-      const isLite = id.includes('lite');
-      const tier = isPro?'Pro':isLite?'Lite':'Flash';
-      const isFree = id.includes('2.0')||id.includes('2.5-flash')||id.includes('flash-lite');
-      // merge description from static if available
-      const stat = GEMINI_MODELS_STATIC.find(s=>s.id===id);
-      return { id, label, tier, free:isFree, desc: stat?.desc || (m.description||'') };
-    });
-
-    // Dedupe: start with dynamic, fill missing from static
-    const dynamicIds = new Set(dynamic.map(m=>m.id));
-    const merged = [...dynamic, ...GEMINI_MODELS_STATIC.filter(s=>!dynamicIds.has(s.id))];
-    // Sort: Pro first, then Flash, then Lite; newer versions first
-    merged.sort((a,b)=>{
-      const tierOrder = {Pro:0,Flash:1,Lite:2};
-      if(tierOrder[a.tier]!==tierOrder[b.tier]) return tierOrder[a.tier]-tierOrder[b.tier];
-      return b.id.localeCompare(a.id);
-    });
-
-    window._loadedModels = merged;
-    renderModelGrid(merged);
-    document.getElementById('model-count').textContent = `${merged.length} modelos`;
-    showToast(`${merged.length} modelos carregados da API!`,'ok');
-  } catch(e) {
-    showToast('Erro: '+e.message,'err');
-    // Fall back to static
-    renderModelGrid(GEMINI_MODELS_STATIC);
-  } finally {
-    btn.disabled=false; spin.style.display='none';
-  }
-}
-
-const ALL_LEAGUES = [
-  {id:'94',name:'Primeira Liga 🇵🇹'},
-  {id:'39',name:'Premier League 🏴󠁧󠁢󠁥󠁮󠁧󠁿'},
-  {id:'140',name:'La Liga 🇪🇸'},
-  {id:'135',name:'Serie A 🇮🇹'},
-  {id:'78',name:'Bundesliga 🇩🇪'},
-  {id:'61',name:'Ligue 1 🇫🇷'},
-  {id:'2',name:'Champions League'},
-  {id:'3',name:'Europa League'},
-];
-
-function renderFavLeagues() {
-  const el = document.getElementById('fav-leagues');
-  el.innerHTML = ALL_LEAGUES.map(l=>`
-    <button class="filter-chip ${(DB.cfg.favLeagues||[]).includes(l.id)?'on':''}" onclick="toggleFavLeague('${l.id}',this)">${l.name}</button>
+      <button class="btn" style="color:var(--red); padding:5px;" onclick="deleteBet(${b.id})">✕</button>
+    </div>
   `).join('');
 }
 
-function toggleFavLeague(id, el) {
-  if(!DB.cfg.favLeagues) DB.cfg.favLeagues=[];
-  if(DB.cfg.favLeagues.includes(id)) { DB.cfg.favLeagues=DB.cfg.favLeagues.filter(x=>x!==id); el.classList.remove('on'); }
-  else { DB.cfg.favLeagues.push(id); el.classList.add('on'); }
+function deleteBet(id) {
+  if(!confirm('Apagar esta aposta?')) return;
+  DB.bets = DB.bets.filter(b => b.id !== id);
+  save();
+  renderBets();
+  updateHeader();
+}
+
+function updateHeader() {
+  let profit = 0;
+  let wins = 0;
+  let active = 0;
+
+  DB.bets.forEach(b => {
+    if(b.status === 'win') {
+      profit += (b.stake * b.odd) - b.stake;
+      wins++;
+    } else if(b.status === 'lose') {
+      profit -= b.stake;
+    } else {
+      active++;
+    }
+  });
+
+  const currentBank = (DB.cfg.bank || 0) + profit;
+  const wr = DB.bets.filter(x=>x.status!=='pending').length > 0 
+    ? (wins / DB.bets.filter(x=>x.status!=='pending').length * 100).toFixed(1) 
+    : 0;
+
+  document.getElementById('header-balance').innerText = `${currentBank.toFixed(2)}€`;
+  document.getElementById('stat-bank').innerText = `${currentBank.toFixed(2)}€`;
+  document.getElementById('stat-profit').innerText = `${profit.toFixed(2)}€`;
+  document.getElementById('stat-profit').style.color = profit >= 0 ? 'var(--g4)' : 'var(--red)';
+  document.getElementById('stat-wr').innerText = `${wr}%`;
+  document.getElementById('stat-active').innerText = active;
+}
+
+// --- Helpers ---
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.innerText = msg;
+  t.style.borderColor = type === 'error' ? 'var(--red)' : 'var(--g1)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function renderFavLeagues() {
+  const leagues = [
+    {id: 94, name: 'Portugal'}, {id: 140, name: 'Espanha'}, 
+    {id: 39, name: 'Inglaterra'}, {id: 61, name: 'França'}, {id: 78, name: 'Alemanha'}
+  ];
+  const el = document.getElementById('fav-leagues');
+  el.innerHTML = leagues.map(l => `
+    <button class="filter-chip ${DB.cfg.favLeagues.includes(l.id)?'on':''}" onclick="toggleLeague(${l.id})">${l.name}</button>
+  `).join('');
+}
+
+function toggleLeague(id) {
+  if(DB.cfg.favLeagues.includes(id)) {
+    DB.cfg.favLeagues = DB.cfg.favLeagues.filter(x => x !== id);
+  } else {
+    DB.cfg.favLeagues.push(id);
+  }
+  save();
+  renderFavLeagues();
+  loadFixtures();
 }
 
 function exportData() {
-  const blob = new Blob([JSON.stringify({bets:DB.bets,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});
-  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='scoutai_backup.json'; a.click();
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(DB));
+  const downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute("href", dataStr);
+  downloadAnchorNode.setAttribute("download", "scoutai_pro_backup.json");
+  document.body.appendChild(downloadAnchorNode);
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
 }
 
 function clearAllData() {
-  if(!confirm('Apagar TODOS os dados? Esta ação não pode ser desfeita.')) return;
-  localStorage.removeItem('sai_bets');
-  localStorage.removeItem('sai_fixtures');
-  DB.bets=[]; DB.fixtures=[];
-  updateHeader();
-  showToast('Dados apagados','info');
-}
-
-// ═══════ HELPERS ═══════
-function formatDate(d) {
-  if(!d) return '—';
-  const [y,m,day] = d.split('-');
-  return `${day}/${m}/${y}`;
-}
-
-function showToast(msg, type='ok') {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.className='toast on '+type;
-  clearTimeout(t._t);
-  t._t = setTimeout(()=>t.classList.remove('on'),3000);
+  if(confirm('ATENÇÃO: Isto irá apagar todas as apostas e configurações. Continuar?')) {
+    localStorage.removeItem('sai_pro_v1');
+    location.reload();
+  }
 }
 </script>
 </body>
